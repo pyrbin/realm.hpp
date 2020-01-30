@@ -47,7 +47,7 @@ public:
         handles.reserve(capacity);
     }
 
-    entity_t create(entity_location loc)
+    entity_t create(const entity_location& loc)
     {
         entity_handle handle;
         auto index = first_available;

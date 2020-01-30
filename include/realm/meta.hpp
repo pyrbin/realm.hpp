@@ -22,7 +22,12 @@ using hash_t = uint64_t;
 inline constexpr hash_t fnv_basis = 14695981039346656037ull;
 inline constexpr hash_t fnv_prime = 1099511628211ull;
 
-// https://notes.underscorediscovery.com/constexpr-fnv1a/
+/**
+ * @brief https://notes.underscorediscovery.com/constexpr-fnv1a/
+ * @param str
+ * @param value
+ * @return
+ */
 inline constexpr hash_t
 hash_fnv1a(const char* const str, const hash_t value = fnv_basis) noexcept
 {
@@ -36,6 +41,7 @@ template<typename T>
 struct type_meta
 {
 private:
+    // TODO: only use the name of the class when generating hash
     static constexpr auto get_hash() noexcept
     {
         return detail::hash_fnv1a(__VALID_PRETTY_FUNC__);

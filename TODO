@@ -1,6 +1,15 @@
-* select name:
+* new name:
 alternatives:
-    -> arena, realm, pillar, bulwark, arketyp, essence (escense), buckler, rymd, atex (ArcheType EntityX(cs)
+    -> arena, realm, pillar, bulwark, arketyp, essence (escense), buckler, rymd, atex (ArcheType EntityX(cs), arkt.
+    -> alt. .hpp as postfix cuz datz kewl xd.
 
 * fix cmake setup for testing & bench
 * better test cases
+
+* impl concepts
+    * query functor has to be unique + either ref or ref const
+    * components has to be something?
+    * component array has to be unique
+
+
+* when more c++20 features are default impl. modules, coroutines & ranges

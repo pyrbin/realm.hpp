@@ -22,7 +22,7 @@ public:
     {
         auto at = archetype::of<T...>();
         auto chunk = get_chunk(at);
-        auto entt = entities.create({ chunk->size(), chunk });
+        auto entt = entities.create(entity_location{ chunk->size(), chunk });
         return chunk->insert(entt);
     }
 
@@ -30,7 +30,7 @@ public:
     std::vector<entity_t> batch(uint32_t n)
     {
         std::vector<entity_t> entts;
-        for (int i{ 0 }; i < n; i++) { entts.push_back(create<T...>()); }
+        for (uint32_t i{ 0 }; i < n; i++) { entts.push_back(create<T...>()); }
         return entts;
     }
 
@@ -38,11 +38,18 @@ public:
     T& get(entity_t entt)
     {
         auto [index, ptr] = *entities.get(entt);
-        return *ptr->get<T>(index);
+        return *ptr->get<std::decay_t<T>>(index);
     }
 
     int32_t size() const noexcept { return entities.size(); }
     int32_t capacity() const noexcept { return entities.capacity(); }
+
+    // Functor objects
+    template<typename Functor>
+    void query(Functor&& f)
+    {
+        query_helper(&f, &std::decay_t<Functor>::operator());
+    }
 
 private:
     archetype_chunk_parent::chunk_ptr get_chunk(const archetype& at)
@@ -51,6 +58,14 @@ private:
             chunks.emplace(at.mask(), archetype_chunk_parent{ at });
         auto cp = chunks.at(at.mask());
         return cp.find_free();
+    }
+
+    // https://stackoverflow.com/questions/55756181/use-lambda-to-modify-references-identified-by-a-packed-parameter
+    template<typename Class, typename... Args>
+    void query_helper(Class* obj, void (Class::*f)(Args...) const)
+    {
+        entities.each(
+          [&](auto&& entt, auto&& loc) { (obj->*f)(get<std::decay_t<Args>>(entt)...); });
     }
 };
 }

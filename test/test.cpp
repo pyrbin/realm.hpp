@@ -52,10 +52,18 @@ printf(realm::world& world, vector<realm::entity_t> entts)
 int
 main()
 {
-    auto world = realm::world{ 1 };
+    auto world = realm::world{ 6 };
     auto entts = world.batch<pos, vel>(world.capacity());
-    printf(world, entts);
-    // for (int i{ 0 }; i < world.capacity(); i++) { world.get<vel>(entts[i]) = { 20, 20
-    // }; } printf(world, entts);
+    // printf(world, entts);
+
+    auto arch = realm::archetype::of<pos, vel>();
+
+    auto p = world.get<const pos>(0);
+
+    cout << p.x << "\n";
+
+    world.query([](pos& p) { p.x = 200; });
+    world.query([](pos& p) { cout << p.x << "\n"; });
+
     return 0;
 }

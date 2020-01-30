@@ -103,7 +103,6 @@ struct component
     template<typename T>
     static constexpr component of()
     {
-        auto hash = type_meta<T>::hash;
         return { component_meta::of<T>(),
                  memory_layout::of<T>(),
                  [](void* ptr) { new (ptr) T{}; },

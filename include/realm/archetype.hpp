@@ -1,6 +1,7 @@
 #pragma once
 
 #include "component.hpp"
+#include "concept.hpp"
 #include "entity.hpp"
 #include "util.hpp"
 
@@ -34,9 +35,10 @@ public:
         combined_mask = other.combined_mask;
         data_size = other.data_size;
         for (auto component : other.components) { components.push_back(component); }
+        return *this;
     }
 
-    template<typename... T>
+    template<Component... T>
     static archetype of() noexcept
     {
         archetype archetype{};
@@ -104,7 +106,7 @@ struct archetype_chunk_parent
     std::vector<chunk_ptr> chunks;
     chunk_ptr cached_free{ nullptr };
 
-    const archetype archetype;
+    const struct archetype archetype;
     const uint32_t per_chunk;
 
     archetype_chunk_parent(const struct archetype& archetype)
@@ -127,7 +129,7 @@ public:
     using entities_t = std::vector<entity_t>;
     using pointer = void*;
 
-    const archetype archetype;
+    const struct archetype archetype;
 
     // const archetype_chunk_parent* parent;
 
@@ -216,7 +218,7 @@ public:
     bool used() const noexcept { return data != nullptr; }
 
 private:
-    constexpr size_t offset_to(uint index, const component& type) const
+    size_t offset_to(uint index, const component& type) const
     {
         auto offset = offsets.at(type.meta.hash);
         return offset + (index * type.layout.size);
