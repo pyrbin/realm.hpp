@@ -1,0 +1,6 @@
+* select name:
+alternatives:
+    -> arena, realm, pillar, bulwark, arketyp, essence (escense), buckler, rymd,
+
+* fix cmake setup for testing & bench
+* better test cases

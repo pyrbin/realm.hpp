@@ -1,0 +1,15 @@
+
+# Build
+build/
+
+# Temp
+\#*
+*~
+
+# Editor
+CMakeSettings.json
+.vscode/
+.idea/
+.vs/
+compile_commands.json
+compile_flags.txt
