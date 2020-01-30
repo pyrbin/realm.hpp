@@ -1,7 +1,6 @@
 #pragma once
 
 #include "component.hpp"
-#include "concept.hpp"
 #include "entity.hpp"
 #include "util.hpp"
 
@@ -38,7 +37,7 @@ public:
         return *this;
     }
 
-    template<Component... T>
+    template<typename... T>
     static archetype of() noexcept
     {
         archetype archetype{};
