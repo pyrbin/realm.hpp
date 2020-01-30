@@ -11,7 +11,7 @@
 #include <type_traits>
 #include <unordered_map>
 
-namespace pillar {
+namespace realm {
 
 /**
  * @brief archetype represents a set of components.
@@ -87,20 +87,12 @@ struct archetype_chunk
 {
 public:
     using offsets_t = std::unordered_map<size_t, size_t>;
+    using entities_t = std::vector<entity_t>;
+    using pointer = void*;
+
     const archetype archetype;
 
-    archetype_chunk(size_t size, const struct archetype& archetype)
-      : entt_size{ size }, archetype(archetype)
-    {
-        entities.reserve(size);
-        for (auto&& [hash, component] : archetype.components) {
-            data_size += component.layout.padding_needed_for(data_size);
-            offsets.emplace(component.meta.hash, data_size);
-            data_size += component.layout.size * entt_size;
-        }
-        data =
-          (aligned_alloc(archetype.components.begin()->second.layout.align, data_size));
-    }
+    archetype_chunk(const struct archetype& archetype) : archetype(archetype) {}
 
     ~archetype_chunk()
     {
@@ -110,20 +102,33 @@ public:
         }
     }
 
+    pointer allocate(size_t size)
+    {
+        max_entities = size;
+        entities.reserve(size);
+        for (auto&& [hash, component] : archetype.components) {
+            data_size += component.layout.padding_needed_for(data_size);
+            offsets.emplace(component.meta.hash, data_size);
+            data_size += component.layout.size * max_entities;
+        }
+        return data = (aligned_alloc(archetype.components.begin()->second.layout.align,
+                                     data_size));
+    }
+
     entity_t acquire(std::function<entity_t(uint)> fn)
     {
-        auto entt = fn(entt_count);
-        entities[entt_count++] = entt;
+        auto entt = fn(len);
+        entities[len++] = entt;
         return entt;
     }
 
     entity_t remove(uint index)
     {
         // do de-fragmentation, (is this costly?)
-        auto end{ entt_count - 1 };
+        auto end{ len - 1 };
         util::swap_remove(index, entities);
         copy_to(end, *this, index);
-        entt_count--;
+        len--;
         return entities[index];
     }
 
@@ -134,7 +139,7 @@ public:
         return ((T*) get_pointer(index, comp));
     }
 
-    void* get_pointer(unsigned index, const component& type)
+    pointer get_pointer(unsigned index, const component& type)
     {
         return (void*) ((std::byte*) data + offset_to(index, type));
     }
@@ -148,8 +153,11 @@ public:
         }
     }
 
-    size_t size() const { return entt_size; }
-    size_t count() const { return entt_count; }
+    size_t capacity() const noexcept { return max_entities; }
+    size_t size() const noexcept { return len; }
+
+    bool full() const noexcept { return len >= max_entities; }
+    bool used() const noexcept { return data != nullptr; }
 
 private:
     constexpr size_t offset_to(uint index, const component& type) const
@@ -158,12 +166,14 @@ private:
         return offset + (index * type.layout.size);
     }
 
-    void* data{ nullptr };
-    std::vector<entity_t> entities{};
-    size_t entt_count{ 0 };
-    size_t entt_size{ 0 };
+    pointer data{ nullptr };
+
+    size_t len{ 0 };
+    size_t max_entities{ 0 };
     size_t data_size{ 0 };
+
+    entities_t entities;
     offsets_t offsets;
 };
 
-} // namespace pillar
+} // namespace realm

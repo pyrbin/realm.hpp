@@ -7,7 +7,7 @@
 
 #include "meta.hpp"
 
-namespace pillar {
+namespace realm {
 
 /**
  * @brief Describes a particular layout of memory. Inspired by rust
@@ -85,4 +85,4 @@ struct component
     }
 };
 
-} // namespace pillar
+} // namespace realm

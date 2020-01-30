@@ -1,7 +1,7 @@
-#include "../include/pillar.hpp"
+#include "../include/realm.hpp"
 #include <iostream>
 
-using namespace pillar;
+using namespace realm;
 using namespace std;
 
 struct pos
@@ -20,7 +20,8 @@ main()
     const size_t n = 20;
 
     entity_pool entities{ n };
-    archetype_chunk chunk1{ n / 2, archetype::of<pos, vel>() };
+    archetype_chunk chunk1{ archetype::of<pos, vel>() };
+    chunk1.allocate(n / 2);
 
     for (int i = 0; i < 10; i++) {
         auto entt = chunk1.acquire([&](uint idx) {

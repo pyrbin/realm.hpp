@@ -13,7 +13,7 @@
 #error "Compiler not supported"
 #endif
 
-namespace pillar {
+namespace realm {
 
 namespace detail {
 
@@ -46,4 +46,4 @@ public:
     static constexpr hash_type hash{ get_hash() };
 };
 
-} // namespace pillar
+} // namespace realm

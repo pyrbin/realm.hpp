@@ -2,7 +2,7 @@
 
 #include <algorithm>
 
-namespace pillar {
+namespace realm {
 namespace util {
 
 /**
@@ -22,4 +22,4 @@ swap_remove(unsigned index, T target)
 }
 
 } // namespace util
-} // namespace pillar
+} // namespace realm

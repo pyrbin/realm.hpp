@@ -1,4 +1,4 @@
-<h1 align="center">pillar.hpp</h1>
+<h1 align="center">realm.hpp</h1>
 <p align="center">A header-only c++20 ecs framework</p>
 
 ## Table of Contents

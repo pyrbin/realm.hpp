@@ -7,7 +7,7 @@
 #include <numeric>
 #include <vector>
 
-namespace pillar {
+namespace realm {
 
 /**
  * @brief Entities are represented as 64-bit integers split in half,
@@ -164,4 +164,4 @@ private:
     int64_t first_available;
 };
 
-} // namespace pillar
+} // namespace realm
