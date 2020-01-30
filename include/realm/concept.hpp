@@ -23,4 +23,10 @@ struct is_viable_component
 
 template<typename T>
 concept Component = detail::is_viable_component<T>::value;
+
+template<typename... T>
+concept UniquePack = detail::is_unique<std::unwrap_ref_decay_t<T>...>;
+
+template<typename T>
+concept Entity = std::is_integral_v<T>;
 }

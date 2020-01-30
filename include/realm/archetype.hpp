@@ -1,6 +1,7 @@
 #pragma once
 
 #include "component.hpp"
+#include "concept.hpp"
 #include "entity.hpp"
 #include "util.hpp"
 
@@ -38,7 +39,7 @@ public:
     }
 
     template<typename... T>
-    static archetype of() noexcept
+    static archetype of() noexcept requires UniquePack<T...>
     {
         archetype archetype{};
         (archetype.add(component::of<T>()), ...);
@@ -53,7 +54,7 @@ public:
     }
 
     template<typename... T>
-    void add()
+    void add() requires UniquePack<T...>
     {
         (add(component::of<T>()), ...);
     }
@@ -66,7 +67,7 @@ public:
     }
 
     template<typename... T>
-    void remove()
+    void remove() requires UniquePack<T...>
     {
         (remove(component::of<T>()), ...);
     }
@@ -125,7 +126,7 @@ struct archetype_chunk
 {
 public:
     using offsets_t = std::unordered_map<size_t, size_t>;
-    using entities_t = std::vector<entity_t>;
+    using entities_t = std::vector<entity>;
     using pointer = void*;
 
     const struct archetype archetype;
@@ -165,7 +166,7 @@ public:
         return data = (aligned_alloc(alignment, data_size));
     }
 
-    entity_t insert(entity_t entt)
+    entity insert(entity entt)
     {
         for (const auto& component : archetype.components) {
             component.invoke(get_pointer(len, component));
@@ -174,7 +175,7 @@ public:
         return entt;
     }
 
-    entity_t remove(uint index)
+    entity remove(uint index)
     {
         // do de-fragmentation, (is this costly?)
         auto end{ len - 1 };

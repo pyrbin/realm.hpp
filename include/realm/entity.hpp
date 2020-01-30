@@ -13,8 +13,8 @@ namespace realm {
  * @brief Entities are represented as 64-bit integers split in half,
  * where each 32-bit half represents an index & generation
  */
-using entity_t = uint64_t;
-using entity_id = entity_t;
+using entity = uint64_t;
+using entity_id = entity;
 
 struct entity_handle
 {
@@ -47,7 +47,7 @@ public:
         handles.reserve(capacity);
     }
 
-    entity_t create(const entity_location& loc)
+    entity create(const entity_location& loc)
     {
         entity_handle handle;
         auto index = first_available;
@@ -69,14 +69,14 @@ public:
         return merge_handle(handle);
     }
 
-    void update(entity_t entt, const entity_location& loc)
+    void update(entity entt, const entity_location& loc)
     {
         auto to_update = get(entt);
         to_update->chunk = loc.chunk;
         to_update->chunk_index = loc.chunk_index;
     }
 
-    void free(entity_t entt)
+    void free(entity entt)
     {
         auto handle = extract_handle(entt);
         auto [index, generation] = handles.at(handle.index);
@@ -91,7 +91,7 @@ public:
         util::swap_remove(loc_index, locations);
     }
 
-    entity_location* get(entity_t entt)
+    entity_location* get(entity entt)
     {
         auto handle = extract_handle(entt);
         auto [index, generation] = handles.at(handle.index);
@@ -100,7 +100,7 @@ public:
                  : nullptr;
     }
 
-    bool exists(entity_t entt) const noexcept
+    bool exists(entity entt) const noexcept
     {
         auto handle = extract_handle(entt);
         return handle.index <= handles.size()
@@ -108,7 +108,7 @@ public:
                  : false;
     }
 
-    void each(std::function<void(const entity_t, const entity_location*)> fn)
+    void each(std::function<void(const entity, const entity_location*)> fn)
     {
         for (unsigned i{ 0 }; i < handles.size(); i++) {
             auto id = merge_handle(handles[i]);
@@ -116,7 +116,7 @@ public:
         }
     }
 
-    void each_mut(std::function<void(const entity_t, entity_location*)> fn)
+    void each_mut(std::function<void(const entity, entity_location*)> fn)
     {
         for (unsigned i{ 0 }; i < handles.size(); i++) {
             auto id = merge_handle(handles[i]);
@@ -127,29 +127,29 @@ public:
     int32_t size() const noexcept { return handles.size(); }
     int32_t capacity() const noexcept { return handles.capacity(); }
 
-    static inline constexpr entity_t merge_handle(uint32_t index,
+    static inline constexpr entity merge_handle(uint32_t index,
                                                   uint32_t generation) noexcept
     {
-        return entity_t{ generation } << 32 | entity_t{ index };
+        return entity{ generation } << 32 | entity{ index };
     }
 
-    static inline constexpr entity_t merge_handle(entity_handle handle) noexcept
+    static inline constexpr entity merge_handle(entity_handle handle) noexcept
     {
         auto [index, generation] = handle;
         return merge_handle(index, generation);
     }
 
-    static inline constexpr uint32_t index(entity_t entt) noexcept
+    static inline constexpr uint32_t index(entity entt) noexcept
     {
         return static_cast<uint32_t>(entt);
     }
 
-    static inline constexpr uint32_t generation(entity_t entt) noexcept
+    static inline constexpr uint32_t generation(entity entt) noexcept
     {
         return (entt >> 32);
     }
 
-    static inline constexpr entity_handle extract_handle(entity_t entt) noexcept
+    static inline constexpr entity_handle extract_handle(entity entt) noexcept
     {
         return { index(entt), generation(entt) };
     }

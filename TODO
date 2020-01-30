@@ -11,5 +11,4 @@ alternatives:
     * components has to be something?
     * component array has to be unique
 
-
 * when more c++20 features are default impl. modules, coroutines & ranges

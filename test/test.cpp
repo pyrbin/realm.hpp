@@ -40,7 +40,7 @@ struct alignas(64) friends
 };
 
 void
-printf(realm::world& world, vector<realm::entity_t> entts)
+printf(realm::world& world, vector<realm::entity> entts)
 {
     for (int i{ 0 }; i < world.capacity(); i++) {
         std::cout << "entity: " << entts[i] << "\n";
@@ -58,12 +58,18 @@ main()
 
     auto arch = realm::archetype::of<pos, vel>();
 
-    auto p = world.get<const pos>(0);
+    auto& p = world.get<const pos>(0);
 
     cout << p.x << "\n";
 
+    cout << world.get<pos>(0).x << "\n";
+
     world.query([](pos& p) { p.x = 200; });
-    world.query([](pos& p) { cout << p.x << "\n"; });
+
+    world.query([](pos& p, realm::entity entt) {
+        cout << "entt: " << entt << " has p.x of: " << p.x << "\n";
+    });
+    cout << world.get<pos>(0).x << "\n";
 
     return 0;
 }

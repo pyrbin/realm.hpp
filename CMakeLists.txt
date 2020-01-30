@@ -24,7 +24,7 @@ target_include_directories(
 set(CMAKE_CXX_STANDARD 20)
 
 # todo: Should flags be put in cmakelist?
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}  -Wall -o3")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fconcepts -Wall -o2")
 
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)

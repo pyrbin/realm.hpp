@@ -103,10 +103,11 @@ struct component
     template<typename T>
     static constexpr component of()
     {
-        return { component_meta::of<T>(),
-                 memory_layout::of<T>(),
-                 [](void* ptr) { new (ptr) T{}; },
-                 [](void* ptr) { ((T*) ptr)->~T(); } };
+        using C = std::decay_t<T>;
+        return { component_meta::of<C>(),
+                 memory_layout::of<C>(),
+                 [](void* ptr) { new (ptr) C{}; },
+                 [](void* ptr) { ((C*) ptr)->~C(); } };
     }
 };
 
