@@ -1,6 +1,6 @@
 * select name:
 alternatives:
-    -> arena, realm, pillar, bulwark, arketyp, essence (escense), buckler, rymd,
+    -> arena, realm, pillar, bulwark, arketyp, essence (escense), buckler, rymd, atex (ArcheType EntityX(cs)
 
 * fix cmake setup for testing & bench
 * better test cases

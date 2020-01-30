@@ -23,10 +23,11 @@ struct entity_handle
 };
 
 struct archetype_chunk;
-using chunk_ptr = archetype_chunk*;
 
 struct entity_location
 {
+    using chunk_ptr = std::shared_ptr<archetype_chunk>;
+
     uint32_t chunk_index{ 0 };
     chunk_ptr chunk{ nullptr };
 };
@@ -39,18 +40,13 @@ struct entity_location
 class entity_pool
 {
 public:
-    entity_pool(uint32_t capacity)
-      : locations{ capacity }
-      , handles{ capacity }
-      , slots{ capacity }
-      , first_available{ -1 }
-    {}
-    ~entity_pool()
+    entity_pool(uint32_t capacity) : first_available{ -1 }
     {
-        for (auto&& loc : locations) {
-            if (loc.chunk != nullptr) { loc.chunk = nullptr; }
-        }
+        slots.reserve(capacity);
+        locations.reserve(capacity);
+        handles.reserve(capacity);
     }
+
     entity_t create(entity_location loc)
     {
         entity_handle handle;
@@ -112,8 +108,6 @@ public:
                  : false;
     }
 
-    size_t size() const { return handles.size(); }
-
     void each(std::function<void(const entity_t, const entity_location*)> fn)
     {
         for (unsigned i{ 0 }; i < handles.size(); i++) {
@@ -129,6 +123,9 @@ public:
             fn(id, (get(id)));
         }
     }
+
+    int32_t size() const noexcept { return handles.size(); }
+    int32_t capacity() const noexcept { return handles.capacity(); }
 
     static inline constexpr entity_t merge_handle(uint32_t index,
                                                   uint32_t generation) noexcept

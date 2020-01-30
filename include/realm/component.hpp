@@ -1,5 +1,6 @@
 #pragma once
 
+#include <assert.h>
 #include <cstddef>
 #include <string>
 #include <typeinfo>
@@ -17,11 +18,11 @@ namespace realm {
  */
 struct memory_layout
 {
-    const size_t size{ 0 };
-    const size_t align{ 0 };
+    int size{ 0 };
+    int align{ 0 };
 
     constexpr memory_layout() {}
-    constexpr memory_layout(size_t size, size_t align) : size{ size }, align{ align }
+    constexpr memory_layout(int size, int align) : size{ size }, align{ align }
     {
         /**
          * todo: add some necessary checks, eg. align has to be power of 2
@@ -43,16 +44,21 @@ struct memory_layout
      * @param size size to control
      * @return padding to insert
      */
-    inline constexpr size_t padding_needed_for(const size_t size) const noexcept
+    static inline constexpr int align_up(const int size, const int align) noexcept
     {
-        return (size + align - 1) & (!align + 1);
+        return (size + (align - 1)) & !(align - 1);
+    }
+
+    inline constexpr int align_up(const int size) const noexcept
+    {
+        return align_up(size, align);
     }
 };
 
 struct component_meta
 {
-    const size_t hash{ 0 };
-    const size_t mask{ 0 };
+    size_t hash{ 0 };
+    size_t mask{ 0 };
 
     template<typename T>
     static constexpr component_meta of()
@@ -64,13 +70,30 @@ struct component_meta
 
 struct component
 {
-    const component_meta meta;
-    const memory_layout layout;
+    using constructor_t = void(void*);
+
+    component_meta meta;
+    memory_layout layout;
+
+    constructor_t* invoke{ nullptr };
+    constructor_t* destroy{ nullptr };
 
     constexpr component() {}
-    constexpr component(component_meta meta, memory_layout layout)
-      : meta{ meta }, layout{ layout }
+    constexpr component(component_meta meta,
+                        memory_layout layout,
+                        constructor_t* invoke,
+                        constructor_t* destroy)
+      : meta{ meta }, layout{ layout }, invoke{ invoke }, destroy{ destroy }
     {}
+
+    component& operator=(const component& other)
+    {
+        meta = other.meta;
+        layout = other.layout;
+        invoke = other.invoke;
+        destroy = other.destroy;
+        return *this;
+    }
 
     constexpr bool operator==(const component& other) const
     {
@@ -81,7 +104,10 @@ struct component
     static constexpr component of()
     {
         auto hash = type_meta<T>::hash;
-        return { component_meta::of<T>(), memory_layout::of<T>() };
+        return { component_meta::of<T>(),
+                 memory_layout::of<T>(),
+                 [](void* ptr) { new (ptr) T{}; },
+                 [](void* ptr) { ((T*) ptr)->~T(); } };
     }
 };
 

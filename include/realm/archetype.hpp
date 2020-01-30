@@ -4,6 +4,7 @@
 #include "entity.hpp"
 #include "util.hpp"
 
+#include "assert.h"
 #include <algorithm>
 #include <iostream>
 #include <memory>
@@ -20,7 +21,7 @@ namespace realm {
 struct archetype
 {
 private:
-    using components_t = std::unordered_map<size_t, component>;
+    using components_t = std::vector<component>;
     size_t combined_mask{ 0 };
     size_t data_size{ 0 };
 
@@ -28,6 +29,12 @@ public:
     components_t components;
 
     archetype() {}
+    archetype& operator=(const archetype& other)
+    {
+        combined_mask = other.combined_mask;
+        data_size = other.data_size;
+        for (auto component : other.components) { components.push_back(component); }
+    }
 
     template<typename... T>
     static archetype of() noexcept
@@ -39,7 +46,7 @@ public:
 
     void add(const component& comp)
     {
-        components.emplace(comp.meta.hash, comp);
+        components.push_back(comp);
         combined_mask |= comp.meta.mask;
         data_size += comp.layout.size;
     }
@@ -52,7 +59,7 @@ public:
 
     void remove(const component& comp)
     {
-        components.erase(comp.meta.hash);
+        components.erase(std::find(components.cbegin(), components.cend(), comp));
         combined_mask &= ~comp.meta.mask;
         data_size -= comp.layout.size;
     }
@@ -83,6 +90,36 @@ public:
     size_t size() const { return data_size; }
 };
 
+// forward declaration
+struct archetype_chunk_parent
+{
+    using chunk_ptr = std::shared_ptr<archetype_chunk>;
+
+    static const uint32_t CHUNK_SIZE_16KB{ 16 * 1024 };
+    static const uint32_t CHUNK_COMPONENT_ALIGNMENT{ 64 };
+
+    static constexpr const memory_layout CHUNK_LAYOUT{ CHUNK_SIZE_16KB,
+                                                       CHUNK_COMPONENT_ALIGNMENT };
+
+    std::vector<chunk_ptr> chunks;
+    chunk_ptr cached_free{ nullptr };
+
+    const archetype archetype;
+    const uint32_t per_chunk;
+
+    archetype_chunk_parent(const struct archetype& archetype)
+      : archetype{ archetype }
+      , per_chunk{ CHUNK_LAYOUT.size / (uint32_t) archetype.size() }
+    {}
+
+    ~archetype_chunk_parent()
+    {
+        for (auto&& ptr : chunks) { ptr = nullptr; }
+    }
+    chunk_ptr find_free();
+    chunk_ptr create_chunk();
+};
+
 struct archetype_chunk
 {
 public:
@@ -92,32 +129,46 @@ public:
 
     const archetype archetype;
 
-    archetype_chunk(const struct archetype& archetype) : archetype(archetype) {}
+    // const archetype_chunk_parent* parent;
+
+    archetype_chunk(const struct archetype& archetype, uint32_t max_capacity)
+      : archetype(archetype), max_capacity(max_capacity)
+    {}
 
     ~archetype_chunk()
     {
         if (data != nullptr) {
             free((void*) (data));
             data = nullptr;
+            // parent = nullptr;
         }
     }
 
-    pointer allocate(size_t size)
+    pointer allocate(uint chunk_size, uint alignment)
     {
-        max_entities = size;
-        entities.reserve(size);
-        for (auto&& [hash, component] : archetype.components) {
-            data_size += component.layout.padding_needed_for(data_size);
+        entities.reserve(max_capacity);
+
+        for (const auto& component : archetype.components) {
+            /* data_size += memory_layout::align_up(
+              memory_layout::align_up(data_size, CHUNK_COMPONENT_ALIGNMENT),
+              component.layout.align);*/
+            data_size += component.layout.align_up(data_size);
             offsets.emplace(component.meta.hash, data_size);
-            data_size += component.layout.size * max_entities;
+            data_size += component.layout.size * max_capacity;
         }
-        return data = (aligned_alloc(archetype.components.begin()->second.layout.align,
-                                     data_size));
+
+        data_size += (chunk_size % data_size);
+
+        assert(data_size == chunk_size);
+
+        return data = (aligned_alloc(alignment, data_size));
     }
 
-    entity_t acquire(std::function<entity_t(uint)> fn)
+    entity_t insert(entity_t entt)
     {
-        auto entt = fn(len);
+        for (const auto& component : archetype.components) {
+            component.invoke(get_pointer(len, component));
+        }
         entities[len++] = entt;
         return entt;
     }
@@ -128,6 +179,9 @@ public:
         auto end{ len - 1 };
         util::swap_remove(index, entities);
         copy_to(end, *this, index);
+        for (const auto& component : archetype.components) {
+            component.invoke(get_pointer(end, component));
+        }
         len--;
         return entities[index];
     }
@@ -146,17 +200,19 @@ public:
 
     void copy_to(uint from, archetype_chunk& other, uint to)
     {
-        for (auto&& [hash, component] : archetype.components) {
+        for (auto&& component : archetype.components) {
             memcpy(other.get_pointer(to, component),
                    get_pointer(from, component),
                    component.layout.size);
         }
     }
 
-    size_t capacity() const noexcept { return max_entities; }
-    size_t size() const noexcept { return len; }
+    // const archetype& archetype() const { return parent->archetype; }
 
-    bool full() const noexcept { return len >= max_entities; }
+    constexpr uint32_t capacity() const noexcept { return max_capacity; }
+    constexpr uint32_t size() const noexcept { return len; }
+
+    bool full() const noexcept { return len >= max_capacity; }
     bool used() const noexcept { return data != nullptr; }
 
 private:
@@ -168,12 +224,38 @@ private:
 
     pointer data{ nullptr };
 
-    size_t len{ 0 };
-    size_t max_entities{ 0 };
-    size_t data_size{ 0 };
+    uint32_t len{ 0 };
+    uint32_t max_capacity{ 0 };
+    uint32_t data_size{ 0 };
 
     entities_t entities;
     offsets_t offsets;
 };
 
+archetype_chunk_parent::chunk_ptr
+archetype_chunk_parent::find_free()
+{
+    if (cached_free && !cached_free->full()) return cached_free;
+
+    auto it = std::find_if(
+      chunks.begin(), chunks.end(), [](auto& b) { return !b->full() && b->used(); });
+
+    archetype_chunk_parent::chunk_ptr ptr{ nullptr };
+
+    if (it != chunks.end()) {
+        ptr = *it;
+    } else {
+        ptr = create_chunk();
+        ptr->allocate(CHUNK_LAYOUT.size, CHUNK_LAYOUT.align);
+    }
+
+    return cached_free = ptr;
+}
+
+archetype_chunk_parent::chunk_ptr
+archetype_chunk_parent::create_chunk()
+{
+    chunks.push_back(std::make_shared<archetype_chunk>(archetype, per_chunk));
+    return chunks.back();
+}
 } // namespace realm
