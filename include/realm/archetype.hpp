@@ -46,6 +46,11 @@ public:
         return archetype;
     }
 
+    constexpr bool operator==(const archetype& other) const
+    {
+        return other.mask() == mask();
+    }
+
     void add(const component& comp)
     {
         components.push_back(comp);
@@ -88,14 +93,16 @@ public:
         return (combined_mask & other.mask()) == other.mask();
     }
 
-    size_t mask() const { return combined_mask; }
-    size_t size() const { return data_size; }
+    bool subset(size_t other) { return (combined_mask & other) == other; }
+
+    constexpr size_t mask() const { return combined_mask; }
+    constexpr size_t size() const { return data_size; }
 };
 
 // forward declaration
 struct archetype_chunk_parent
 {
-    using chunk_ptr = std::shared_ptr<archetype_chunk>;
+    using chunk_ptr = archetype_chunk*;
 
     static const uint32_t CHUNK_SIZE_16KB{ 16 * 1024 };
     static const uint32_t CHUNK_COMPONENT_ALIGNMENT{ 64 };
@@ -114,10 +121,6 @@ struct archetype_chunk_parent
       , per_chunk{ CHUNK_LAYOUT.size / (uint32_t) archetype.size() }
     {}
 
-    ~archetype_chunk_parent()
-    {
-        for (auto&& ptr : chunks) { ptr = nullptr; }
-    }
     chunk_ptr find_free();
     chunk_ptr create_chunk();
 };
@@ -189,10 +192,17 @@ public:
     }
 
     template<typename T>
-    T* get(uint index)
+    T* get(unsigned int index)
     {
         auto comp = component::of<T>();
         return ((T*) get_pointer(index, comp));
+    }
+
+    // allows queries to use entity-types as parameter
+    template<Entity T>
+    entity* get(unsigned int index)
+    {
+        return &entities[index];
     }
 
     pointer get_pointer(unsigned index, const component& type)
@@ -237,6 +247,8 @@ private:
 archetype_chunk_parent::chunk_ptr
 archetype_chunk_parent::find_free()
 {
+    std::cout << "cached" << cached_free << "\n";
+
     if (cached_free && !cached_free->full()) return cached_free;
 
     auto it = std::find_if(
@@ -251,13 +263,17 @@ archetype_chunk_parent::find_free()
         ptr->allocate(CHUNK_LAYOUT.size, CHUNK_LAYOUT.align);
     }
 
-    return cached_free = ptr;
+    std::cout << "cSIzE" << chunks.size() << "\n";
+    cached_free = ptr;
+
+    return ptr;
 }
 
 archetype_chunk_parent::chunk_ptr
 archetype_chunk_parent::create_chunk()
 {
-    chunks.push_back(std::make_shared<archetype_chunk>(archetype, per_chunk));
-    return chunks.back();
+    auto ptr = new archetype_chunk(archetype, per_chunk);
+    chunks.push_back(ptr);
+    return ptr;
 }
 } // namespace realm

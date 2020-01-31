@@ -26,7 +26,7 @@ struct archetype_chunk;
 
 struct entity_location
 {
-    using chunk_ptr = std::shared_ptr<archetype_chunk>;
+    using chunk_ptr = archetype_chunk*;
 
     uint32_t chunk_index{ 0 };
     chunk_ptr chunk{ nullptr };
@@ -128,7 +128,7 @@ public:
     int32_t capacity() const noexcept { return handles.capacity(); }
 
     static inline constexpr entity merge_handle(uint32_t index,
-                                                  uint32_t generation) noexcept
+                                                uint32_t generation) noexcept
     {
         return entity{ generation } << 32 | entity{ index };
     }

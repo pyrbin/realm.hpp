@@ -52,7 +52,7 @@ printf(realm::world& world, vector<realm::entity> entts)
 int
 main()
 {
-    auto world = realm::world{ 6 };
+    auto world = realm::world{ 2 };
     auto entts = world.batch<pos, vel>(world.capacity());
     // printf(world, entts);
 
@@ -64,12 +64,14 @@ main()
 
     cout << world.get<pos>(0).x << "\n";
 
-    world.query([](pos& p) { p.x = 200; });
+    world.query([](pos& p) {
+        p.x = 200;
+        cout << " has p.x of: " << p.x << "\n";
+    });
 
     world.query([](pos& p, realm::entity entt) {
         cout << "entt: " << entt << " has p.x of: " << p.x << "\n";
     });
-    cout << world.get<pos>(0).x << "\n";
 
     return 0;
 }

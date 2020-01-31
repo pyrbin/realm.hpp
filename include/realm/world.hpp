@@ -10,7 +10,7 @@ namespace realm {
 struct world
 {
 public:
-    using chunks_t = std::unordered_map<size_t, archetype_chunk_parent>;
+    using chunks_t = std::vector<archetype_chunk_parent*>;
     using entitites_t = entity_pool;
 
     entitites_t entities;
@@ -21,6 +21,7 @@ public:
     entity create(const archetype& at)
     {
         auto chunk = get_chunk(at);
+        std::cout << "after" << chunks.size() << "\n";
         auto entt = entities.create(entity_location{ chunk->size(), chunk });
         return chunk->insert(entt);
     }
@@ -48,41 +49,58 @@ public:
     T& get(entity entt)
     {
         auto [index, ptr] = *entities.get(entt);
-        return *ptr->get<std::decay_t<T>>(index);
+        return *ptr->get<T>(index);
+    }
+
+    // Functor objects
+    template<typename T>
+    void query(T&& f)
+    {
+        query_helper(&f, &std::decay_t<T>::operator());
     }
 
     int32_t size() const noexcept { return entities.size(); }
     int32_t capacity() const noexcept { return entities.capacity(); }
 
-    // Functor objects
-    template<typename Functor>
-    void query(Functor&& f)
-    {
-        query_helper(&f, &std::decay_t<Functor>::operator());
-    }
-
 private:
     archetype_chunk_parent::chunk_ptr get_chunk(const archetype& at)
     {
-        if (!chunks.contains(at.mask()))
-            chunks.emplace(at.mask(), archetype_chunk_parent{ at });
-        auto cp = chunks.at(at.mask());
-        return cp.find_free();
+        auto it = std::find_if(
+          chunks.begin(), chunks.end(), [at](auto& b) { return b->archetype == at; });
+        archetype_chunk_parent* cp{ nullptr };
+        if (it == chunks.end()) {
+            cp = new archetype_chunk_parent{ at };
+            chunks.push_back(cp);
+        } else {
+            cp = *it;
+        }
+        return cp->find_free();
     }
-
     // https://stackoverflow.com/questions/55756181/use-lambda-to-modify-references-identified-by-a-packed-parameter
-    template<typename Class, typename... Args>
-    void query_helper(Class* obj,
-                      void (Class::*f)(Args...) const) requires UniquePack<Args...>
+    template<typename T, typename... Args>
+    void query_helper(T* obj, void (T::*f)(Args...) const) requires UniquePack<Args...>
     {
-        entities.each(
-          [&](auto&& entt, auto&& loc) { (obj->*f)(get<std::decay_t<Args>>(entt)...); });
-    }
-    // allows queries to use entity-types as parameter
-    template<Entity T>
-    entity get(entity entt)
-    {
-        return entity{ entt };
+        auto at = archetype::of<Args...>();
+        std::cout << "sz" << chunks.size() << "\n";
+        for (auto&& root : chunks) {
+            std::cout << "true?" << at.subset(root->archetype) << "\n";
+
+            if (!at.subset(root->archetype)) {
+                std::cout << "in the zone0"
+                          << "\n";
+                std::cout << root->per_chunk << "\n";
+                for (auto&& chunk : root->chunks) {
+                    std::cout << "in the zone1"
+                              << "\n";
+                    for (uint32_t i{ 0 }; i < chunk->size(); i++) {
+                        std::cout << "in the zone2"
+                                  << "\n";
+                        (obj->*f)(*chunk->template get<std::decay_t<Args>>(
+                          std::forward<uint32_t>(i))...);
+                    }
+                }
+            }
+        }
     }
 };
 }

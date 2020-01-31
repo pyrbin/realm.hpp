@@ -3,8 +3,18 @@ alternatives:
     -> arena, realm, pillar, bulwark, arketyp, essence (escense), buckler, rymd, atex (ArcheType EntityX(cs), arkt.
     -> alt. .hpp as postfix cuz datz kewl xd.
 
+* PRIO: fix pointers, fix memory, use custom hashmap phmap
+
 * fix cmake setup for testing & bench
 * better test cases
+
+* impl component fetch_types / event-system in queries ex,
+    * emit<pos>     -> doesnt query pos but declares that it will create pos as an event
+    * listen<pos>   -> declares the query will listen on emit of pos (allows to create a DAG graph of systems)
+    * changed<pos>  -> query is called only if pos is changed
+    these shold not be in the lambda (a additional template param maybe?)
+    * not<pos>      -> exclude a component is a query
+    * .....
 
 * impl concepts
     * query functor has to be unique + either ref or ref const
