@@ -47,6 +47,14 @@ public:
         handles.reserve(capacity);
     }
 
+    ~entity_pool()
+    {
+        for (auto&& loc : locations) {
+            loc.chunk_index = 0;
+            loc.chunk = nullptr;
+        }
+    }
+
     entity create(const entity_location& loc)
     {
         entity_handle handle;

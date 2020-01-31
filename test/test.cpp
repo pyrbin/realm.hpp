@@ -54,15 +54,8 @@ main()
 {
     auto world = realm::world{ 2 };
     auto entts = world.batch<pos, vel>(world.capacity());
-    // printf(world, entts);
-
     auto arch = realm::archetype::of<pos, vel>();
-
     auto& p = world.get<const pos>(0);
-
-    cout << p.x << "\n";
-
-    cout << world.get<pos>(0).x << "\n";
 
     world.query([](pos& p) {
         p.x = 200;

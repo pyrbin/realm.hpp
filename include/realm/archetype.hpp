@@ -102,7 +102,7 @@ public:
 // forward declaration
 struct archetype_chunk_parent
 {
-    using chunk_ptr = archetype_chunk*;
+    using chunk_ptr = std::unique_ptr<archetype_chunk>;
 
     static const uint32_t CHUNK_SIZE_16KB{ 16 * 1024 };
     static const uint32_t CHUNK_COMPONENT_ALIGNMENT{ 64 };
@@ -111,7 +111,7 @@ struct archetype_chunk_parent
                                                        CHUNK_COMPONENT_ALIGNMENT };
 
     std::vector<chunk_ptr> chunks;
-    chunk_ptr cached_free{ nullptr };
+    archetype_chunk* cached_free{ nullptr };
 
     const struct archetype archetype;
     const uint32_t per_chunk;
@@ -121,8 +121,10 @@ struct archetype_chunk_parent
       , per_chunk{ CHUNK_LAYOUT.size / (uint32_t) archetype.size() }
     {}
 
-    chunk_ptr find_free();
-    chunk_ptr create_chunk();
+    ~archetype_chunk_parent() { cached_free = nullptr; }
+
+    archetype_chunk* find_free();
+    archetype_chunk* create_chunk();
 };
 
 struct archetype_chunk
@@ -132,16 +134,15 @@ public:
     using entities_t = std::vector<entity>;
     using pointer = void*;
 
-    const struct archetype archetype;
+    const archetype_chunk_parent* parent;
 
-    // const archetype_chunk_parent* parent;
-
-    archetype_chunk(const struct archetype& archetype, uint32_t max_capacity)
-      : archetype(archetype), max_capacity(max_capacity)
+    archetype_chunk(archetype_chunk_parent* parent, uint32_t max_capacity)
+      : parent{ parent }, max_capacity(max_capacity)
     {}
 
     ~archetype_chunk()
     {
+        parent = nullptr;
         if (data != nullptr) {
             free((void*) (data));
             data = nullptr;
@@ -149,11 +150,13 @@ public:
         }
     }
 
+    const struct archetype* archetype() { return &parent->archetype; }
+
     pointer allocate(uint chunk_size, uint alignment)
     {
         entities.reserve(max_capacity);
 
-        for (const auto& component : archetype.components) {
+        for (const auto& component : archetype()->components) {
             /* data_size += memory_layout::align_up(
               memory_layout::align_up(data_size, CHUNK_COMPONENT_ALIGNMENT),
               component.layout.align);*/
@@ -171,7 +174,7 @@ public:
 
     entity insert(entity entt)
     {
-        for (const auto& component : archetype.components) {
+        for (const auto& component : archetype()->components) {
             component.invoke(get_pointer(len, component));
         }
         entities[len++] = entt;
@@ -184,7 +187,7 @@ public:
         auto end{ len - 1 };
         util::swap_remove(index, entities);
         copy_to(end, *this, index);
-        for (const auto& component : archetype.components) {
+        for (const auto& component : archetype()->components) {
             component.invoke(get_pointer(end, component));
         }
         len--;
@@ -212,7 +215,7 @@ public:
 
     void copy_to(uint from, archetype_chunk& other, uint to)
     {
-        for (auto&& component : archetype.components) {
+        for (auto&& component : archetype()->components) {
             memcpy(other.get_pointer(to, component),
                    get_pointer(from, component),
                    component.layout.size);
@@ -244,36 +247,32 @@ private:
     offsets_t offsets;
 };
 
-archetype_chunk_parent::chunk_ptr
+archetype_chunk*
 archetype_chunk_parent::find_free()
 {
-    std::cout << "cached" << cached_free << "\n";
 
     if (cached_free && !cached_free->full()) return cached_free;
 
     auto it = std::find_if(
       chunks.begin(), chunks.end(), [](auto& b) { return !b->full() && b->used(); });
 
-    archetype_chunk_parent::chunk_ptr ptr{ nullptr };
+    archetype_chunk* ptr{ nullptr };
 
     if (it != chunks.end()) {
-        ptr = *it;
+        ptr = (*it).get();
     } else {
         ptr = create_chunk();
         ptr->allocate(CHUNK_LAYOUT.size, CHUNK_LAYOUT.align);
     }
 
-    std::cout << "cSIzE" << chunks.size() << "\n";
     cached_free = ptr;
-
     return ptr;
 }
 
-archetype_chunk_parent::chunk_ptr
+archetype_chunk*
 archetype_chunk_parent::create_chunk()
 {
-    auto ptr = new archetype_chunk(archetype, per_chunk);
-    chunks.push_back(ptr);
-    return ptr;
+    chunks.push_back(std::move(std::make_unique<archetype_chunk>(this, per_chunk)));
+    return chunks.back().get();
 }
 } // namespace realm

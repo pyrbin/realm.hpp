@@ -10,18 +10,17 @@ namespace realm {
 struct world
 {
 public:
-    using chunks_t = std::vector<archetype_chunk_parent*>;
-    using entitites_t = entity_pool;
+    using chunks_t = std::vector<std::unique_ptr<archetype_chunk_parent>>;
+    using entities_t = entity_pool;
 
-    entitites_t entities;
     chunks_t chunks;
+    entities_t entities;
 
     world(uint32_t capacity = 100) : entities{ capacity } {}
 
     entity create(const archetype& at)
     {
         auto chunk = get_chunk(at);
-        std::cout << "after" << chunks.size() << "\n";
         auto entt = entities.create(entity_location{ chunk->size(), chunk });
         return chunk->insert(entt);
     }
@@ -63,38 +62,29 @@ public:
     int32_t capacity() const noexcept { return entities.capacity(); }
 
 private:
-    archetype_chunk_parent::chunk_ptr get_chunk(const archetype& at)
+    archetype_chunk* get_chunk(const archetype& at)
     {
         auto it = std::find_if(
           chunks.begin(), chunks.end(), [at](auto& b) { return b->archetype == at; });
-        archetype_chunk_parent* cp{ nullptr };
+        archetype_chunk_parent* root{ nullptr };
         if (it == chunks.end()) {
-            cp = new archetype_chunk_parent{ at };
-            chunks.push_back(cp);
+            chunks.push_back(std::move(std::make_unique<archetype_chunk_parent>(at)));
+            root = chunks.back().get();
         } else {
-            cp = *it;
+            root = (*it).get();
         }
-        return cp->find_free();
+        return root->find_free();
     }
+
     // https://stackoverflow.com/questions/55756181/use-lambda-to-modify-references-identified-by-a-packed-parameter
     template<typename T, typename... Args>
     void query_helper(T* obj, void (T::*f)(Args...) const) requires UniquePack<Args...>
     {
         auto at = archetype::of<Args...>();
-        std::cout << "sz" << chunks.size() << "\n";
         for (auto&& root : chunks) {
-            std::cout << "true?" << at.subset(root->archetype) << "\n";
-
             if (!at.subset(root->archetype)) {
-                std::cout << "in the zone0"
-                          << "\n";
-                std::cout << root->per_chunk << "\n";
                 for (auto&& chunk : root->chunks) {
-                    std::cout << "in the zone1"
-                              << "\n";
                     for (uint32_t i{ 0 }; i < chunk->size(); i++) {
-                        std::cout << "in the zone2"
-                                  << "\n";
                         (obj->*f)(*chunk->template get<std::decay_t<Args>>(
                           std::forward<uint32_t>(i))...);
                     }
