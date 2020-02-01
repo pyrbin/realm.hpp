@@ -59,10 +59,11 @@ public:
     }
 
     // Functor objects
+    // todo: only allow invocables
     template<typename T>
-    void query(T&& f)
+    void fetch(T&& f)
     {
-        query_helper(&f, &std::unwrap_ref_decay_t<T>::operator());
+        fetch_helper(&f, &std::unwrap_ref_decay_t<T>::operator());
     }
 
     int32_t size() const noexcept { return entities.size(); }
@@ -90,7 +91,7 @@ private:
 
     // https://stackoverflow.com/questions/55756181/use-lambda-to-modify-references-identified-by-a-packed-parameter
     template<typename T, typename... Args>
-    void query_helper(T* obj, void (T::*f)(Args...) const)
+    void fetch_helper(T* obj, void (T::*f)(Args...) const) requires(Inner<T, Args...>)
     {
         std::vector<component> vec;
         build_comp_set<Args...>(vec);

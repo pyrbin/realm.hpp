@@ -41,6 +41,7 @@ printf(realm::world& world, vector<realm::entity> entts)
 struct update_test
 {
     void update(const pos& pos) const { cout << "system: " << pos.x << "\n"; }
+    void operator()() {}
 };
 
 int
@@ -59,4 +60,12 @@ main()
     auto& pm = wo.get<pos>(et);
     pm.x = 200;
     assert(wo.get<const pos>(et).x == 200);
+
+    auto q = realm::query<const pos, const vel>();
+
+    wo.fetch([](pos& p, pos p1) {
+
+    });
+
+    wo.fetch(pm);
 }
