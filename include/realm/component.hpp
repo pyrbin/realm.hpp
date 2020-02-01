@@ -2,10 +2,12 @@
 
 #include <assert.h>
 #include <cstddef>
+#include <iostream>
 #include <string>
 #include <typeinfo>
 #include <vector>
 
+#include "concept.hpp"
 #include "meta.hpp"
 
 namespace realm {
@@ -60,7 +62,7 @@ struct component_meta
     size_t hash{ 0 };
     size_t mask{ 0 };
 
-    template<typename T>
+    template<Component T>
     static constexpr component_meta of()
     {
         auto hash = type_meta<T>::hash;
@@ -100,14 +102,13 @@ struct component
         return other.meta.hash == meta.hash;
     }
 
-    template<typename T>
+    template<Component T>
     static constexpr component of()
     {
-        using C = std::decay_t<T>;
-        return { component_meta::of<C>(),
-                 memory_layout::of<C>(),
-                 [](void* ptr) { new (ptr) C{}; },
-                 [](void* ptr) { ((C*) ptr)->~C(); } };
+        return { component_meta::of<T>(),
+                 memory_layout::of<T>(),
+                 [](void* ptr) { new (ptr) T{}; },
+                 [](void* ptr) { ((T*) ptr)->~T(); } };
     }
 };
 

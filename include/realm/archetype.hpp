@@ -9,41 +9,57 @@
 #include <algorithm>
 #include <iostream>
 #include <memory>
+#include <numeric>
 #include <string.h>
+#include <tuple>
 #include <type_traits>
-#include <unordered_map>
 
 namespace realm {
 
 /**
  * @brief archetype represents a set of components.
- *
  */
 struct archetype
 {
 private:
     using components_t = std::vector<component>;
-    size_t combined_mask{ 0 };
-    size_t data_size{ 0 };
 
-public:
-    components_t components;
-
-    archetype() {}
-    archetype& operator=(const archetype& other)
+    struct data
     {
-        combined_mask = other.combined_mask;
-        data_size = other.data_size;
-        for (auto component : other.components) { components.push_back(component); }
-        return *this;
+        size_t size{ 0 };
+        size_t mask{ 0 };
+    };
+
+    const data info{ 0, 0 };
+    const size_t components_count{ 0 };
+
+    inline data generate_data(const components_t& comps) const
+    {
+        return std::accumulate(
+          comps.begin(), comps.end(), (data{}), [](data&& res, auto&& c) {
+              res.mask |= c.meta.mask;
+              res.size += c.layout.size;
+              return res;
+          });
     }
 
+public:
+    const components_t components;
+
+    archetype() {}
+    archetype(const components_t& comps)
+      : components{ std::move(comps) }
+      , info{ generate_data(comps) }
+      , components_count{ comps.size() }
+    {}
+
     template<typename... T>
-    static archetype of() noexcept requires UniquePack<T...>
+    static archetype of() noexcept requires ComponentPack<T...>
     {
-        archetype archetype{};
-        (archetype.add(component::of<T>()), ...);
-        return archetype;
+        std::cout << __VALID_PRETTY_FUNC__ << "\n";
+        components_t comps;
+        (comps.push_back(component::of<std::remove_reference_t<T>>()), ...);
+        return archetype{ comps };
     }
 
     constexpr bool operator==(const archetype& other) const
@@ -51,53 +67,29 @@ public:
         return other.mask() == mask();
     }
 
-    void add(const component& comp)
-    {
-        components.push_back(comp);
-        combined_mask |= comp.meta.mask;
-        data_size += comp.layout.size;
-    }
-
-    template<typename... T>
-    void add() requires UniquePack<T...>
-    {
-        (add(component::of<T>()), ...);
-    }
-
-    void remove(const component& comp)
-    {
-        components.erase(std::find(components.cbegin(), components.cend(), comp));
-        combined_mask &= ~comp.meta.mask;
-        data_size -= comp.layout.size;
-    }
-
-    template<typename... T>
-    void remove() requires UniquePack<T...>
-    {
-        (remove(component::of<T>()), ...);
-    }
-
-    bool has(const component& comp)
-    {
-        return (combined_mask & comp.meta.mask) == comp.meta.mask;
-    }
-
-    template<typename T>
-    void has()
+    template<Component T>
+    constexpr bool has() const
     {
         return has(component::of<T>());
     }
 
-    bool subset(const archetype& other)
+    constexpr bool has(const component& comp) const
     {
-        return (combined_mask & other.mask()) == other.mask();
+        return (mask() & comp.meta.mask) == comp.meta.mask;
     }
 
-    bool subset(size_t other) { return (combined_mask & other) == other; }
+    constexpr bool subset(size_t other) const { return (mask() & other) == other; }
 
-    constexpr size_t mask() const { return combined_mask; }
-    constexpr size_t size() const { return data_size; }
-};
+    constexpr bool subset(const archetype& other) const { return subset(other.mask()); }
+
+    constexpr size_t mask() const { return info.mask; }
+    /**
+     * Return the value of sizeof([all components...])
+     * @return total size of all components (memory not count)
+     */
+    constexpr size_t size() const { return info.size; }
+    constexpr size_t count() const { return components_count; }
+}; // namespace realm
 
 // forward declaration
 struct archetype_chunk_parent
@@ -117,7 +109,7 @@ struct archetype_chunk_parent
     const uint32_t per_chunk;
 
     archetype_chunk_parent(const struct archetype& archetype)
-      : archetype{ archetype }
+      : archetype{ archetype.components }
       , per_chunk{ CHUNK_LAYOUT.size / (uint32_t) archetype.size() }
     {}
 
@@ -134,15 +126,20 @@ public:
     using entities_t = std::vector<entity>;
     using pointer = void*;
 
-    const archetype_chunk_parent* parent;
+    const struct archetype archetype;
+    entities_t entities;
 
-    archetype_chunk(archetype_chunk_parent* parent, uint32_t max_capacity)
-      : parent{ parent }, max_capacity(max_capacity)
-    {}
+    archetype_chunk(const struct archetype archetype, uint32_t max_capacity)
+      : archetype{ archetype }, max_capacity(max_capacity)
+    {
+        std::cout << "new chunk created"
+                  << "\n";
+        std::cout << archetype.size() << " <-- size \n";
+        std::cout << archetype.count() << " <-- count \n";
+    }
 
     ~archetype_chunk()
     {
-        parent = nullptr;
         if (data != nullptr) {
             free((void*) (data));
             data = nullptr;
@@ -150,13 +147,11 @@ public:
         }
     }
 
-    const struct archetype* archetype() { return &parent->archetype; }
-
     pointer allocate(uint chunk_size, uint alignment)
     {
         entities.reserve(max_capacity);
 
-        for (const auto& component : archetype()->components) {
+        for (const auto& component : archetype.components) {
             /* data_size += memory_layout::align_up(
               memory_layout::align_up(data_size, CHUNK_COMPONENT_ALIGNMENT),
               component.layout.align);*/
@@ -174,7 +169,7 @@ public:
 
     entity insert(entity entt)
     {
-        for (const auto& component : archetype()->components) {
+        for (const auto& component : archetype.components) {
             component.invoke(get_pointer(len, component));
         }
         entities[len++] = entt;
@@ -187,7 +182,7 @@ public:
         auto end{ len - 1 };
         util::swap_remove(index, entities);
         copy_to(end, *this, index);
-        for (const auto& component : archetype()->components) {
+        for (const auto& component : archetype.components) {
             component.invoke(get_pointer(end, component));
         }
         len--;
@@ -197,7 +192,13 @@ public:
     template<typename T>
     T* get(unsigned int index)
     {
+        std::cout << __VALID_PRETTY_FUNC__ << "\n";
+
         auto comp = component::of<T>();
+        std::cout << comp.layout.size << "\n";
+        std::cout << "t: " << archetype.has(comp) << "\n";
+        std::cout << "s: " << archetype.size() << "\n";
+
         return ((T*) get_pointer(index, comp));
     }
 
@@ -205,6 +206,8 @@ public:
     template<Entity T>
     entity* get(unsigned int index)
     {
+        std::cout << index << " in "
+                  << " :: " << size() << "\n";
         return &entities[index];
     }
 
@@ -215,7 +218,7 @@ public:
 
     void copy_to(uint from, archetype_chunk& other, uint to)
     {
-        for (auto&& component : archetype()->components) {
+        for (auto&& component : archetype.components) {
             memcpy(other.get_pointer(to, component),
                    get_pointer(from, component),
                    component.layout.size);
@@ -242,8 +245,6 @@ private:
     uint32_t len{ 0 };
     uint32_t max_capacity{ 0 };
     uint32_t data_size{ 0 };
-
-    entities_t entities;
     offsets_t offsets;
 };
 
@@ -272,7 +273,7 @@ archetype_chunk_parent::find_free()
 archetype_chunk*
 archetype_chunk_parent::create_chunk()
 {
-    chunks.push_back(std::move(std::make_unique<archetype_chunk>(this, per_chunk)));
+    chunks.push_back(std::move(std::make_unique<archetype_chunk>(archetype, per_chunk)));
     return chunks.back().get();
 }
 } // namespace realm

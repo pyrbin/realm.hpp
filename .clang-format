@@ -18,6 +18,7 @@ PointerAlignment: Left
 AlignConsecutiveAssignments: false
 AlignTrailingComments: true
 CompactNamespaces: false
+FixNamespaceComments: true
 
 SpaceAfterCStyleCast: true
 CommentPragmas: '^ NO-FORMAT:'

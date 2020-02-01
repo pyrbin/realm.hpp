@@ -1,32 +1,46 @@
 #pragma once
 
+#include "traits.hpp"
 #include <type_traits>
 
-// TODO: get a compiler that supports concepts & integrate
+/** designs goals:
+ * component::of    -> only pure classes eg, pos, vel & not const pos, pos&, pos*
+ * archetype::of    -> same rules as component
+ *
+ * query    ::of    -> allows pure classes & const class (write & read) or and entity
+ * query    ::args  -> same as query but only reference or an entity no referenec
+ *
+ * concepts needed:
+ *
+ * BaseComponent -> is_class<T> || !is_reference<T> || is_copyable<T> || is_moveable<T>
+ * Component -> is_class<T> || !is_reference<T> || is_copyable<T> || is_moveable<T> ||
+ * !is_const Queryable -> is_class<T>
+ */
 
 namespace realm {
 
-namespace detail {
-
-template<typename...>
-inline constexpr bool is_unique = std::true_type{};
-
-template<typename T, typename... Rest>
-inline constexpr bool is_unique<T, Rest...> =
-  std::bool_constant<(!std::is_same_v<T, Rest> && ...) && is_unique<Rest...>>{};
-
-template<class T>
-struct is_viable_component
-  : std::integral_constant<bool, std::is_class<T>::value && !std::is_reference<T>::value>
-{};
-}
+template<typename T>
+concept BaseComponent = (std::is_class<T>::value && std::is_copy_assignable<T>::value &&
+                         std::is_copy_constructible<T>::value &&
+                         std::is_move_assignable<T>::value &&
+                         std::is_move_constructible<T>::value);
 
 template<typename T>
-concept Component = detail::is_viable_component<T>::value;
+concept Component = (BaseComponent<T> && !std::is_const<T>::value &&
+                     !std::is_reference<T>::value);
 
 template<typename... T>
-concept UniquePack = detail::is_unique<std::unwrap_ref_decay_t<T>...>;
+concept ComponentPack = detail::is_unique<std::unwrap_ref_decay_t<T>...> &&
+                        (Component<T>, ...);
 
 template<typename T>
 concept Entity = std::is_integral_v<T>;
-}
+
+template<typename... T>
+concept QueryInput = detail::is_unique<std::unwrap_ref_decay_t<T>...> &&
+                     ((std::is_class<T>::value || std::is_integral_v<T>), ...);
+
+template<typename T>
+concept NotWrapped = std::is_same_v<std::unwrap_ref_decay_t<T>, T>;
+
+} // namespace realm

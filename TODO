@@ -3,7 +3,21 @@ alternatives:
     -> arena, realm, pillar, bulwark, arketyp, essence (escense), buckler, rymd, atex (ArcheType EntityX(cs), arkt.
     -> alt. .hpp as postfix cuz datz kewl xd.
 
-* PRIO: fix pointers, fix memory, use custom hashmap phmap
+* query & systems
+
+* make archetypes immutable
+
+auto q = query::of<const pos, vel>;
+
+for (auto&& comps : q.fetch(&world)) {
+
+}
+
+world.query([](const pos, vel){
+
+
+});
+
 
 * fix cmake setup for testing & bench
 * better test cases

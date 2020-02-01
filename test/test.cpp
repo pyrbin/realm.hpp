@@ -1,4 +1,5 @@
 #include "../include/realm.hpp"
+#include <assert.h>
 #include <iostream>
 #include <string>
 #include <vector>
@@ -20,18 +21,6 @@ struct alignas(16) id
     string id;
     unsigned char file_version[4];
     unsigned char options[2];
-    unsigned char header_length[2];
-    unsigned char state_info_length[2];
-    unsigned char base_info_length[2];
-    unsigned char base_pos[2];
-    unsigned char key_parts[2];
-    unsigned char unique_key_parts[2];
-    unsigned char keys;
-    unsigned char uniques;
-    unsigned char language;
-    unsigned char max_block_size_index;
-    unsigned char fulltext_keys;
-    unsigned char not_used;
 };
 
 struct alignas(64) friends
@@ -49,22 +38,16 @@ printf(realm::world& world, vector<realm::entity> entts)
     }
 }
 
+struct update_test
+{
+    void update(const pos& pos) const { cout << "system: " << pos.x << "\n"; }
+};
+
 int
 main()
 {
-    auto world = realm::world{ 2 };
-    auto entts = world.batch<pos, vel>(world.capacity());
     auto arch = realm::archetype::of<pos, vel>();
-    auto& p = world.get<const pos>(0);
-
-    world.query([](pos& p) {
-        p.x = 200;
-        cout << " has p.x of: " << p.x << "\n";
-    });
-
-    world.query([](pos& p, realm::entity entt) {
-        cout << "entt: " << entt << " has p.x of: " << p.x << "\n";
-    });
-
+    assert(arch.count() == 2);
+    assert(arch.has<pos>());
     return 0;
 }

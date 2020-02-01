@@ -13,8 +13,6 @@
 #error "Compiler not supported"
 #endif
 
-namespace realm {
-
 namespace detail {
 
 using hash_t = uint64_t;
@@ -37,6 +35,8 @@ hash_fnv1a(const char* const str, const hash_t value = fnv_basis) noexcept
 
 } // namespace detail
 
+namespace realm {
+
 template<typename T>
 struct type_meta
 {
@@ -44,7 +44,7 @@ private:
     // TODO: only use the name of the class when generating hash
     static constexpr auto get_hash() noexcept
     {
-        return detail::hash_fnv1a(__VALID_PRETTY_FUNC__);
+        return ::detail::hash_fnv1a(__VALID_PRETTY_FUNC__);
     }
 
 public:

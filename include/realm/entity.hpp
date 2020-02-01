@@ -26,10 +26,8 @@ struct archetype_chunk;
 
 struct entity_location
 {
-    using chunk_ptr = archetype_chunk*;
-
     uint32_t chunk_index{ 0 };
-    chunk_ptr chunk{ nullptr };
+    archetype_chunk* chunk{ nullptr };
 };
 
 /**
@@ -166,7 +164,7 @@ private:
     std::vector<entity_location> locations;
     std::vector<entity_handle> handles;
     std::vector<uint32_t> slots;
-    int64_t first_available;
+    entity first_available;
 };
 
 } // namespace realm
