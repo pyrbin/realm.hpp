@@ -3,7 +3,6 @@
 #include "archetype.hpp"
 #include "concept.hpp"
 #include "entity.hpp"
-#include "query.hpp"
 #include "system.hpp"
 #include "unordered_map"
 #include "vector"
@@ -26,13 +25,13 @@ public:
     }
 
     template<typename... T>
-    entity create()
+    entity create() requires ComponentPack<T...>
     {
         return create(archetype::of<T...>());
     }
 
     template<typename... T>
-    std::vector<entity> batch(uint32_t n)
+    std::vector<entity> batch(uint32_t n) requires ComponentPack<T...>
     {
         return batch(n, archetype::of<T...>());
     }
@@ -44,11 +43,11 @@ public:
         return entts;
     }
 
-    template<Component T>
+    template<FetchComponent T>
     T& get(entity entt)
     {
         auto [index, ptr] = *entities.get(entt);
-        return *ptr->get<T>(index);
+        return static_cast<T&>(*ptr->get<std::unwrap_ref_decay_t<T>>(index));
     }
 
     template<NotWrapped T, typename... Args>
@@ -68,6 +67,7 @@ public:
 
     int32_t size() const noexcept { return entities.size(); }
     int32_t capacity() const noexcept { return entities.capacity(); }
+
     // TODO: move to private
     archetype_chunk* get_chunk(const archetype& at)
     {
@@ -108,6 +108,7 @@ private:
             }
         }
     }
+
     template<typename... Args>
     static inline std::vector<component>& build_comp_set(std::vector<component>& v)
     {

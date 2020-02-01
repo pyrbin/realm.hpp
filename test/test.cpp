@@ -47,7 +47,16 @@ int
 main()
 {
     auto arch = realm::archetype::of<pos, vel>();
+
     assert(arch.count() == 2);
     assert(arch.has<pos>());
-    return 0;
+
+    auto wo = realm::world{ 5 };
+    auto et = wo.create(arch);
+
+    auto& pc = wo.get<const pos>(et);
+
+    auto& pm = wo.get<pos>(et);
+    pm.x = 200;
+    assert(wo.get<const pos>(et).x == 200);
 }

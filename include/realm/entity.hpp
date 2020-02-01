@@ -164,7 +164,7 @@ private:
     std::vector<entity_location> locations;
     std::vector<entity_handle> handles;
     std::vector<uint32_t> slots;
-    entity first_available;
+    int first_available;
 };
 
 } // namespace realm

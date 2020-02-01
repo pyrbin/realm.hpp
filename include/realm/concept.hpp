@@ -20,9 +20,9 @@
 namespace realm {
 
 template<typename T>
-concept BaseComponent = (std::is_class<T>::value && std::is_copy_assignable<T>::value &&
+concept BaseComponent = (std::is_class<T>::value &&
+                         std::is_trivially_copyable<T>::value &&
                          std::is_copy_constructible<T>::value &&
-                         std::is_move_assignable<T>::value &&
                          std::is_move_constructible<T>::value);
 
 template<typename T>
@@ -32,6 +32,9 @@ concept Component = (BaseComponent<T> && !std::is_const<T>::value &&
 template<typename... T>
 concept ComponentPack = detail::is_unique<std::unwrap_ref_decay_t<T>...> &&
                         (Component<T>, ...);
+
+template<typename T>
+concept FetchComponent = (BaseComponent<T> && !std::is_reference<T>::value);
 
 template<typename T>
 concept Entity = std::is_integral_v<T>;
