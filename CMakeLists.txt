@@ -22,12 +22,14 @@ target_include_directories(
 
 # Settings
 set(CMAKE_CXX_STANDARD 20)
-
-# todo: Should flags be put in cmakelist?
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fconcepts -Wall -o2")
-
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
+
+target_compile_features(${TARGET_NAME} PRIVATE cxx_std_20)
+
+if(MSVC)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /std:c++latest")
+endif(MSVC)
 
 # Conan
 find_program(CONAN conan)
