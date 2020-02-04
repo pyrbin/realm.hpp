@@ -27,3 +27,4 @@ CMakeSettings.json
 .vs/
 compile_commands.json
 compile_flags.txt
+CMakeFiles

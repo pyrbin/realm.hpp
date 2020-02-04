@@ -1,4 +1,5 @@
 #include "../include/realm.hpp"
+
 #include <assert.h>
 #include <iostream>
 #include <string>
@@ -47,6 +48,7 @@ struct update_test
 int
 main()
 {
+
     auto arch = realm::archetype::of<pos, vel>();
 
     assert(arch.count() == 2);
@@ -63,9 +65,5 @@ main()
 
     auto q = realm::query<const pos, const vel>();
 
-    wo.fetch([](pos& p, pos p1) {
-
-    });
-
-    wo.fetch(pm);
+    wo.fetch([](const pos& p, vel& v) { std::cout << p.x << "\n"; });
 }

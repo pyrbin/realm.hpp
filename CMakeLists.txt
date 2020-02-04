@@ -5,9 +5,8 @@ cmake_minimum_required(VERSION 3.15)
 project(
   realm
   VERSION 0.1.0
-  LANGUAGES CXX
   DESCRIPTION
-    "A header only ecs c++20 library"
+  "A header only ecs c++20 library"
 )
 
 add_library(${PROJECT_NAME} INTERFACE)
@@ -18,41 +17,20 @@ include(CTest)
 
 target_include_directories(
   ${PROJECT_NAME}
-  INTERFACE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>)
+  INTERFACE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/realm.hpp>)
 
 # Settings
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-target_compile_features(${TARGET_NAME} PRIVATE cxx_std_20)
-
 if(MSVC)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /std:c++latest")
 endif(MSVC)
 
-# Conan
-find_program(CONAN conan)
-if(NOT CONAN)
-  message(WARNING "Conan not found. Skipping tests")
-  set(BUILD_TESTING FALSE)
-else()
-  # setting up conan to download.cmake automatically, you can also just copy the
-  # conan.cmake file
-  if(NOT EXISTS "${CMAKE_BINARY_DIR}/conan.cmake")
-    message(
-      STATUS
-        "Downloading conan.cmake from https://github.com/conan-io/cmake-conan")
-    file(
-      DOWNLOAD
-      "https://raw.githubusercontent.com/conan-io/cmake-conan/master/conan.cmake"
-      "${CMAKE_BINARY_DIR}/conan.cmake")
-  endif()
-
-  include(${CMAKE_BINARY_DIR}/conan.cmake)
-  conan_cmake_run(CONANFILE conanfile.txt BASIC_SETUP CMAKE_TARGETS BUILD
-                  missing)
-endif()
+if(CMAKE_COMPILER_IS_GNUCXX)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fconcepts")
+endif(CMAKE_COMPILER_IS_GNUCXX)
 
 # Testing
 if(BUILD_TESTING)
