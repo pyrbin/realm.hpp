@@ -1,6 +1,6 @@
 #pragma once
 
-#include "traits.hpp"
+#include "../detail/type_traits.hpp"
 #include <type_traits>
 
 /** designs goals:
@@ -19,45 +19,41 @@
 
 namespace realm {
 
-template<typename T>
-concept BaseComponent = (std::is_class<T>::value &&
-                         std::is_trivially_copyable<T>::value &&
-                         std::is_copy_constructible<T>::value &&
-                         std::is_move_constructible<T>::value);
-
 template<typename... T>
 concept UniquePack =
   detail::is_unique<std::remove_const_t<std::unwrap_ref_decay_t<T>>...>;
 
+/**
+ *
+ * @tparam T
+ */
+template<typename T>
+concept BaseComponent = (std::is_class_v<T> && std::is_trivially_copyable_v<T> &&
+                         std::is_copy_constructible_v<T> &&
+                         std::is_move_constructible_v<T>);
 template<typename T>
 concept Component = (BaseComponent<T> && !std::is_const<T>::value &&
                      !std::is_reference<T>::value);
-
 template<typename... T>
 concept ComponentPack = UniquePack<T...> && (Component<T>, ...);
 
 template<typename T>
-concept FetchComponent = (BaseComponent<T> && !std::is_reference<T>::value);
+concept RefComponent = (BaseComponent<std::unwrap_ref_decay_t<T>> &&
+                        std::is_reference_v<T>);
+
+template<typename T>
+concept GetComponent = (BaseComponent<T> && !std::is_reference_v<T>);
 
 template<typename T>
 concept Entity = std::is_integral_v<T>;
 
+template<typename T>
+concept System = std::is_same_v<std::unwrap_ref_decay_t<T>, T> && !std::is_const_v<T>;
+
 template<typename... T>
-concept QueryPack = UniquePack<T...> && ((FetchComponent<T> || Entity<T>), ...);
+concept QueryPack = UniquePack<T...> && ((GetComponent<T> || Entity<T>), ...);
 
-template<typename T>
-concept NotWrapped = std::is_same_v<std::unwrap_ref_decay_t<T>, T>;
-
-template<typename T, typename... Args>
-concept Invocable = std::is_invocable<T, Args...>::value || std::is_function<T>::value;
-
-template<typename T, typename... Args>
-concept Inner = UniquePack<Args...> && ((FetchComponent<Args> || Entity<Args>), ...);
-
-template<typename T>
-concept QueryFunction = requires(T&& f)
-{
-    fetch_helper(&f, &std::unwrap_ref_decay_t<T>::operator());
-};
+template<typename... T>
+concept FetchPack = UniquePack<T...> && ((RefComponent<T> || Entity<T>), ...);
 
 } // namespace realm

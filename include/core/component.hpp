@@ -7,8 +7,8 @@
 #include <typeinfo>
 #include <vector>
 
-#include "concept.hpp"
-#include "meta.hpp"
+#include "../detail/type_meta.hpp"
+#include "concepts.hpp"
 
 namespace realm {
 
@@ -65,7 +65,7 @@ struct component_meta
     template<Component T>
     static constexpr component_meta of()
     {
-        auto hash = type_meta<T>::hash;
+        auto hash = detail::type_meta<T>::hash;
         return { hash, (size_t)(1 << hash) };
     }
 };

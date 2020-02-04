@@ -1,7 +1,7 @@
 #pragma once
 
-#include "realm/archetype.hpp"
-#include "realm/component.hpp"
-#include "realm/entity.hpp"
-#include "realm/query.hpp"
-#include "realm/world.hpp"
+#include "core/archetype.hpp"
+#include "core/component.hpp"
+#include "core/entity.hpp"
+#include "core/query.hpp"
+#include "core/world.hpp"

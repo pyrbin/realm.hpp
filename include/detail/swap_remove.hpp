@@ -3,8 +3,7 @@
 #include <algorithm>
 
 namespace realm {
-namespace util {
-
+namespace detail {
 /**
  * @brief Removes element at index and swap with last value in a
  * vector. Does not free memory.
@@ -21,5 +20,5 @@ swap_remove(unsigned index, T target)
     target.resize(target.size() - 1);
 }
 
-} // namespace util
+} // namespace detail
 } // namespace realm

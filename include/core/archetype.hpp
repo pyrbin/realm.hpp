@@ -1,18 +1,17 @@
 #pragma once
 
-#include "component.hpp"
-#include "concept.hpp"
-#include "entity.hpp"
-#include "util.hpp"
-
-#include "assert.h"
 #include <algorithm>
-#include <iostream>
+#include <cstring>
 #include <memory>
 #include <numeric>
-#include <string.h>
 #include <tuple>
 #include <type_traits>
+
+#include "../detail/swap_remove.hpp"
+
+#include "component.hpp"
+#include "concepts.hpp"
+#include "entity.hpp"
 
 namespace realm {
 
@@ -164,7 +163,7 @@ public:
 
         assert(data_size == chunk_size);
 
-        return data = (aligned_alloc(alignment, data_size));
+        return data = (std::aligned_alloc(alignment, data_size));
     }
 
     entity insert(entity entt)
@@ -180,7 +179,7 @@ public:
     {
         // do de-fragmentation, (is this costly?)
         auto end{ len - 1 };
-        util::swap_remove(index, entities);
+        detail::swap_remove(index, entities);
         copy_to(end, *this, index);
         for (const auto& component : archetype.components) {
             component.invoke(get_pointer(end, component));

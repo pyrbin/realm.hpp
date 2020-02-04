@@ -1,11 +1,12 @@
 #pragma once
 
-#include "util.hpp"
 #include <cstdint>
 #include <functional>
 #include <memory>
 #include <numeric>
 #include <vector>
+
+#include "../detail/swap_remove.hpp"
 
 namespace realm {
 
@@ -93,8 +94,8 @@ public:
         handles.at(handle.index).index =
           first_available != -1 ? first_available : handle.index;
         first_available = handle.index;
-        util::swap_remove(loc_index, slots);
-        util::swap_remove(loc_index, locations);
+        detail::swap_remove(loc_index, slots);
+        detail::swap_remove(loc_index, locations);
     }
 
     entity_location* get(entity entt)
