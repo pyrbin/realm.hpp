@@ -41,17 +41,19 @@ public:
     void init(R (T::*f)(Args...) const)
     {
         archetype = archetype::of<Args...>();
-        fn = [this, f](archetype_chunk* chunk) -> void {
-            auto inner_update = [this, f](Args... args) -> void {};
+        invoke = [this, f](archetype_chunk* chunk) -> void {
+            auto inner_update = [this, f](Args... args) -> void {
+
+            };
         };
     }
 
     bool compare(size_t hash) const override { return archetype.subset(hash); }
-    void operator()(archetype_chunk* chunk) const override { fn(chunk); }
+    void operator()(archetype_chunk* chunk) const override { invoke(chunk); }
 
 private:
     struct archetype archetype;
     system_ptr<T> sys;
-    fn_ptr fn;
+    fn_ptr invoke;
 };
 } // namespace realm

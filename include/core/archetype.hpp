@@ -88,10 +88,33 @@ public:
      */
     constexpr size_t size() const { return info.size; }
     constexpr size_t count() const { return components_count; }
-}; // namespace realm
+};
+
+namespace detail {
+// TODO: Probly exist better method to filter non Components from a variadic template
+// using concepts/SFINAE to filter?
+template<BaseComponent T>
+static inline void
+__unpack_archetype_helper(std::vector<component>& comps)
+{
+    comps.push_back(component::of<std::unwrap_ref_decay_t<T>>());
+}
+template<typename F>
+static inline void
+__unpack_archetype_helper(std::vector<component>&)
+{}
+template<typename... T>
+static inline archetype
+unpack_archetype()
+{
+    std::vector<component> comps;
+    (__unpack_archetype_helper<std::unwrap_ref_decay_t<T>>(comps), ...);
+    return archetype{ comps };
+}
+} // namespace detail
 
 // forward declaration
-struct archetype_chunk_parent
+struct archetype_chunk_root
 {
     using chunk_ptr = std::unique_ptr<archetype_chunk>;
 
@@ -107,12 +130,12 @@ struct archetype_chunk_parent
     const struct archetype archetype;
     const uint32_t per_chunk;
 
-    archetype_chunk_parent(const struct archetype& archetype)
+    archetype_chunk_root(const struct archetype& archetype)
       : archetype{ archetype.components }
       , per_chunk{ CHUNK_LAYOUT.size / (uint32_t) archetype.size() }
     {}
 
-    ~archetype_chunk_parent() { cached_free = nullptr; }
+    ~archetype_chunk_root() { cached_free = nullptr; }
 
     archetype_chunk* find_free();
     archetype_chunk* create_chunk();
@@ -133,8 +156,6 @@ public:
     {
         std::cout << "new chunk created"
                   << "\n";
-        std::cout << archetype.size() << " <-- size \n";
-        std::cout << archetype.count() << " <-- count \n";
     }
 
     ~archetype_chunk()
@@ -189,28 +210,19 @@ public:
     }
 
     template<typename T>
-    T* get(unsigned int index)
+    T* get(uint32_t index) const
     {
-        std::cout << __VALID_PRETTY_FUNC__ << "\n";
-
-        auto comp = component::of<T>();
-        std::cout << comp.layout.size << "\n";
-        std::cout << "t: " << archetype.has(comp) << "\n";
-        std::cout << "s: " << archetype.size() << "\n";
-
-        return ((T*) get_pointer(index, comp));
+        return ((T*) get_pointer(index, component::of<T>()));
     }
 
     // allows queries to use entity-types as parameter
     template<Entity T>
-    entity* get(unsigned int index)
+    const entity* get(uint32_t index) const
     {
-        std::cout << index << " in "
-                  << " :: " << size() << "\n";
         return &entities[index];
     }
 
-    pointer get_pointer(unsigned index, const component& type)
+    pointer get_pointer(uint32_t index, const component& type) const
     {
         return (void*) ((std::byte*) data + offset_to(index, type));
     }
@@ -231,6 +243,8 @@ public:
 
     bool full() const noexcept { return len >= max_capacity; }
     bool used() const noexcept { return data != nullptr; }
+    // todo: move to private
+    pointer data{ nullptr };
 
 private:
     size_t offset_to(uint index, const component& type) const
@@ -239,8 +253,6 @@ private:
         return offset + (index * type.layout.size);
     }
 
-    pointer data{ nullptr };
-
     uint32_t len{ 0 };
     uint32_t max_capacity{ 0 };
     uint32_t data_size{ 0 };
@@ -248,7 +260,7 @@ private:
 };
 
 archetype_chunk*
-archetype_chunk_parent::find_free()
+archetype_chunk_root::find_free()
 {
 
     if (cached_free && !cached_free->full()) return cached_free;
@@ -270,7 +282,7 @@ archetype_chunk_parent::find_free()
 }
 
 archetype_chunk*
-archetype_chunk_parent::create_chunk()
+archetype_chunk_root::create_chunk()
 {
     chunks.push_back(std::move(std::make_unique<archetype_chunk>(archetype, per_chunk)));
     return chunks.back().get();

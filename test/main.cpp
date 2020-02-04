@@ -45,6 +45,12 @@ struct update_test
     void operator()() {}
 };
 
+struct holder
+{
+    holder(const void* data) : data{ data } {}
+    const void* data;
+};
+
 int
 main()
 {
@@ -55,6 +61,7 @@ main()
     assert(arch.has<pos>());
 
     auto wo = realm::world{ 5 };
+
     auto et = wo.create(arch);
 
     auto& pc = wo.get<const pos>(et);
@@ -63,7 +70,11 @@ main()
     pm.x = 200;
     assert(wo.get<const pos>(et).x == 200);
 
-    auto q = realm::query<const pos, const vel>();
+    auto q = realm::query<pos, vel>();
 
-    wo.fetch([](const pos& p, vel& v) { std::cout << p.x << "\n"; });
+    q.fetch(&wo, [](pos& p, vel& v) {
+        std::cout << "hello my honey" << p.x << "\n";
+        p.x += 200;
+    });
+    q.fetch(&wo, [](pos& p, vel& v) { std::cout << "hello my honey" << p.x << "\n"; });
 }
