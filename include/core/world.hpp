@@ -6,14 +6,14 @@
 #include "system.hpp"
 
 #include <functional>
+#include <unordered_map>
 #include <vector>
 
 namespace realm {
 
 struct world
 {
-    // todo: use hashmap for better lookup performance
-    using chunks_t = std::vector<std::unique_ptr<archetype_chunk_root>>;
+    using chunks_t = std::unordered_map<size_t, std::unique_ptr<archetype_chunk_root>>;
     using entities_t = entity_pool;
 
     chunks_t chunks;
@@ -25,14 +25,12 @@ private:
 
         archetype_chunk_root* root{ nullptr };
 
-        auto it = std::find_if(
-          chunks.begin(), chunks.end(), [at](auto& b) { return b->archetype == at; });
-
-        if (it == chunks.end()) {
-            chunks.push_back(std::move(std::make_unique<archetype_chunk_root>(at)));
-            root = chunks.back().get();
+        if (!chunks.contains(at.mask())) {
+            auto ptr = std::make_unique<archetype_chunk_root>(at);
+            root = ptr.get();
+            chunks.emplace(at.mask(), std::move(ptr));
         } else {
-            root = (*it).get();
+            root = chunks.at(at.mask()).get();
         }
 
         return root->find_free();
@@ -85,8 +83,8 @@ public:
     template<typename T>
     void iter_chunks(const archetype& at, T&& fn)
     {
-        for (auto& root : chunks) {
-            if (at.subset(root->archetype)) {
+        for (auto& [hash, root] : chunks) {
+            if (at.subset(hash)) {
                 for (auto& chunk : root->chunks) { fn(chunk.get()); }
             }
         }
@@ -95,8 +93,8 @@ public:
     template<typename T>
     void iter_chunk_roots(const archetype& at, T&& fn)
     {
-        for (auto& root : chunks) {
-            if (at.subset(root->archetype)) { fn(root.get()); }
+        for (auto& [hash, root] : chunks) {
+            if (at.subset(hash)) { fn(root.get()); }
         }
     }
 

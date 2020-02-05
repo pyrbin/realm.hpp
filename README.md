@@ -36,7 +36,7 @@ struct pos {
 };
 
 struct vel {
-   int x, y = 0;
+    int x, y = 0;
 };
 
 // create a world of capacity 10000
@@ -60,15 +60,17 @@ auto& p_read = world.get<const pos>(entt);
 
 // query the world using only a lamdba where each argument is 
 // an component you want to fetch
-world.query([&](pos&, const vel&) {
-  pos.x += vel.x;
-  pos.y += vel.y;
+
+realm::query(&world, [](pos&, const vel&) {
+    pos.x += vel.x;
+    pos.y += vel.y;
 });
 
 // Add an realm::entity type to include the current entity
-world.query([&](const pos&, realm::entity current) {
-  std::cout << "entity: " << current << "with pos: " << pos << "\n";
+realm::query(&world, [](pos&, const vel&, realm::entity entt) {
+    std::cout << "querying entity: " << entt << "\n";
 });
+
 
 ```
 
