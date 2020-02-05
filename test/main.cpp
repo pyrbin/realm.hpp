@@ -1,80 +1,117 @@
 #include "../include/realm.hpp"
 
-#include <assert.h>
-#include <iostream>
+#include <chrono>
+#include <functional>
+#include <memory>
+#include <numeric>
+#include <random>
 #include <string>
 #include <vector>
 
-using namespace std;
-
-struct alignas(4) pos
+struct timer final
 {
-    int x, y{ 0 };
-};
+    timer() : start{ std::chrono::system_clock::now() } {}
 
-struct alignas(8) vel
-{
-    int x, y{ 0 };
-};
-
-struct alignas(16) id
-{
-    string id;
-    unsigned char file_version[4];
-    unsigned char options[2];
-};
-
-struct alignas(64) friends
-{
-    vector<string> list;
-};
-
-void
-printf(realm::world& world, vector<realm::entity> entts)
-{
-    for (int i{ 0 }; i < world.capacity(); i++) {
-        std::cout << "entity: " << entts[i] << "\n";
-        std::cout << "vel: " << world.get<vel>(entts[i]).x << ", "
-                  << world.get<vel>(entts[i]).y << "\n";
+    void elapsed()
+    {
+        auto now = std::chrono::system_clock::now();
+        std::cout << std::chrono::duration<double>(now - start).count() << " seconds"
+                  << std::endl;
     }
+
+private:
+    std::chrono::time_point<std::chrono::system_clock> start;
+};
+
+struct pos
+{
+    float x = 0.0f;
+    float y = 0.0f;
+};
+
+struct dir
+{
+    float x = 4.0f;
+    float y = 0.0f;
+};
+
+struct wierd
+{
+    float thingy = 0.0;
+    int dingy = 0;
+    bool mingy = false;
+    std::string stringy;
+};
+
+using timedelta = double;
+
+struct movement_system
+{
+    realm::world* world;
+
+    movement_system(realm::world* world) : world{ world } {}
+
+    void update(timedelta dt)
+    {
+        realm::query(world, [dt](pos& p, const dir& d) {
+            p.x += d.x * dt;
+            p.y += d.y * dt;
+        });
+    }
+};
+
+struct comflab_system
+{
+    realm::world* world;
+
+    comflab_system(realm::world* world) : world{ world } {}
+
+    void update(timedelta dt)
+    {
+        realm::query(world, [dt](wierd& comflab) {
+            comflab.thingy *= 1.000001f;
+            comflab.mingy = !comflab.mingy;
+            comflab.dingy++;
+        });
+    }
+};
+
+const int N = 1000000;
+
+inline realm::world world{ N };
+inline comflab_system comf_sys{ &world };
+inline movement_system move_sys{ &world };
+
+inline void
+game_update(timedelta dt)
+{
+    comf_sys.update(dt);
+    move_sys.update(dt);
 }
 
-struct update_test
+void
+TEST_CASE_1M()
 {
-    void update(const pos& pos) const { cout << "system: " << pos.x << "\n"; }
-    void operator()() {}
-};
+    std::cout << "Constructing " << N << " entities"
+              << "\n";
+    timer timer;
+    world.batch<pos, dir>(N);
+    timer.elapsed();
+}
 
-struct holder
+void
+TEST_CASE_UPDATE()
 {
-    holder(const void* data) : data{ data } {}
-    const void* data;
-};
+    std::cout << "Updating " << N << " entities "
+              << "with 2 systems\n";
+    timer timer;
+    game_update(1.0);
+    timer.elapsed();
+}
 
 int
 main()
 {
-
-    auto arch = realm::archetype::of<pos, vel>();
-
-    assert(arch.count() == 2);
-    assert(arch.has<pos>());
-
-    auto wo = realm::world{ 5 };
-
-    auto et = wo.create(arch);
-
-    auto& pc = wo.get<const pos>(et);
-
-    auto& pm = wo.get<pos>(et);
-    pm.x = 200;
-    assert(wo.get<const pos>(et).x == 200);
-
-    auto q = realm::query<pos, vel>();
-
-    q.fetch(&wo, [](pos& p, vel& v) {
-        std::cout << "hello my honey" << p.x << "\n";
-        p.x += 200;
-    });
-    q.fetch(&wo, [](pos& p, vel& v) { std::cout << "hello my honey" << p.x << "\n"; });
+    TEST_CASE_1M();
+    TEST_CASE_UPDATE();
 }
