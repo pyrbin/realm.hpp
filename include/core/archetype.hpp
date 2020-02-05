@@ -55,7 +55,6 @@ public:
     template<typename... T>
     static archetype of() noexcept requires ComponentPack<T...>
     {
-        std::cout << __VALID_PRETTY_FUNC__ << "\n";
         components_t comps;
         (comps.push_back(component::of<std::remove_reference_t<T>>()), ...);
         return archetype{ comps };
@@ -153,10 +152,7 @@ public:
 
     archetype_chunk(const struct archetype archetype, uint32_t max_capacity)
       : archetype{ archetype }, max_capacity(max_capacity)
-    {
-        std::cout << "new chunk created"
-                  << "\n";
-    }
+    {}
 
     ~archetype_chunk()
     {
