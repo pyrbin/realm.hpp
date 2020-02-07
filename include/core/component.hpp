@@ -20,8 +20,8 @@ namespace realm {
  */
 struct memory_layout
 {
-    int size{ 0 };
-    int align{ 0 };
+    const int size{ 0 };
+    const int align{ 0 };
 
     constexpr memory_layout() {}
     constexpr memory_layout(int size, int align) : size{ size }, align{ align }
@@ -59,11 +59,11 @@ struct memory_layout
 
 struct component_meta
 {
-    size_t hash{ 0 };
-    size_t mask{ 0 };
+    const size_t hash{ 0 };
+    const size_t mask{ 0 };
 
     template<Component T>
-    static constexpr component_meta of()
+    static inline constexpr component_meta of()
     {
         auto hash = detail::type_meta<T>::hash;
         return { hash, (size_t)(1 << hash) };
@@ -74,36 +74,26 @@ struct component
 {
     using constructor_t = void(void*);
 
-    component_meta meta;
-    memory_layout layout;
+    const component_meta meta;
+    const memory_layout layout;
 
-    constructor_t* invoke{ nullptr };
-    constructor_t* destroy{ nullptr };
+    const constructor_t* invoke{ nullptr };
+    const constructor_t* destroy{ nullptr };
 
-    constexpr component() {}
-    constexpr component(component_meta meta,
-                        memory_layout layout,
-                        constructor_t* invoke,
-                        constructor_t* destroy)
+    inline constexpr component(component_meta meta,
+                               memory_layout layout,
+                               constructor_t* invoke,
+                               constructor_t* destroy)
       : meta{ meta }, layout{ layout }, invoke{ invoke }, destroy{ destroy }
     {}
 
-    component& operator=(const component& other)
-    {
-        meta = other.meta;
-        layout = other.layout;
-        invoke = other.invoke;
-        destroy = other.destroy;
-        return *this;
-    }
-
-    constexpr bool operator==(const component& other) const
+    inline constexpr bool operator==(const component& other) const
     {
         return other.meta.hash == meta.hash;
     }
 
     template<Component T>
-    static constexpr component of()
+    static inline constexpr component of()
     {
         return { component_meta::of<T>(),
                  memory_layout::of<T>(),

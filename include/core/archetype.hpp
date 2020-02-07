@@ -1,19 +1,86 @@
 #pragma once
 
+#include "../detail/swap_remove.hpp"
+#include "robin_hood.hpp"
 #include <algorithm>
+#include <array>
 #include <cstring>
 #include <memory>
 #include <numeric>
 #include <tuple>
 #include <type_traits>
 
-#include "../detail/swap_remove.hpp"
-
 #include "component.hpp"
 #include "concepts.hpp"
 #include "entity.hpp"
 
 namespace realm {
+
+template<typename... Ts>
+requires ComponentPack<Ts...> struct archetype
+{
+private:
+    using components_t = std::array<component, sizeof...(Ts)>;
+    const components_t components;
+
+    struct data
+    {
+        size_t size{ 0 };
+        size_t mask{ 0 };
+    };
+
+    const data info{ 0, 0 };
+    const size_t components_count{ 0 };
+
+    inline constexpr data generate_data(const components_t& comps) const
+    {
+        return std::accumulate(
+          comps.begin(), comps.end(), (data{}), [](data&& res, auto&& c) {
+              res.mask |= c.meta.mask;
+              res.size += c.layout.size;
+              return res;
+          });
+    }
+
+public:
+    inline constexpr archetype(){};
+    inline constexpr archetype(const components_t& comps)
+      : components{ comps }
+      , info{ generate_data(comps) }
+      , components_count{ comps.size() }
+    {}
+
+    inline constexpr bool operator==(const archetype& other) const
+    {
+        return other.mask() == mask();
+    }
+
+    template<Component T>
+    inline constexpr bool has() const
+    {
+        return has(component::of<T>());
+    }
+
+    inline constexpr bool has(const component& comp) const
+    {
+        return (mask() & comp.meta.mask) == comp.meta.mask;
+    }
+
+    inline constexpr bool subset(size_t other) const { return (mask() & other) == other; }
+
+    inline constexpr bool subset(const archetype& other) const
+    {
+        return subset(other.mask());
+    }
+
+    inline constexpr size_t mask() const { return info.mask; }
+    /**
+     * Return the value of sizeof([all components...])
+     * @return total size of all components (memory not count)
+     */
+    inline constexpr size_t size() const { return info.size; }
+    inline constexpr size_t count() const { return components_count; }
+};
 
 /**
  * @brief archetype represents a set of components.
@@ -143,7 +210,7 @@ struct archetype_chunk_root
 struct archetype_chunk
 {
 public:
-    using offsets_t = std::unordered_map<size_t, size_t>;
+    using offsets_t = robin_hood::unordered_node_map<size_t, size_t>;
     using entities_t = std::vector<entity>;
     using pointer = void*;
 
@@ -152,7 +219,9 @@ public:
 
     archetype_chunk(const struct archetype archetype, uint32_t max_capacity)
       : archetype{ archetype }, max_capacity(max_capacity)
-    {}
+    {
+        entities.reserve(max_capacity);
+    }
 
     ~archetype_chunk()
     {
@@ -163,10 +232,8 @@ public:
         }
     }
 
-    pointer allocate(uint chunk_size, uint alignment)
+    inline pointer allocate(uint chunk_size, uint alignment)
     {
-        entities.reserve(max_capacity);
-
         for (const auto& component : archetype.components) {
             /* data_size += memory_layout::align_up(
               memory_layout::align_up(data_size, CHUNK_COMPONENT_ALIGNMENT),
@@ -177,10 +244,9 @@ public:
         }
 
         data_size += (chunk_size % data_size);
-
         assert(data_size == chunk_size);
 
-        return data = (std::aligned_alloc(alignment, data_size));
+        return data = (std::aligned_alloc(alignment, chunk_size));
     }
 
     entity insert(entity entt)
@@ -206,19 +272,19 @@ public:
     }
 
     template<typename T>
-    T* get(uint32_t index) const
+    inline T* get(uint32_t index) const
     {
         return ((T*) get_pointer(index, component::of<T>()));
     }
 
     // allows queries to use entity-types as parameter
     template<Entity T>
-    const entity* get(uint32_t index) const
+    inline const entity* get(uint32_t index) const
     {
         return &entities[index];
     }
 
-    pointer get_pointer(uint32_t index, const component& type) const
+    inline pointer get_pointer(uint32_t index, const component& type) const
     {
         return (void*) ((std::byte*) data + offset_to(index, type));
     }
@@ -243,7 +309,7 @@ public:
     pointer data{ nullptr };
 
 private:
-    size_t offset_to(uint index, const component& type) const
+    inline size_t offset_to(uint index, const component& type) const
     {
         auto offset = offsets.at(type.meta.hash);
         return offset + (index * type.layout.size);

@@ -17,20 +17,21 @@ inline constexpr void
 __query_inner(F* obj, void (F::*f)(Args...) const) requires FetchPack<Args...>;
 
 template<typename F, typename... Args>
-inline constexpr void
+inline void
 __query_inner(world* world,
               F* obj,
               void (F::*f)(Args...) const) requires FetchPack<Args...>
 {
     auto at = detail::unpack_archetype<std::unwrap_ref_decay_t<Args>...>();
-    world->iter_chunk_roots(at, [&](archetype_chunk_root* root) {
+    for (auto& [hash, root] : world->chunks) {
+        if (!at.subset(hash)) continue;
         for (auto& chunk : root->chunks) {
             for (uint32_t i{ 0 }; i < chunk->size(); i++) {
                 (obj->*f)(*chunk->template get<std::unwrap_ref_decay_t<Args>>(
                   std::forward<uint32_t>(i))...);
             }
         }
-    });
+    }
 }
 
 } // namespace detail
