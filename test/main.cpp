@@ -12,11 +12,11 @@ struct timer final
 {
     timer() : start{ std::chrono::system_clock::now() } {}
 
-    void elapsed()
+    void elapsed() { std::cout << elapsed_value() << " seconds" << std::endl; }
+    double elapsed_value()
     {
         auto now = std::chrono::system_clock::now();
-        std::cout << std::chrono::duration<double>(now - start).count() << " seconds"
-                  << std::endl;
+        return std::chrono::duration<double>(now - start).count();
     }
 
 private:
@@ -95,18 +95,28 @@ TEST_CASE_1M()
     std::cout << "Constructing " << N << " entities"
               << "\n";
     timer timer;
-    world.batch<pos, dir>(N);
+
+    world.batch<pos, dir, wierd>(N);
+    // for (int i = 0; i < N; i++) { world.create<pos, dir, wierd>(); }
     timer.elapsed();
 }
 
 void
 TEST_CASE_UPDATE()
 {
+    double min = 99999999;
+
     std::cout << "Updating " << N << " entities "
               << "with 2 systems\n";
-    timer timer;
-    game_update(1.0);
-    timer.elapsed();
+
+    for (int i = 0; i < 100; i++) {
+        timer timer;
+        game_update(1.0);
+        double elapsed = timer.elapsed_value();
+        if (elapsed < min) { min = elapsed; }
+    }
+
+    std::cout << min << " seconds\n";
 }
 
 int

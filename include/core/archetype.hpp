@@ -16,12 +16,13 @@
 
 namespace realm {
 
-template<typename... Ts>
-requires ComponentPack<Ts...> struct archetype
+/**
+ * @brief archetype represents a set of components.
+ */
+struct archetype
 {
 private:
-    using components_t = std::array<component, sizeof...(Ts)>;
-    const components_t components;
+    using components_t = std::vector<component>;
 
     struct data
     {
@@ -32,23 +33,31 @@ private:
     const data info{ 0, 0 };
     const size_t components_count{ 0 };
 
-    inline constexpr data generate_data(const components_t& comps) const
+    static inline data generate_data(const components_t& components)
     {
         return std::accumulate(
-          comps.begin(), comps.end(), (data{}), [](data&& res, auto&& c) {
-              res.mask |= c.meta.mask;
-              res.size += c.layout.size;
+          components.begin(), components.end(), (data{}), [](data&& res, auto&& comp) {
+              res.mask |= comp.meta.mask;
+              res.size += comp.layout.size;
               return res;
           });
     }
 
 public:
-    inline constexpr archetype(){};
-    inline constexpr archetype(const components_t& comps)
-      : components{ comps }
-      , info{ generate_data(comps) }
-      , components_count{ comps.size() }
+    const components_t components;
+
+    inline archetype() {}
+    inline archetype(const components_t& components)
+      : components{ std::move(components) }
+      , info{ generate_data(components) }
+      , components_count{ components.size() }
     {}
+
+    template<typename... T>
+    static inline archetype of() noexcept requires ComponentPack<T...>
+    {
+        return archetype{ { component::of<T>()... } };
+    }
 
     inline constexpr bool operator==(const archetype& other) const
     {
@@ -61,7 +70,7 @@ public:
         return has(component::of<T>());
     }
 
-    inline constexpr bool has(const component& comp) const
+    inline bool has(const component& comp) const
     {
         return (mask() & comp.meta.mask) == comp.meta.mask;
     }
@@ -80,80 +89,6 @@ public:
      */
     inline constexpr size_t size() const { return info.size; }
     inline constexpr size_t count() const { return components_count; }
-};
-
-/**
- * @brief archetype represents a set of components.
- */
-struct archetype
-{
-private:
-    using components_t = std::vector<component>;
-
-    struct data
-    {
-        size_t size{ 0 };
-        size_t mask{ 0 };
-    };
-
-    const data info{ 0, 0 };
-    const size_t components_count{ 0 };
-
-    inline data generate_data(const components_t& comps) const
-    {
-        return std::accumulate(
-          comps.begin(), comps.end(), (data{}), [](data&& res, auto&& c) {
-              res.mask |= c.meta.mask;
-              res.size += c.layout.size;
-              return res;
-          });
-    }
-
-public:
-    const components_t components;
-
-    archetype() {}
-    archetype(const components_t& comps)
-      : components{ std::move(comps) }
-      , info{ generate_data(comps) }
-      , components_count{ comps.size() }
-    {}
-
-    template<typename... T>
-    static archetype of() noexcept requires ComponentPack<T...>
-    {
-        components_t comps;
-        (comps.push_back(component::of<std::remove_reference_t<T>>()), ...);
-        return archetype{ comps };
-    }
-
-    constexpr bool operator==(const archetype& other) const
-    {
-        return other.mask() == mask();
-    }
-
-    template<Component T>
-    constexpr bool has() const
-    {
-        return has(component::of<T>());
-    }
-
-    constexpr bool has(const component& comp) const
-    {
-        return (mask() & comp.meta.mask) == comp.meta.mask;
-    }
-
-    constexpr bool subset(size_t other) const { return (mask() & other) == other; }
-
-    constexpr bool subset(const archetype& other) const { return subset(other.mask()); }
-
-    constexpr size_t mask() const { return info.mask; }
-    /**
-     * Return the value of sizeof([all components...])
-     * @return total size of all components (memory not count)
-     */
-    constexpr size_t size() const { return info.size; }
-    constexpr size_t count() const { return components_count; }
 };
 
 namespace detail {
@@ -217,7 +152,7 @@ public:
     const struct archetype archetype;
     entities_t entities;
 
-    archetype_chunk(const struct archetype archetype, uint32_t max_capacity)
+    inline archetype_chunk(const struct archetype archetype, uint32_t max_capacity)
       : archetype{ archetype }, max_capacity(max_capacity)
     {
         entities.reserve(max_capacity);
@@ -249,7 +184,7 @@ public:
         return data = (std::aligned_alloc(alignment, chunk_size));
     }
 
-    entity insert(entity entt)
+    inline entity insert(entity entt)
     {
         for (const auto& component : archetype.components) {
             component.invoke(get_pointer(len, component));
@@ -258,7 +193,7 @@ public:
         return entt;
     }
 
-    entity remove(uint index)
+    inline entity remove(uint index)
     {
         // do de-fragmentation, (is this costly?)
         auto end{ len - 1 };
@@ -300,11 +235,11 @@ public:
 
     // const archetype& archetype() const { return parent->archetype; }
 
-    constexpr uint32_t capacity() const noexcept { return max_capacity; }
-    constexpr uint32_t size() const noexcept { return len; }
+    inline constexpr uint32_t capacity() const noexcept { return max_capacity; }
+    inline constexpr uint32_t size() const noexcept { return len; }
 
-    bool full() const noexcept { return len >= max_capacity; }
-    bool used() const noexcept { return data != nullptr; }
+    inline bool full() const noexcept { return len >= max_capacity; }
+    inline bool used() const noexcept { return data != nullptr; }
     // todo: move to private
     pointer data{ nullptr };
 
@@ -321,7 +256,7 @@ private:
     offsets_t offsets;
 };
 
-archetype_chunk*
+inline archetype_chunk*
 archetype_chunk_root::find_free()
 {
 
@@ -343,7 +278,7 @@ archetype_chunk_root::find_free()
     return ptr;
 }
 
-archetype_chunk*
+inline archetype_chunk*
 archetype_chunk_root::create_chunk()
 {
     chunks.push_back(std::move(std::make_unique<archetype_chunk>(archetype, per_chunk)));

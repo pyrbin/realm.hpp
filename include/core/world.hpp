@@ -13,7 +13,8 @@ namespace realm {
 
 struct world
 {
-    using chunks_t = std::unordered_map<size_t, std::unique_ptr<archetype_chunk_root>>;
+    using chunks_t =
+      robin_hood::unordered_flat_map<size_t, std::unique_ptr<archetype_chunk_root>>;
     using entities_t = entity_pool;
 
     chunks_t chunks;
@@ -24,8 +25,9 @@ private:
     {
 
         archetype_chunk_root* root{ nullptr };
+        auto it = chunks.find(at.mask());
 
-        if (!chunks.contains(at.mask())) {
+        if (it == chunks.end()) {
             auto ptr = std::make_unique<archetype_chunk_root>(at);
             root = ptr.get();
             chunks.emplace(at.mask(), std::move(ptr));

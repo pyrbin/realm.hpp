@@ -23,8 +23,8 @@ struct memory_layout
     const int size{ 0 };
     const int align{ 0 };
 
-    constexpr memory_layout() {}
-    constexpr memory_layout(int size, int align) : size{ size }, align{ align }
+    inline constexpr memory_layout() {}
+    inline constexpr memory_layout(int size, int align) : size{ size }, align{ align }
     {
         /**
          * todo: add some necessary checks, eg. align has to be power of 2
@@ -33,7 +33,7 @@ struct memory_layout
     }
 
     template<typename T>
-    static constexpr memory_layout of()
+    inline static constexpr memory_layout of()
     {
         return { sizeof(T), alignof(T) };
     }
