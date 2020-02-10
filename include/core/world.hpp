@@ -1,7 +1,6 @@
 #pragma once
 
 #include "archetype.hpp"
-#include "concepts.hpp"
 #include "entity.hpp"
 #include "system.hpp"
 
@@ -49,13 +48,13 @@ public:
     }
 
     template<typename... T>
-    entity create() requires ComponentPack<T...>
+    detail::enable_if_component_pack<entity, T...> create()
     {
         return create(archetype::of<T...>());
     }
 
     template<typename... T>
-    std::vector<entity> batch(uint32_t n) requires ComponentPack<T...>
+    detail::enable_if_component_pack<std::vector<entity>, T...> batch(uint32_t n)
     {
         return batch(n, archetype::of<T...>());
     }
@@ -67,14 +66,14 @@ public:
         return entts;
     }
 
-    template<BaseComponent T>
-    T& get(entity entt)
+    template<typename T>
+    detail::enable_if_component<T, T&> get(entity entt)
     {
         auto [index, ptr] = *entities.get(entt);
         return static_cast<T&>(*ptr->get<std::unwrap_ref_decay_t<T>>(index));
     }
 
-    template<System T, typename... Args>
+    template<typename T, typename... Args>
     system_functor<T>* insert(Args&&... args)
     {
         auto system = new system_functor<T>(T{ std::forward<Args>(args)... });

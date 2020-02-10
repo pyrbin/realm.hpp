@@ -1,7 +1,5 @@
 #pragma once
 
-#include "../detail/swap_remove.hpp"
-#include "robin_hood.hpp"
 #include <algorithm>
 #include <array>
 #include <cstring>
@@ -10,9 +8,11 @@
 #include <tuple>
 #include <type_traits>
 
+#include "../detail/swap_remove.hpp"
+#include "../detail/type_traits.hpp"
 #include "component.hpp"
-#include "concepts.hpp"
 #include "entity.hpp"
+#include "robin_hood.hpp"
 
 namespace realm {
 
@@ -33,7 +33,7 @@ private:
     const data info{ 0, 0 };
     const size_t components_count{ 0 };
 
-    static inline data generate_data(const components_t& components)
+    static inline data accumulate_info(const components_t& components)
     {
         return std::accumulate(
           components.begin(), components.end(), (data{}), [](data&& res, auto&& comp) {
@@ -49,12 +49,12 @@ public:
     inline archetype() {}
     inline archetype(const components_t& components)
       : components{ std::move(components) }
-      , info{ generate_data(components) }
+      , info{ accumulate_info(components) }
       , components_count{ components.size() }
     {}
 
     template<typename... T>
-    static inline archetype of() noexcept requires ComponentPack<T...>
+    static inline detail::enable_if_component_pack<archetype, T...> of() noexcept
     {
         return archetype{ { component::of<T>()... } };
     }
@@ -64,8 +64,8 @@ public:
         return other.mask() == mask();
     }
 
-    template<Component T>
-    inline constexpr bool has() const
+    template<typename T>
+    inline constexpr detail::enable_if_component<T, bool> has() const
     {
         return has(component::of<T>());
     }
@@ -94,16 +94,18 @@ public:
 namespace detail {
 // TODO: Probly exist better method to filter non Components from a variadic template
 // using concepts/SFINAE to filter?
-template<BaseComponent T>
-static inline void
+template<typename T>
+static inline detail::enable_if_component<T, void>
 __unpack_archetype_helper(std::vector<component>& comps)
 {
     comps.push_back(component::of<std::unwrap_ref_decay_t<T>>());
 }
-template<typename F>
-static inline void
+
+template<typename T>
+static inline detail::enable_if_entity<T, void>
 __unpack_archetype_helper(std::vector<component>&)
 {}
+
 template<typename... T>
 static inline archetype
 unpack_archetype()
@@ -207,15 +209,16 @@ public:
     }
 
     template<typename T>
-    inline T* get(uint32_t index) const
+    inline detail::enable_if_component<T, T*> get(uint32_t index) const
     {
         return ((T*) get_pointer(index, component::of<T>()));
     }
 
     // allows queries to use entity-types as parameter
-    template<Entity T>
-    inline const entity* get(uint32_t index) const
+    template<typename T>
+    inline const detail::enable_if_entity<T, entity*> get(uint32_t index) const
     {
+        // todo: this doesnt feel good
         return &entities[index];
     }
 

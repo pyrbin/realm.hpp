@@ -1,7 +1,6 @@
 #pragma once
 
 #include "archetype.hpp"
-#include "concepts.hpp"
 #include "world.hpp"
 
 #include <algorithm>
@@ -14,13 +13,7 @@ namespace detail {
 
 template<typename F, typename... Args>
 inline constexpr void
-__query_inner(F* obj, void (F::*f)(Args...) const) requires FetchPack<Args...>;
-
-template<typename F, typename... Args>
-inline constexpr void
-__query_inner(world* world,
-              F* obj,
-              void (F::*f)(Args...) const) requires FetchPack<Args...>
+__query_inner(world* world, F* obj, void (F::*f)(Args...) const)
 {
 
     auto at = detail::unpack_archetype<std::unwrap_ref_decay_t<Args>...>();
@@ -37,11 +30,8 @@ __query_inner(world* world,
 
 } // namespace detail
 
+// TODO: only allow functors with arguments that are ref or const-ref to components
 template<typename F>
-requires requires(F& f)
-{
-    detail::__query_inner(&f, &F::operator());
-}
 inline constexpr void
 query(world* world, F&& f)
 {

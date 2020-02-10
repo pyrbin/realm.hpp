@@ -8,7 +8,6 @@
 #include <vector>
 
 #include "../detail/type_meta.hpp"
-#include "concepts.hpp"
 
 namespace realm {
 
@@ -62,10 +61,10 @@ struct component_meta
     const size_t hash{ 0 };
     const size_t mask{ 0 };
 
-    template<Component T>
-    static inline constexpr component_meta of()
+    template<typename T>
+    static inline constexpr detail::enable_if_component<T, component_meta> of()
     {
-        auto hash = detail::type_meta<T>::hash;
+        auto hash = detail::type_meta<std::unwrap_ref_decay_t<T>>::hash;
         return { hash, (size_t)(1 << hash) };
     }
 };
@@ -92,8 +91,8 @@ struct component
         return other.meta.hash == meta.hash;
     }
 
-    template<Component T>
-    static inline constexpr component of()
+    template<typename T>
+    static inline constexpr detail::enable_if_component<T, component> of()
     {
         return { component_meta::of<T>(),
                  memory_layout::of<T>(),
