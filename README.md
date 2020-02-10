@@ -24,8 +24,9 @@ The main focus is a clean & minimal API with acceptable performance,
 perfect aligned contiguous memory of components & parallelization of systems.
 
 ## Features
-* Using C++20 Concepts for a more implicit & non error-prone API
-    * Eg. `component::of<vel&, vel>` would not compile.
+* ~~Using C++20 Concepts for a more implicit & non error-prone API~~
+    * ~~Eg. `component::of<vel&, vel>` would not compile.~~
+    * Concept features not used atm due to problems with IntelliSense on VStudio w/ cmake.
     
 ## API
 
