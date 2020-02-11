@@ -18,7 +18,7 @@ __query_inner(world* world, F* obj, void (F::*f)(Args...) const)
 
     auto at = internal::unpack_archetype<std::unwrap_ref_decay_t<Args>...>();
     for (auto& [hash, root] : world->chunks) {
-        if (!at.subset(hash)) continue;
+        if (!root->archetype.subset(at)) continue;
         for (auto& chunk : root->chunks) {
             for (uint32_t i{ 0 }; i < chunk->size(); i++) {
                 (obj->*f)(*chunk->template get<std::unwrap_ref_decay_t<Args>>(

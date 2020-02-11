@@ -96,8 +96,7 @@ public:
 };
 
 namespace internal {
-// TODO: Probly exist better method to filter non Components from a variadic template
-// using concepts/SFINAE to filter?
+// TODO: Use template-programming to filter T... from non-components instead
 template<typename T>
 static inline internal::enable_if_component<T, void>
 __unpack_archetype_helper(std::vector<component>& comps)
