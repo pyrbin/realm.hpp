@@ -4,38 +4,38 @@ cmake_minimum_required(VERSION 3.15)
 
 project(
   realm
-  VERSION 0.1.0
+  VERSION "0.1.0"
+  LANGUAGES CXX
   DESCRIPTION
-  "A header only ecs c++20 library"
+  "A header only ecs c++20/17 library"
 )
 
-add_library(${PROJECT_NAME} INTERFACE)
+set(IS_MASTER_PROJECT OFF)
 
+if (${CMAKE_CURRENT_SOURCE_DIR} STREQUAL ${CMAKE_SOURCE_DIR})
+  set(IS_MASTER_PROJECT ON)
+endif()
+
+# Enable if master project
+option(REALM_TESTS "Build unit tests" ${IS_MASTER_PROJECT})
+option(REALM_DOCS "Create documentation" ${IS_MASTER_PROJECT})
+
+# Targets
+if(REALM_TESTS)
+  enable_testing()
+  add_subdirectory(test)
+endif()
+
+#if(REALM_DOCS)
+#  add_subdirectory(docs)
+#endif()
+
+# Library
+add_library(${PROJECT_NAME} INTERFACE)
 add_library(${PROJECT_NAME}::${PROJECT_NAME} ALIAS ${PROJECT_NAME})
 
-include(CTest)
+target_compile_features(${PROJECT_NAME} INTERFACE cxx_std_20)
 
 target_include_directories(
   ${PROJECT_NAME}
   INTERFACE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/realm.hpp>)
-
-# Settings
-set(CMAKE_CXX_STANDARD 20)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_EXTENSIONS OFF)
-
-# Compiler flags
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -DNDEBUG -Wall -Wextra -Wnon-virtual-dtor -Wcast-align -Woverloaded-virtual -pedantic")
-
-if(MSVC)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /std:c++latest")
-endif(MSVC)
-
-if(CMAKE_COMPILER_IS_GNUCXX)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fconcepts -ltbb")
-endif(CMAKE_COMPILER_IS_GNUCXX)
-
-# Testing
-if(BUILD_TESTING)
-  add_subdirectory(test)
-endif()
