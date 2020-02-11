@@ -14,7 +14,7 @@
 #endif
 
 namespace realm {
-namespace detail {
+namespace internal {
 
 using hash_t = uint64_t;
 
@@ -41,13 +41,13 @@ private:
     // TODO: only use the name of the class when generating hash
     static constexpr auto get_hash() noexcept
     {
-        return detail::hash_fnv1a(__VALID_PRETTY_FUNC__);
+        return internal::hash_fnv1a(__VALID_PRETTY_FUNC__);
     }
 
 public:
-    using hash_type = detail::hash_t;
+    using hash_type = internal::hash_t;
     static constexpr hash_type hash{ get_hash() };
 };
 
-} // namespace detail
+} // namespace internal
 } // namespace realm

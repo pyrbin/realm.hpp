@@ -9,14 +9,14 @@
 
 namespace realm {
 
-namespace detail {
+namespace internal {
 
 template<typename F, typename... Args>
 inline constexpr void
 __query_inner(world* world, F* obj, void (F::*f)(Args...) const)
 {
 
-    auto at = detail::unpack_archetype<std::unwrap_ref_decay_t<Args>...>();
+    auto at = internal::unpack_archetype<std::unwrap_ref_decay_t<Args>...>();
     for (auto& [hash, root] : world->chunks) {
         if (!at.subset(hash)) continue;
         for (auto& chunk : root->chunks) {
@@ -28,14 +28,14 @@ __query_inner(world* world, F* obj, void (F::*f)(Args...) const)
     }
 }
 
-} // namespace detail
+} // namespace internal
 
 // TODO: only allow functors with arguments that are ref or const-ref to components
 template<typename F>
 inline constexpr void
 query(world* world, F&& f)
 {
-    detail::__query_inner(world, &f, &F::operator());
+    internal::__query_inner(world, &f, &F::operator());
 }
 
 } // namespace realm

@@ -15,7 +15,7 @@ struct world
 {
     using chunks_t =
       robin_hood::unordered_flat_map<size_t, std::unique_ptr<archetype_chunk_root>>;
-    using entities_t = detail::entity_pool;
+    using entities_t = internal::entity_pool;
 
     static const size_t DEFAULT_MAX_ENTITIES = 100000;
 
@@ -71,13 +71,13 @@ public:
     }
 
     template<typename... T>
-    detail::enable_if_component_pack<entity, T...> create()
+    internal::enable_if_component_pack<entity, T...> create()
     {
         return create(archetype::of<T...>());
     }
 
     template<typename... T>
-    detail::enable_if_component_pack<std::vector<entity>, T...> batch(uint32_t n)
+    internal::enable_if_component_pack<std::vector<entity>, T...> batch(uint32_t n)
     {
         return batch(n, archetype::of<T...>());
     }
@@ -92,14 +92,14 @@ public:
     bool exists(entity entt) { return entities.exists(entt); }
 
     template<typename T>
-    detail::enable_if_component<T, T&> get(entity entt)
+    internal::enable_if_component<T, T&> get(entity entt)
     {
         auto [index, chunk_ptr] = *entities.get(entt);
         return static_cast<T&>(*chunk_ptr->get<std::unwrap_ref_decay_t<T>>(index));
     }
 
     template<typename... T>
-    detail::enable_if_component_pack<void, T...> add(entity entt)
+    internal::enable_if_component_pack<void, T...> add(entity entt)
     {
         assert(!has<T...>(entt));
 
@@ -111,7 +111,7 @@ public:
     }
 
     template<typename... T>
-    detail::enable_if_component_pack<void, T...> remove(entity entt)
+    internal::enable_if_component_pack<void, T...> remove(entity entt)
     {
         auto at = get_archetype(entt);
         auto to_remove = archetype::of<T...>();
@@ -129,7 +129,7 @@ public:
     }
 
     template<typename... T>
-    detail::enable_if_component_pack<bool, T...> has(entity entt)
+    internal::enable_if_component_pack<bool, T...> has(entity entt)
     {
         auto at = get_archetype(entt);
         return (... && at.has<T>());

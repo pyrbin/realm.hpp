@@ -11,8 +11,8 @@
 #include <cstdlib>
 #include <malloc.h>
 
-#include "../detail/swap_remove.hpp"
-#include "../detail/type_traits.hpp"
+#include "../internal/swap_remove.hpp"
+#include "../internal/type_traits.hpp"
 #include "component.hpp"
 #include "entity.hpp"
 #include "robin_hood.hpp"
@@ -58,7 +58,7 @@ public:
     {}
 
     template<typename... T>
-    static inline detail::enable_if_component_pack<archetype, T...> of() noexcept
+    static inline internal::enable_if_component_pack<archetype, T...> of() noexcept
     {
         return archetype{ { component::of<T>()... } };
     }
@@ -69,7 +69,7 @@ public:
     }
 
     template<typename T>
-    inline constexpr detail::enable_if_component<T, bool> has() const
+    inline constexpr internal::enable_if_component<T, bool> has() const
     {
         return has(component::of<T>());
     }
@@ -95,18 +95,18 @@ public:
     inline constexpr size_t count() const { return components_count; }
 };
 
-namespace detail {
+namespace internal {
 // TODO: Probly exist better method to filter non Components from a variadic template
 // using concepts/SFINAE to filter?
 template<typename T>
-static inline detail::enable_if_component<T, void>
+static inline internal::enable_if_component<T, void>
 __unpack_archetype_helper(std::vector<component>& comps)
 {
     comps.push_back(component::of<std::unwrap_ref_decay_t<T>>());
 }
 
 template<typename T>
-static inline detail::enable_if_entity<T, void>
+static inline internal::enable_if_entity<T, void>
 __unpack_archetype_helper(std::vector<component>&)
 {}
 
@@ -118,7 +118,7 @@ unpack_archetype()
     (__unpack_archetype_helper<std::unwrap_ref_decay_t<T>>(comps), ...);
     return archetype{ comps };
 }
-} // namespace detail
+} // namespace internal
 
 // forward declaration
 struct archetype_chunk_root
@@ -215,7 +215,7 @@ public:
         // do de-fragmentation, (is this costly?)
         auto end{ (len--) - 1 };
         if (len == 0) return entities[index];
-        detail::swap_remove(index, entities);
+        internal::swap_remove(index, entities);
         copy_to(end, this, index);
         for (const auto& component : archetype.components) {
            component.destroy(get_pointer(end, component));
@@ -224,14 +224,14 @@ public:
     }
 
     template<typename T>
-    inline detail::enable_if_component<T, T*> get(uint32_t index) const
+    inline internal::enable_if_component<T, T*> get(uint32_t index) const
     {
         return ((T*) get_pointer(index, component::of<T>()));
     }
 
     // allows queries to use entity-types as parameter
     template<typename T>
-    inline const detail::enable_if_entity<T, entity*> get(uint32_t index) const
+    inline const internal::enable_if_entity<T, entity*> get(uint32_t index) const
     {
         // todo: this doesnt feel good
         return &entities[index];

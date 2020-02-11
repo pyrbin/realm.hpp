@@ -6,7 +6,7 @@
 #include <numeric>
 #include <vector>
 
-#include "../detail/swap_remove.hpp"
+#include "../internal/swap_remove.hpp"
 
 namespace realm {
 
@@ -25,7 +25,7 @@ struct entity_handle
 
 struct archetype_chunk;
 
-namespace detail {
+namespace internal {
 
 
 struct entity_location
@@ -90,8 +90,8 @@ public:
         handles.at(handle.index).index =
           first_available != -1 ? first_available : handle.index;
         first_available = handle.index;
-        detail::swap_remove(loc_index, slots);
-        detail::swap_remove(loc_index, locations);
+        internal::swap_remove(loc_index, slots);
+        internal::swap_remove(loc_index, locations);
     }
 
     const entity_location* get(entity entt)
@@ -179,6 +179,6 @@ private:
     int first_available;
 };
 
-} // namespace detail
+} // namespace internal
 
 } // namespace realm

@@ -8,7 +8,7 @@
 #include <typeinfo>
 #include <vector>
 
-#include "../detail/type_meta.hpp"
+#include "../internal/type_meta.hpp"
 
 namespace realm {
 
@@ -29,7 +29,7 @@ struct memory_layout
     {
         /**
          * todo: add some necessary checks, eg. align has to be power of 2
-         * see rust impl. for details
+         * see rust impl. for internals
          */
     }
 
@@ -64,9 +64,9 @@ struct component_meta
     const size_t mask{ 0 };
 
     template<typename T>
-    static inline constexpr detail::enable_if_component<T, component_meta> of()
+    static inline constexpr internal::enable_if_component<T, component_meta> of()
     {
-        auto hash = detail::type_meta<std::unwrap_ref_decay_t<T>>::hash;
+        auto hash = internal::type_meta<std::unwrap_ref_decay_t<T>>::hash;
         return { hash, (size_t)(1 << hash) };
     }
 };
@@ -98,7 +98,7 @@ struct component
     }
 
     template<typename T>
-    static inline constexpr detail::enable_if_component<T, component> of()
+    static inline constexpr internal::enable_if_component<T, component> of()
     {
         return { component_meta::of<T>(),
                  memory_layout::of<T>(),
