@@ -1,5 +1,3 @@
-* add systems (wrappers around query)
-
 * add docs generation and documentation
 
 * redo block memory allocation/iteration

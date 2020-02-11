@@ -11,7 +11,7 @@
 - [Developer](#developer)
 
 ## Introduction
-Goal of this project is to create a simple ECS framework in C++20 to increase 
+Goal of this project is to create a simple ECS framework in `C++20/17` to increase 
 my knowledge of modern C++/C++ toolchains, DoD patterns, concurrent programming and general game dev. 
 This is an archetype-based ECS taking inspiration from 
 [Unity DOTS](https://unity.com/dots) and smaller frameworks like
@@ -50,29 +50,36 @@ auto entt = world.create<vel, pos>();
 auto at = realm::archetype::of<vel, pos>();
 auto entt = world.create(at);
 
-// if you rather want to use something more OOP-friendly
-// there is an wrapper-class actor that contains functions
-// for get/add/remove components.
-auto actor = new realm::actor(entt, &world);
-
 // use the type system for mutable/immutable fetch of comps
 auto& p_write = world.get<pos>(entt);
 auto& p_read = world.get<const pos>(entt);
 
 // query the world using only a lamdba where each argument is 
 // an component you want to fetch
-
 realm::query(&world, [](pos&, const vel&) {
     pos.x += vel.x;
     pos.y += vel.y;
 });
 
-// Add an realm::entity type to include the current entity
+// Add an realm::entity type to get the current entity
 realm::query(&world, [](pos&, const vel&, realm::entity entt) {
     std::cout << "querying entity: " << entt << "\n";
 });
 
+// You can also create a system class and insert it to the world
+// The query lambda is taken from the update function
+struct example_system {
+    void update(pos&, const vel&, realm::entity entt) const {
+        pos.x += vel.x;
+        pos.y += vel.y;
+    }
+}
 
+world.insert<example_system>(/* args */);
+
+// All systems can be invokable by calling world.update
+world.update();
+world.update(/* execution policy? */);
 ```
 
 ## TODO
@@ -93,7 +100,7 @@ Videos & talks:
   <tbody>
     <tr>
       <td align="center" valign="top">
-        <img width="150" height="150" src="https://github.com/pyrbin.png?s=150">
+        <img width="100" height="100" src="https://github.com/pyrbin.png?s=150">
         <br>
         <a href="https://github.com/pyrbin">pyrbin</a>
       </td>

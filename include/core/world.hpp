@@ -13,14 +13,16 @@ namespace realm {
 
 struct world
 {
+    static const size_t DEFAULT_MAX_ENTITIES = 100000;
+
     using chunks_t =
       robin_hood::unordered_flat_map<size_t, std::unique_ptr<archetype_chunk_root>>;
+    using systems_t = std::vector<std::unique_ptr<system_base>>;
     using entities_t = internal::entity_pool;
-
-    static const size_t DEFAULT_MAX_ENTITIES = 100000;
 
     chunks_t chunks;
     entities_t entities;
+    systems_t systems;
 
 private:
     inline archetype_chunk* get_free_chunk(const archetype& at)
@@ -56,7 +58,6 @@ private:
 
         // update location info of entity
         entities.update(entt, { idx, chunk });
-
     }
 
 public:
@@ -111,7 +112,7 @@ public:
     }
 
     template<typename... T>
-    internal::enable_if_component_pack<void, T...> remove(entity entt)
+    inline constexpr internal::enable_if_component_pack<void, T...> remove(entity entt)
     {
         auto at = get_archetype(entt);
         auto to_remove = archetype::of<T...>();
@@ -129,7 +130,7 @@ public:
     }
 
     template<typename... T>
-    internal::enable_if_component_pack<bool, T...> has(entity entt)
+    inline constexpr internal::enable_if_component_pack<bool, T...> has(entity entt)
     {
         auto at = get_archetype(entt);
         return (... && at.has<T>());
@@ -141,11 +142,18 @@ public:
     }
 
     template<typename T, typename... Args>
-    system_functor<T>* insert(Args&&... args)
+    inline constexpr system_functor<T>* insert(Args&&... args)
     {
-        auto system = new system_functor<T>(T{ std::forward<Args>(args)... });
-        static_cast<system_functor<T>*>(system)->init(&T::update);
-        return system;
+        systems.push_back(
+          std::make_unique<system_functor<T>>(T{ std::forward<Args>(args)... }));
+        return static_cast<system_functor<T>*>(systems.back().get());
+    }
+
+    inline void update()
+    {
+        for (auto& sys : systems) {
+            sys->operator()(this);
+        }
     }
 
     template<typename T>
@@ -168,6 +176,7 @@ public:
 
     int32_t size() const noexcept { return entities.size(); }
     int32_t capacity() const noexcept { return entities.capacity(); }
+    int32_t system_count() const noexcept { return systems.size(); }
 };
 
 } // namespace realm
