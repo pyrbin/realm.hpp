@@ -1,16 +1,16 @@
 set(
-  TESTS
-  entity_tests
+  BENCHS
+  simple_bench
 )
 
 # TODO: link realm library
 
-function(add_cmake_test target)
+function(add_cmake_bench target)
   string(CONCAT target_src ${target} ".cpp")
   add_executable(${target} ${target_src})
-  add_test(NAME ${target} COMMAND ${target})
+  target_link_libraries(${target} realm::realm)
 endfunction()
 
-foreach(t ${TESTS})
-  add_cmake_test(${t})
+foreach(b ${BENCHS})
+  add_cmake_bench(${b})
 endforeach()

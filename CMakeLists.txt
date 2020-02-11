@@ -18,7 +18,18 @@ endif()
 
 # Enable if master project
 option(REALM_TESTS "Build unit tests" ${IS_MASTER_PROJECT})
-option(REALM_DOCS "Create documentation" ${IS_MASTER_PROJECT})
+option(REALM_BENCH "Build benchmarks" ${IS_MASTER_PROJECT})
+
+# Library
+add_library(${PROJECT_NAME} INTERFACE)
+add_library(${PROJECT_NAME}::${PROJECT_NAME} ALIAS ${PROJECT_NAME})
+
+# Settings
+target_compile_features(${PROJECT_NAME} INTERFACE cxx_std_20)
+target_include_directories(
+  ${PROJECT_NAME}
+  INTERFACE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/realm.hpp>)
+
 
 # Targets
 if(REALM_TESTS)
@@ -26,16 +37,6 @@ if(REALM_TESTS)
   add_subdirectory(test)
 endif()
 
-#if(REALM_DOCS)
-#  add_subdirectory(docs)
-#endif()
-
-# Library
-add_library(${PROJECT_NAME} INTERFACE)
-add_library(${PROJECT_NAME}::${PROJECT_NAME} ALIAS ${PROJECT_NAME})
-
-target_compile_features(${PROJECT_NAME} INTERFACE cxx_std_20)
-
-target_include_directories(
-  ${PROJECT_NAME}
-  INTERFACE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/realm.hpp>)
+if(REALM_BENCH)
+  add_subdirectory(bench)
+endif()
