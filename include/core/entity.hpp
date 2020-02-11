@@ -6,7 +6,7 @@
 #include <numeric>
 #include <vector>
 
-#include "../internal/swap_remove.hpp"
+#include "../util/swap_remove.hpp"
 
 namespace realm {
 

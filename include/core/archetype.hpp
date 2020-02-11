@@ -11,11 +11,12 @@
 #include <tuple>
 #include <type_traits>
 
-#include "../internal/swap_remove.hpp"
-#include "../internal/type_traits.hpp"
+#include "../external/robin_hood.hpp"
+#include "../util/swap_remove.hpp"
+#include "../util/type_traits.hpp"
+
 #include "component.hpp"
 #include "entity.hpp"
-#include "robin_hood.hpp"
 
 namespace realm {
 

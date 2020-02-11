@@ -4,7 +4,6 @@
 #include <utility>
 
 namespace realm {
-
 namespace internal {
 
 template<typename...>
@@ -39,5 +38,4 @@ using enable_if_component_pack = std::enable_if_t<is_component_pack<T...>, R>;
 
 
 } // namespace internal
-
 } // namespace realm

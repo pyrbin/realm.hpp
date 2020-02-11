@@ -8,7 +8,7 @@
 #include <typeinfo>
 #include <vector>
 
-#include "../internal/type_hash.hpp"
+#include "../util/type_hash.hpp"
 
 namespace realm {
 
