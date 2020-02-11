@@ -10,28 +10,38 @@
 #include <tuple>
 #include <utility>
 
-#include "query.hpp"
 #include "archetype.hpp"
+#include "query.hpp"
 
 namespace realm {
 
 struct world;
 
+namespace internal {
+// TODO: remove this
+// has to predeclare in CLion for some reason for it to compile
+template<typename F, typename... Args>
+inline constexpr void
+__query_inner(world* world, F* obj, void (F::*f)(Args...) const);
+
+} // namespace internal
+
 struct system_base
 {
 protected:
-    using archetype_t = archetype;
-
     template<typename T>
     using system_ptr = std::unique_ptr<T>;
+    using archetype_t = struct archetype;
 
 public:
-    inline constexpr system_base(){};
-    inline ~system_base(){};
+    archetype_t archetype;
+
+    inline system_base(){};
+    inline system_base(const archetype_t& at) : archetype{ at } {};
+    virtual inline ~system_base() = default;
 
     virtual inline constexpr bool compare(size_t hash) const = 0;
     virtual inline void operator()(world*) const = 0;
-
 };
 
 template<typename T>
@@ -41,25 +51,28 @@ private:
     template<typename R = void, typename... Args>
     archetype_t create_archetype(R (T::*f)(Args...) const)
     {
-        return internal::unpack_archetype<std::unwrap_ref_decay_t<Args>...>();
+        return std::move(internal::unpack_archetype<std::unwrap_ref_decay_t<Args>...>());
     }
 
     const system_ptr<T> inner_system;
 
 public:
-    const archetype_t archetype;
-
-    inline constexpr system_functor(T&& s)
-      : inner_system{ std::make_unique<T>(std::move(s)) }
-      , archetype{ create_archetype(&T::update) }
+    template<typename... Args>
+    inline constexpr system_functor(Args&&... args)
+      : inner_system{ std::make_unique<T>(std::forward<Args>(args)...) }
+      , system_base{ create_archetype(&T::update) }
     {}
 
-    inline constexpr bool compare(size_t hash) const override { return archetype.subset(hash); }
+    inline constexpr bool compare(size_t hash) const override
+    {
+        return archetype.subset(hash);
+    }
+
     inline void operator()(world* world) const override
     {
         // TODO: anyway to use realm::query instead?
         internal::__query_inner(world, inner_system.get(), &T::update);
     }
-
 };
+
 } // namespace realm

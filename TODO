@@ -25,6 +25,8 @@
     }
 
 
+* add std::optional when getting components?
+
 * add tag/flag components (components who doesnt occupy memory, no data)
 
 * add static components/instances (components whose data never changes doesnt have to be reallocated)

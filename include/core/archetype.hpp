@@ -2,14 +2,14 @@
 
 #include <algorithm>
 #include <array>
+#include <cstdlib>
 #include <cstring>
+#include <malloc.h>
 #include <memory>
 #include <numeric>
+#include <stdlib.h>
 #include <tuple>
 #include <type_traits>
-#include <stdlib.h>
-#include <cstdlib>
-#include <malloc.h>
 
 #include "../internal/swap_remove.hpp"
 #include "../internal/type_traits.hpp"
@@ -26,7 +26,7 @@ struct archetype
 {
 private:
     using components_t = std::vector<component>;
-    //using components_t = robin_hood::unordered_flat_set<component>;
+    // using components_t = robin_hood::unordered_flat_set<component>;
 
     struct data
     {
@@ -159,8 +159,7 @@ public:
 
     inline archetype_chunk(const struct archetype archetype, uint32_t max_capacity)
       : archetype{ archetype }, max_capacity(max_capacity)
-    {
-    }
+    {}
 
     ~archetype_chunk() { dealloc(); }
 
@@ -178,11 +177,11 @@ public:
 
         assert(data_size <= chunk_size);
 
-        #if defined(_WIN32) || defined(__CYGWIN__)
+#if defined(_WIN32) || defined(__CYGWIN__)
         data = (_aligned_malloc(data_size, alignment));
-        #else
+#else
         data = (std::aligned_alloc(alignment, data_size));
-        #endif
+#endif
 
         return data;
     }
@@ -190,11 +189,11 @@ public:
     inline void dealloc()
     {
         if (data != nullptr) {
-            #if defined(_WIN32) || defined(__CYGWIN__)
+#if defined(_WIN32) || defined(__CYGWIN__)
             _aligned_free((void*) data);
-            #else
+#else
             free((void*) (data));
-            #endif
+#endif
             data = nullptr;
             // parent = nullptr;
         }
@@ -217,7 +216,7 @@ public:
         internal::swap_remove(index, entities);
         copy_to(end, this, index);
         for (const auto& component : archetype.components) {
-           component.destroy(get_pointer(end, component));
+            component.destroy(get_pointer(end, component));
         }
         return entities[index];
     }
@@ -246,8 +245,8 @@ public:
         for (const auto& component : archetype.components) {
             if (other->archetype.has(component)) {
                 memcpy(other->get_pointer(to, component),
-                    get_pointer(from, component),
-                    component.layout.size);
+                       get_pointer(from, component),
+                       component.layout.size);
             }
         }
     }

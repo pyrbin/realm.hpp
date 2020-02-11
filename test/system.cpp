@@ -6,7 +6,8 @@ struct example_system
 
     example_system(float value) : value{ value } {};
 
-    void update(realm::entity entt, pos& p) const {
+    void update(realm::entity entt, pos& p) const
+    {
         p.x += value + entt;
         p.y += value + entt;
         p.z += value + entt;
@@ -26,7 +27,6 @@ TEST_CASE("system_insert")
 
     REQUIRE(sys->archetype.count() == 1);
     REQUIRE(world.system_count() == 1);
-
 }
 
 TEST_CASE("system_update")
@@ -35,5 +35,5 @@ TEST_CASE("system_update")
     REQUIRE(world.get<pos>(0).x == Arg1 + 0);
 
     world.update();
-    REQUIRE(world.get<pos>(N-1).x == Arg1 * 2 + ((N-1)*2));
+    REQUIRE(world.get<pos>(N - 1).x == Arg1 * 2 + ((N - 1) * 2));
 }

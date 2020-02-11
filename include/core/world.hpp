@@ -5,9 +5,9 @@
 #include "system.hpp"
 
 #include <functional>
+#include <optional>
 #include <unordered_map>
 #include <vector>
-#include <optional>
 
 namespace realm {
 
@@ -120,9 +120,7 @@ public:
         std::vector<component> new_components{};
 
         for (auto& comp : at.components) {
-            if (!to_remove.has(comp)) { 
-                new_components.push_back(component{comp});
-            }
+            if (!to_remove.has(comp)) { new_components.push_back(component{ comp }); }
         }
 
         auto new_at = archetype{ new_components };
@@ -144,16 +142,14 @@ public:
     template<typename T, typename... Args>
     inline constexpr system_functor<T>* insert(Args&&... args)
     {
-        systems.push_back(
-          std::make_unique<system_functor<T>>(T{ std::forward<Args>(args)... }));
-        return static_cast<system_functor<T>*>(systems.back().get());
+        auto ptr = std::make_unique<system_functor<T>>(std::forward<Args>(args)...);
+        return static_cast<system_functor<T>*>(
+          systems.emplace_back(std::move(ptr)).get());
     }
 
     inline void update()
     {
-        for (auto& sys : systems) {
-            sys->operator()(this);
-        }
+        for (auto& sys : systems) { sys->operator()(this); }
     }
 
     template<typename T>
