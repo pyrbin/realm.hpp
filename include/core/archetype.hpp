@@ -61,7 +61,7 @@ public:
     }
 
     template<typename... T>
-    static inline constexpr size_t mask_of() noexcept
+    static inline constexpr internal::enable_if_component_pack<size_t, T...> mask_of()
     {
         size_t mask{ 0 };
         ( // Iterate each type and get component mask
