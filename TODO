@@ -31,7 +31,7 @@
 
 * better tests/benchs (and link library)
 
-* implement conan
+* integrate conan
 
 * impl component fetch_types / event-system in queries ex,
     * emit<pos>     -> doesnt query pos but declares that it will create pos as an event
