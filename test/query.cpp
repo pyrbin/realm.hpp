@@ -14,7 +14,7 @@ TEST_CASE("query_read")
     int i{ 0 };
 
 
-    realm::query(&world, [&](const pos& p) {
+    realm::query(&world, [&](realm::entity entt, const pos& p) {
         REQUIRE(p.x == i++);
     });
 
