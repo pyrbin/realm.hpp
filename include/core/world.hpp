@@ -7,6 +7,7 @@
 #include <functional>
 #include <unordered_map>
 #include <vector>
+#include <optional>
 
 namespace realm {
 
@@ -14,13 +15,15 @@ struct world
 {
     using chunks_t =
       robin_hood::unordered_flat_map<size_t, std::unique_ptr<archetype_chunk_root>>;
-    using entities_t = entity_pool;
+    using entities_t = detail::entity_pool;
+
+    static const size_t DEFAULT_MAX_ENTITIES = 100000;
 
     chunks_t chunks;
     entities_t entities;
 
 private:
-    archetype_chunk* get_free_chunk(const archetype& at)
+    inline archetype_chunk* get_free_chunk(const archetype& at)
     {
 
         archetype_chunk_root* root{ nullptr };
@@ -37,14 +40,34 @@ private:
         return root->find_free();
     }
 
+    inline void modify_archetype(entity entt, const archetype& new_at) noexcept
+    {
+        auto old_location = entities.get(entt);
+        auto chunk = get_free_chunk(new_at);
+
+        if (chunk->archetype == old_location->chunk->archetype) return;
+
+        // insert into new archetype chunk
+        auto idx = chunk->insert(entt);
+
+        // copy and remove from old chunk to new
+        old_location->chunk->copy_to(old_location->chunk_index, chunk, idx);
+        auto moved = old_location->chunk->remove(old_location->chunk_index);
+
+        // update location info of entity
+        entities.update(entt, { idx, chunk });
+
+    }
+
 public:
-    world(uint32_t capacity = 100) : entities{ capacity } {}
+    world(uint32_t capacity = DEFAULT_MAX_ENTITIES) : entities{ capacity } {}
 
     entity create(const archetype& at)
     {
         auto chunk = get_free_chunk(at);
-        auto entt = entities.create(entity_location{ chunk->size(), chunk });
-        return chunk->insert(entt);
+        auto entt = entities.create({ chunk->size(), chunk });
+        chunk->insert(entt);
+        return entt;
     }
 
     template<typename... T>
@@ -66,11 +89,55 @@ public:
         return entts;
     }
 
+    bool exists(entity entt) { return entities.exists(entt); }
+
     template<typename T>
     detail::enable_if_component<T, T&> get(entity entt)
     {
-        auto [index, ptr] = *entities.get(entt);
-        return static_cast<T&>(*ptr->get<std::unwrap_ref_decay_t<T>>(index));
+        auto [index, chunk_ptr] = *entities.get(entt);
+        return static_cast<T&>(*chunk_ptr->get<std::unwrap_ref_decay_t<T>>(index));
+    }
+
+    template<typename... T>
+    detail::enable_if_component_pack<void, T...> add(entity entt)
+    {
+        assert(!has<T...>(entt));
+
+        auto at = get_archetype(entt);
+        auto comps = std::vector<component>{ at.components };
+        (comps.push_back(component::of<T>()), ...);
+        auto new_at = archetype{ comps };
+        modify_archetype(entt, new_at);
+    }
+
+    template<typename... T>
+    detail::enable_if_component_pack<void, T...> remove(entity entt)
+    {
+        auto at = get_archetype(entt);
+        auto to_remove = archetype::of<T...>();
+
+        std::vector<component> new_components{};
+
+        for (auto& comp : at.components) {
+            if (!to_remove.has(comp)) { 
+                new_components.push_back(component{comp});
+            }
+        }
+
+        auto new_at = archetype{ new_components };
+        modify_archetype(entt, new_at);
+    }
+
+    template<typename... T>
+    detail::enable_if_component_pack<bool, T...> has(entity entt)
+    {
+        auto at = get_archetype(entt);
+        return (... && at.has<T>());
+    }
+
+    const archetype& get_archetype(entity entt)
+    {
+        return entities.get(entt)->chunk->archetype;
     }
 
     template<typename T, typename... Args>

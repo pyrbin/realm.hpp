@@ -15,7 +15,6 @@ namespace realm {
  * where each 32-bit half represents an index & generation
  */
 using entity = uint64_t;
-using entity_id = entity;
 
 struct entity_handle
 {
@@ -23,7 +22,11 @@ struct entity_handle
     uint32_t generation;
 };
 
+
 struct archetype_chunk;
+
+namespace detail {
+
 
 struct entity_location
 {
@@ -76,13 +79,6 @@ public:
         return merge_handle(handle);
     }
 
-    void update(entity entt, const entity_location& loc)
-    {
-        auto to_update = get(entt);
-        to_update->chunk = loc.chunk;
-        to_update->chunk_index = loc.chunk_index;
-    }
-
     void free(entity entt)
     {
         auto handle = extract_handle(entt);
@@ -98,13 +94,28 @@ public:
         detail::swap_remove(loc_index, locations);
     }
 
-    entity_location* get(entity entt)
+    const entity_location* get(entity entt)
     {
         auto handle = extract_handle(entt);
         auto [index, generation] = handles.at(handle.index);
         return generation == handle.generation
                  ? &locations.at(handles.at(handle.index).index)
                  : nullptr;
+    }
+    
+    entity_location* get_mut(entity entt)
+    {
+        auto handle = extract_handle(entt);
+        auto [index, generation] = handles.at(handle.index);
+        return generation == handle.generation
+                 ? &locations.at(handles.at(handle.index).index)
+                 : nullptr;
+    }
+
+    void update(entity entt, entity_location&& loc)
+    {
+        get_mut(entt)->chunk = std::move(loc.chunk);
+        get_mut(entt)->chunk_index = std::move(loc.chunk_index);
     }
 
     bool exists(entity entt) const noexcept
@@ -127,7 +138,7 @@ public:
     {
         for (unsigned i{ 0 }; i < handles.size(); i++) {
             auto id = merge_handle(handles[i]);
-            fn(id, (get(id)));
+            fn(id, (get_mut(id)));
         }
     }
 
@@ -167,5 +178,7 @@ private:
     std::vector<uint32_t> slots;
     int first_available;
 };
+
+} // namespace detail
 
 } // namespace realm
