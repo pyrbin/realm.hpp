@@ -2,7 +2,7 @@
 
 #include <cstddef>
 
-// todo: implement a fallback id generation
+// TODO: implement a fallback id generation
 #if defined(__GNUC__)
 #define __VALID_PRETTY_FUNC__ __PRETTY_FUNCTION__
 #elif defined(__clang__)
@@ -18,8 +18,8 @@ namespace internal {
 
 using hash_t = uint64_t;
 
-constexpr hash_t fnv_basis = 14695981039346656037ull;
-constexpr hash_t fnv_prime = 1099511628211ull;
+inline const hash_t fnv_basis = 14695981039346656037ull;
+inline const hash_t fnv_prime = 1099511628211ull;
 
 /**
  * @brief https://notes.underscorediscovery.com/constexpr-fnv1a/
@@ -35,18 +35,17 @@ hash_fnv1a(const char* const str, const hash_t value = fnv_basis) noexcept
 }
 
 template<typename T>
-struct type_meta
+struct type_hash
 {
 private:
-    // TODO: only use the name of the class when generating hash
-    static constexpr auto get_hash() noexcept
+    static constexpr auto gen_hash() noexcept
     {
         return internal::hash_fnv1a(__VALID_PRETTY_FUNC__);
     }
 
 public:
-    using hash_type = internal::hash_t;
-    static constexpr hash_type hash{ get_hash() };
+    using value_type = internal::hash_t;
+    static constexpr value_type value{ gen_hash() };
 };
 
 } // namespace internal

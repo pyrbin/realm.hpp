@@ -10,6 +10,8 @@
 #include "util/components.hpp"
 #include "util/timer.hpp"
 
+// TODO: Use a benchmark library/framework
+
 struct movement_system
 {
     realm::world* world;

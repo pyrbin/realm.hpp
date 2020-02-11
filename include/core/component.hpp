@@ -1,14 +1,14 @@
 #pragma once
 
-#include <functional>
 #include <assert.h>
 #include <cstddef>
+#include <functional>
 #include <iostream>
 #include <string>
 #include <typeinfo>
 #include <vector>
 
-#include "../internal/type_meta.hpp"
+#include "../internal/type_hash.hpp"
 
 namespace realm {
 
@@ -66,7 +66,7 @@ struct component_meta
     template<typename T>
     static inline constexpr internal::enable_if_component<T, component_meta> of()
     {
-        auto hash = internal::type_meta<std::unwrap_ref_decay_t<T>>::hash;
+        auto hash = internal::type_hash<std::unwrap_ref_decay_t<T>>::value;
         return { hash, (size_t)(1 << hash) };
     }
 };
@@ -91,7 +91,6 @@ struct component
       : meta{ meta }, layout{ layout }, alloc{ alloc }, destroy{ destroy }
     {}
 
-
     inline constexpr bool operator==(const component& other) const
     {
         return other.meta.hash == meta.hash;
@@ -106,7 +105,6 @@ struct component
                  [](void* ptr) { ((T*) ptr)->~T(); } };
     }
 };
-
 
 } // namespace realm
 
