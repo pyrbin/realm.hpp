@@ -1,5 +1,6 @@
 #pragma once
 
+#include <functional>
 #include <assert.h>
 #include <cstddef>
 #include <iostream>
@@ -19,11 +20,12 @@ namespace realm {
  */
 struct memory_layout
 {
-    const int size{ 0 };
-    const int align{ 0 };
+    const unsigned size{ 0 };
+    const unsigned align{ 0 };
 
     inline constexpr memory_layout() {}
-    inline constexpr memory_layout(int size, int align) : size{ size }, align{ align }
+    inline constexpr memory_layout(unsigned size, unsigned align)
+      : size{ size }, align{ align }
     {
         /**
          * todo: add some necessary checks, eg. align has to be power of 2
@@ -71,20 +73,24 @@ struct component_meta
 
 struct component
 {
+
     using constructor_t = void(void*);
 
     const component_meta meta;
     const memory_layout layout;
 
-    const constructor_t* invoke{ nullptr };
+    const constructor_t* alloc{ nullptr };
     const constructor_t* destroy{ nullptr };
 
+    // underlying type
+    inline constexpr component(){};
     inline constexpr component(component_meta meta,
                                memory_layout layout,
-                               constructor_t* invoke,
+                               constructor_t* alloc,
                                constructor_t* destroy)
-      : meta{ meta }, layout{ layout }, invoke{ invoke }, destroy{ destroy }
+      : meta{ meta }, layout{ layout }, alloc{ alloc }, destroy{ destroy }
     {}
+
 
     inline constexpr bool operator==(const component& other) const
     {
@@ -101,4 +107,18 @@ struct component
     }
 };
 
+
 } // namespace realm
+
+namespace std {
+
+template<>
+struct hash<realm::component>
+{
+    size_t operator()(const realm::component& c) const
+    {
+        return (hash<size_t>{}(c.meta.hash));
+    }
+};
+
+} // namespace std

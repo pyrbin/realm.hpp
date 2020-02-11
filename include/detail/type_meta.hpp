@@ -18,8 +18,8 @@ namespace detail {
 
 using hash_t = uint64_t;
 
-inline constexpr hash_t fnv_basis = 14695981039346656037ull;
-inline constexpr hash_t fnv_prime = 1099511628211ull;
+constexpr hash_t fnv_basis = 14695981039346656037ull;
+constexpr hash_t fnv_prime = 1099511628211ull;
 
 /**
  * @brief https://notes.underscorediscovery.com/constexpr-fnv1a/
