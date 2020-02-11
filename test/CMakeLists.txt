@@ -1,6 +1,7 @@
 set(
   TESTS
   entity_tests
+  query_tests
 )
 
 # TODO: link realm library

@@ -1,5 +1,3 @@
-# reference: https://www.reddit.com/r/cpp/comments/c8ty2h/a_line_by_line_explanation_how_to_create_a/
-
 cmake_minimum_required(VERSION 3.15)
 
 project(
@@ -23,13 +21,15 @@ option(REALM_BENCH "Build benchmarks" ${IS_MASTER_PROJECT})
 # Library
 add_library(${PROJECT_NAME} INTERFACE)
 add_library(${PROJECT_NAME}::${PROJECT_NAME} ALIAS ${PROJECT_NAME})
-
-# Settings
-target_compile_features(${PROJECT_NAME} INTERFACE cxx_std_20)
 target_include_directories(
   ${PROJECT_NAME}
   INTERFACE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/realm.hpp>)
 
+# Settings
+target_compile_features(${PROJECT_NAME} INTERFACE cxx_std_20)
+
+# Old way (CLion doesn't pickup  target_compile_features
+set(CMAKE_CXX_STANDARD 20)
 
 # Targets
 if(REALM_TESTS)
