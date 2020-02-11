@@ -230,9 +230,9 @@ public:
 
     // allows queries to use entity-types as parameter
     template<typename T>
-    inline const internal::enable_if_entity<T, entity*> get(uint32_t index) const
+    inline internal::enable_if_entity<T, const entity*> get(uint32_t index) const
     {
-        // todo: this doesnt feel good
+        // TODO: this feels like UB/not good
         return &entities[index];
     }
 
