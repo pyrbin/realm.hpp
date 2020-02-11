@@ -76,7 +76,7 @@ BENCH_CASE_UPDATE_SIMPLE()
     std::cout << "[BENCH] Updating " << N << " entities "
               << "with 2 systems\n";
 
-    for (int i = 0; i < 100; i++) {
+    for (int i = 0; i < 50; i++) {
         timer timer;
         game_update(1.0);
         double elapsed = timer.elapsed();

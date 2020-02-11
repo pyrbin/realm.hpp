@@ -27,7 +27,6 @@ struct archetype
 {
 private:
     using components_t = std::vector<component>;
-    // using components_t = robin_hood::unordered_flat_set<component>;
 
     struct data
     {
@@ -38,30 +37,39 @@ private:
     const data info{ 0, 0 };
     const size_t components_count{ 0 };
 
-    static inline data accumulate_info(const components_t& components)
-    {
-        return std::accumulate(
-          components.begin(), components.end(), (data{}), [](data&& res, auto&& comp) {
-              res.mask |= comp.meta.mask;
-              res.size += comp.layout.size;
-              return res;
-          });
-    }
+    inline archetype(const components_t& components, const data& info)
+      : components{ components }, info{ info }, components_count{ components.size() }
+    {}
 
 public:
     const components_t components;
 
     inline archetype() {}
-    inline archetype(const components_t& components)
-      : components{ components }
-      , info{ accumulate_info(components) }
-      , components_count{ components.size() }
-    {}
 
     template<typename... T>
-    static inline internal::enable_if_component_pack<archetype, T...> of() noexcept
+    static inline constexpr internal::enable_if_component_pack<archetype, T...> of()
     {
-        return archetype{ { component::of<T>()... } };
+        return archetype({ component::of<T>()... },
+                         { (sizeof(T) + ... + 0), mask_of<T...>() });
+    }
+
+    template<typename... T>
+    static inline constexpr internal::enable_if_component_pack<archetype, T...>
+      from_identity(std::type_identity<std::tuple<T...>>)
+    {
+        return archetype::of<T...>();
+    }
+
+    template<typename... T>
+    static inline constexpr size_t mask_of() noexcept
+    {
+        size_t mask{ 0 };
+        ( // Iterate each type and get component mask
+          [&](component&& component) mutable {
+              mask |= component.meta.mask;
+          }(component::of<T>()),
+          ...);
+        return mask;
     }
 
     inline constexpr bool operator==(const archetype& other) const
@@ -74,6 +82,10 @@ public:
     {
         return has(component::of<T>());
     }
+
+    template<typename T>
+    inline constexpr void each(T&& t) const
+    {}
 
     inline constexpr bool has(const component& comp) const
     {
@@ -96,30 +108,6 @@ public:
     inline constexpr size_t count() const { return components_count; }
 };
 
-namespace internal {
-// TODO: Use template-programming to filter T... from non-components instead
-template<typename T>
-static inline internal::enable_if_component<T, void>
-__unpack_archetype_helper(std::vector<component>& comps)
-{
-    comps.push_back(component::of<std::unwrap_ref_decay_t<T>>());
-}
-
-template<typename T>
-static inline internal::enable_if_entity<T, void>
-__unpack_archetype_helper(std::vector<component>&)
-{}
-
-template<typename... T>
-static inline archetype
-unpack_archetype()
-{
-    std::vector<component> comps;
-    (__unpack_archetype_helper<std::unwrap_ref_decay_t<T>>(comps), ...);
-    return archetype{ comps };
-}
-} // namespace internal
-
 // forward declaration
 struct archetype_chunk_root
 {
@@ -138,7 +126,7 @@ struct archetype_chunk_root
     const uint32_t per_chunk;
 
     archetype_chunk_root(const struct archetype& archetype)
-      : archetype{ archetype.components }
+      : archetype{ archetype }
       , per_chunk{ CHUNK_LAYOUT.size / (uint32_t) archetype.size() }
     {}
 
