@@ -1,4 +1,4 @@
-* redo block memory allocation/iteration
+* fix world add/remove components
 
 * optimization (try to get results close to similar projects while iterating entities)
 

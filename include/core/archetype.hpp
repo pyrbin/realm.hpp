@@ -156,11 +156,10 @@ public:
     {
         entities.resize(max_capacity);
         for (const auto& component : archetype.components) {
-            /* data_size += memory_layout::align_up(
-              memory_layout::align_up(data_size, CHUNK_COMPONENT_ALIGNMENT),
-              component.layout.align);*/
             data_size += component.layout.align_up(data_size);
-            offsets.emplace(component.meta.hash, data_size);
+            /* data_size = memory_layout::align_up(
+              memory_layout::align_up(data_size, alignment), component.layout.align);*/
+            offsets.emplace(component.meta.hash, data_size); 
             data_size += component.layout.size * max_capacity;
         }
 
@@ -184,7 +183,6 @@ public:
             free((void*) (data));
 #endif
             data = nullptr;
-            // parent = nullptr;
         }
     }
 
