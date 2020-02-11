@@ -76,7 +76,6 @@ realm::query(&world, [](pos&, const vel&, realm::entity entt) {
 ```
 
 ## TODO
-* Add todo
 * See `TODO` file
 
 ## Thanks

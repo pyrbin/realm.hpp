@@ -1,26 +1,37 @@
-* new name:
-alternatives:
-    -> arena, realm, pillar, bulwark, arketyp, essence (escense), buckler, rymd, atex (ArcheType EntityX(cs), arkt.
-    -> alt. .hpp as postfix cuz datz kewl xd.
+* add systems (wrappers around query)
 
-* query & systems
+* add docs generation and documentation
 
-* make archetypes immutable
+* add parallel-iteration support (using std::execution/tbb)
 
-auto q = query::of<const pos, vel>;
+* better query api
+  * paralell queries
+    realm::query_par ? runs all chunks in parallell
+    maybe only allow par with systems in world?
 
-for (auto&& comps : q.fetch(&world)) {
+  * example fetch iterator:
+    auto q = query::of<pos, const vel>();
+    alt. query<pos, const vel>(); if types cant be saved
+    for (auto [p, v] : query.fetch(&world)) {
+        // typeof pos = pos&
+        // typeof v = const vel&
+    }
+  * alt. if i want to use current "functional" approach of realm::query
+    for (auto [p, v] : realm::query_iter<pos, const vel>(&world)) {
+        // typeof pos = pos&
+        // typeof v = const vel&
+    }
 
-}
 
-world.query([](const pos, vel){
+* add tag/flag components (components who doesnt occupy memory, no data)
 
+* add static components/instances (components whose data never changes doesnt have to be reallocated)
 
-});
+* redo block memory allocation/iteration
 
+* better tests/benchs (and link library)
 
-* fix cmake setup for testing & bench
-* better test cases
+* implement conan
 
 * impl component fetch_types / event-system in queries ex,
     * emit<pos>     -> doesnt query pos but declares that it will create pos as an event
@@ -29,10 +40,5 @@ world.query([](const pos, vel){
     these shold not be in the lambda (a additional template param maybe?)
     * not<pos>      -> exclude a component is a query
     * .....
-
-* impl concepts
-    * query functor has to be unique + either ref or ref const
-    * components has to be something?
-    * component array has to be unique
 
 * when more c++20 features are default impl. modules, coroutines & ranges
