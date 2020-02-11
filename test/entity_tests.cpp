@@ -1,4 +1,4 @@
-#include "catch.cpp"
+#include "util/catch.cpp"
 
 
 TEST_CASE("entity_batch") {
