@@ -14,3 +14,12 @@ endfunction()
 foreach(b ${BENCHS})
   add_cmake_bench(${b})
 endforeach()
+
+# Enable optimization for benchmarks
+if(MSVC)
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /Ox")
+endif(MSVC)
+
+if(CMAKE_COMPILER_IS_GNUCXX)
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3")
+endif(CMAKE_COMPILER_IS_GNUCXX)
