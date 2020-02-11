@@ -2,6 +2,10 @@
 
 * add docs generation and documentation
 
+* redo block memory allocation/iteration
+
+* optimization (try to get results close to similar projects while iterating entities)
+
 * add parallel-iteration support (using std::execution/tbb)
 
 * better query api
@@ -9,7 +13,7 @@
     realm::query_par ? runs all chunks in parallell
     maybe only allow par with systems in world?
 
-  * example fetch iterator:
+  * example fetch iterator (std::algo compatible iterator):
     auto q = query::of<pos, const vel>();
     alt. query<pos, const vel>(); if types cant be saved
     for (auto [p, v] : query.fetch(&world)) {
@@ -26,8 +30,6 @@
 * add tag/flag components (components who doesnt occupy memory, no data)
 
 * add static components/instances (components whose data never changes doesnt have to be reallocated)
-
-* redo block memory allocation/iteration
 
 * better tests/benchs (and link library)
 
