@@ -11,8 +11,8 @@
 - [Developer](#developer)
 
 ## Introduction
-Goal of this project is to create a simple ECS framework in `C++20/17` to increase 
-my knowledge of modern C++/C++ toolchains, DoD patterns, concurrent programming and general game dev. 
+Goal of this project is to create a simple ECS (Entity Component System) framework in `C++20/17` to increase
+my knowledge of modern C++/C++ toolchains, DoD patterns, parallelization and general game dev.
 This is an archetype-based ECS taking inspiration from 
 [Unity DOTS](https://unity.com/dots) and smaller frameworks like
 [legion](https://github.com/TomGillen/legion), 
@@ -21,7 +21,7 @@ This is an archetype-based ECS taking inspiration from
 [entt](https://github.com/skypjack/entt). 
 
 The main focus is a clean & minimal API with acceptable performance, 
-perfect aligned contiguous memory of components & parallelization of systems.
+perfect aligned contiguous memory of components & easy parallelization of systems (compatible with STL algorithms).
 
 ## Features
 * ~~Using C++20 Concepts for a more implicit & non error-prone API~~
