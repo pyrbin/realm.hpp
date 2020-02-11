@@ -1,10 +1,10 @@
-* add docs generation and documentation
-
 * redo block memory allocation/iteration
 
 * optimization (try to get results close to similar projects while iterating entities)
 
 * add parallel-iteration support (using std::execution/tbb)
+
+* add docs generation and documentation
 
 * better query api
   * paralell queries
@@ -27,20 +27,35 @@
 
 * add std::optional when getting components?
 
+* allow undefined allocation capacity, eg. grow when needed
+
+* better tests/benchs (and link library)
+
+* add a snapshotting feature for syncing of entities in ex multiplayer games
+
 * add tag/flag components (components who doesnt occupy memory, no data)
 
 * add static components/instances (components whose data never changes doesnt have to be reallocated)
 
-* better tests/benchs (and link library)
-
 * integrate conan
 
-* impl component fetch_types / event-system in queries ex,
+* impl. advanced component fetch_types / event-system in queries ex,
     * emit<pos>     -> doesnt query pos but declares that it will create pos as an event
-    * listen<pos>   -> declares the query will listen on emit of pos (allows to create a DAG graph of systems)
+        note: fetches emitter<pos> in query with function .emit(pos&& p) that will emit and event to the event stack in world
+
+    * listen<pos>   -> declares the query will listen on emit of pos (allows creation of a DAG graph of systems)
+
     * changed<pos>  -> query is called only if pos is changed
-    these shold not be in the lambda (a additional template param maybe?)
-    * not<pos>      -> exclude a component is a query
-    * .....
+    
+    * value constraits such as:
+        * bigger<pos, {20, 20}> (has to implement operator</>)
+        * smaller<pos, {20,20}>
+        * etc...
+
+    * not<pos>      -> exclude a component in a query
+
+* event-based reactive queries
+    example: query::changed(&world, [](pos& p){ /* do stuff */} )
+    note: query is only called if an archetype_chunk the query matches has changed since last check
 
 * when more c++20 features are default impl. modules, coroutines & ranges
