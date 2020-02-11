@@ -33,6 +33,7 @@ set(CMAKE_CXX_STANDARD 20)
 
 # Targets
 if(REALM_TESTS)
+  include(CTest)
   enable_testing()
   add_subdirectory(test)
 endif()

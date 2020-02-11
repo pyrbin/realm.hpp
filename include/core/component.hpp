@@ -79,8 +79,8 @@ struct component
     const component_meta meta;
     const memory_layout layout;
 
-    const constructor_t* alloc{ nullptr };
-    const constructor_t* destroy{ nullptr };
+    constructor_t* alloc{ nullptr };
+    constructor_t* destroy{ nullptr };
 
     // underlying type
     inline constexpr component(){};

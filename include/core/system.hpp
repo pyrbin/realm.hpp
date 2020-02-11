@@ -10,8 +10,8 @@
 #include <tuple>
 #include <utility>
 
-#include "archetype.hpp"
 #include "query.hpp"
+#include "archetype.hpp"
 
 namespace realm {
 
@@ -31,7 +31,7 @@ struct system_base
 protected:
     template<typename T>
     using system_ptr = std::unique_ptr<T>;
-    using archetype_t = struct archetype;
+    using archetype_t = archetype;
 
 public:
     archetype_t archetype;
