@@ -14,7 +14,7 @@ namespace internal {
  */
 template<typename T>
 inline constexpr void
-swap_remove(unsigned index, T target)
+swap_remove(unsigned index, T& target)
 {
     std::swap(target[target.size() - 1], target[index]);
     target.resize(target.size() - 1);
