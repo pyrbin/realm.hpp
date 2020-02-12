@@ -56,6 +56,9 @@ private:
         old_location->chunk->copy_to(old_location->chunk_index, chunk, idx);
         auto moved = old_location->chunk->remove(old_location->chunk_index);
 
+        // update switched entity
+        entities.update(moved, { old_location->chunk_index, old_location->chunk });
+        
         // update location info of entity
         entities.update(entt, { idx, chunk });
     }
@@ -92,6 +95,21 @@ public:
 
     bool exists(entity entt) { return entities.exists(entt); }
 
+    void destroy(entity entt) 
+    {
+        if (!exists(entt)) return;
+
+        auto location = entities.get(entt);
+
+        // copy and remove from old chunk to new
+        auto moved = location->chunk->remove(location->chunk_index);
+
+        // update switched entity
+        entities.update(moved, { location->chunk_index, location->chunk });
+        entities.free(entt);
+    }
+
+
     template<typename T>
     internal::enable_if_component<T, T&> get(entity entt)
     {
@@ -103,12 +121,12 @@ public:
     internal::enable_if_component_pack<void, T...> add(entity entt)
     {
         assert(!has<T...>(entt));
-
         auto at = get_archetype(entt);
-        auto comps = std::vector<component>{ at.components };
-        (comps.push_back(component::of<T>()), ...);
-        auto new_at = archetype{ comps };
-        modify_archetype(entt, new_at);
+        auto new_components = std::vector<component>{ at.components };
+        auto info = archetype::data::of<T...>();
+        info += { at.size(), at.mask() };
+        (new_components.push_back(component::of<T>()), ...);
+        modify_archetype(entt, { new_components, info });
     }
 
     template<typename... T>
@@ -116,15 +134,20 @@ public:
     {
         auto at = get_archetype(entt);
         auto to_remove = archetype::of<T...>();
+        auto to_remove_info = archetype::data::of<T...>();
 
         std::vector<component> new_components{};
 
+        archetype::data info{ at.size(), at.mask() };
+        info -= to_remove_info;
+
         for (auto& comp : at.components) {
-            if (!to_remove.has(comp)) { new_components.push_back(component{ comp }); }
+            if (!to_remove.has(comp)) {
+                new_components.push_back(component{ comp });
+            }
         }
 
-        auto new_at = archetype{ new_components };
-        modify_archetype(entt, new_at);
+        modify_archetype(entt, { new_components, info });
     }
 
     template<typename... T>

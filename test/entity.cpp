@@ -35,3 +35,19 @@ TEST_CASE("entity_transfer")
     REQUIRE(world.get<vel>(entt).x == VX);
     REQUIRE(world.chunks.size() == 3);
 }
+
+TEST_CASE("entity_remove")
+{
+    auto at = realm::archetype::of<pos, vel, name>();
+    auto world = realm::world{};
+    
+    world.batch(1000, at);
+
+    REQUIRE(world.size() == 1000);
+
+    world.destroy(10);
+
+    REQUIRE(world.size() == 999);
+
+
+}
