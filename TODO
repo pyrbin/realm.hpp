@@ -1,10 +1,9 @@
-* fix world add/remove components
-
-* optimization (try to get results close to similar projects while iterating entities)
 
 * add parallel-iteration support (using std::execution/tbb)
 
 * add docs generation and documentation
+
+* optimization (try to get results close to similar projects while iterating entities)
 
 * better query api
   * paralell queries
