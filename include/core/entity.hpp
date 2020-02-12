@@ -92,6 +92,7 @@ public:
         first_available = handle.index;
         internal::swap_remove(loc_index, slots);
         internal::swap_remove(loc_index, locations);
+
     }
 
     const entity_location* get(entity entt)
@@ -142,8 +143,8 @@ public:
         }
     }
 
-    int32_t size() const noexcept { return handles.size(); }
-    int32_t capacity() const noexcept { return handles.capacity(); }
+    int32_t size() const noexcept { return slots.size(); }
+    int32_t capacity() const noexcept { return slots.capacity(); }
 
     static inline constexpr entity merge_handle(uint32_t index,
                                                 uint32_t generation) noexcept

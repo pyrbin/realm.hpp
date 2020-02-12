@@ -25,32 +25,51 @@ namespace realm {
  */
 struct archetype
 {
-private:
     using components_t = std::vector<component>;
 
     struct data
     {
         size_t size{ 0 };
         size_t mask{ 0 };
+
+        data& operator+=(const data& other)
+        {
+            size += other.size;
+            mask |= other.mask;
+            return *this;
+        }
+
+        data& operator-=(const data& other)
+        {
+            size -= other.size;
+            mask &= ~other.mask;
+            return *this;
+        }
+
+        template<typename... T>
+        inline static constexpr internal::enable_if_component_pack<data, T...> of()
+        {
+            return { (sizeof(T) + ... + 0), mask_of<T...>() };
+        }
     };
 
-    const data info{ 0, 0 };
-    const size_t components_count{ 0 };
+private:
 
-    inline archetype(const components_t& components, const data& info)
-      : components{ components }, info{ info }, components_count{ components.size() }
-    {}
+    const data info{ 0, 0 };
+    const size_t component_count{ 0 };
 
 public:
     const components_t components;
 
     inline archetype() {}
+    inline archetype(const components_t& components, const data& info)
+      : components{ components }, info{ info }, component_count{ components.size() }
+    {}
 
     template<typename... T>
     static inline constexpr internal::enable_if_component_pack<archetype, T...> of()
     {
-        return archetype({ component::of<T>()... },
-                         { (sizeof(T) + ... + 0), mask_of<T...>() });
+        return archetype{ { component::of<T>()... }, data::of<T...>() };
     }
 
     template<typename... T>
@@ -105,7 +124,7 @@ public:
      * @return total size of all components (memory not count)
      */
     inline constexpr size_t size() const { return info.size; }
-    inline constexpr size_t count() const { return components_count; }
+    inline constexpr size_t count() const { return component_count; }
 };
 
 // forward declaration
