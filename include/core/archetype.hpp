@@ -54,7 +54,6 @@ struct archetype
     };
 
 private:
-
     const data info{ 0, 0 };
     const size_t component_count{ 0 };
 
@@ -91,6 +90,15 @@ public:
         return mask;
     }
 
+    template<typename... T>
+    static inline constexpr internal::enable_if_component_pack<size_t, T...>
+      mask_from_identity(std::type_identity<std::tuple<T...>>)
+    {
+        return archetype::mask_of<T...>();
+    }
+
+    static inline constexpr bool subset(size_t a, size_t b) { return (a & b) == b; }
+
     inline constexpr bool operator==(const archetype& other) const
     {
         return other.mask() == mask();
@@ -106,12 +114,15 @@ public:
     inline constexpr void each(T&& t) const
     {}
 
-    inline constexpr bool has(const component& comp) const
+    inline constexpr bool has(const component& component) const
     {
-        return (mask() & comp.meta.mask) == comp.meta.mask;
+        return (mask() & component.meta.mask) == component.meta.mask;
     }
 
-    inline constexpr bool subset(size_t other) const { return (mask() & other) == other; }
+    inline constexpr bool subset(size_t other) const
+    {
+        return archetype::subset(mask(), other);
+    }
 
     inline constexpr bool subset(const archetype& other) const
     {
@@ -178,7 +189,7 @@ public:
             data_size += component.layout.align_up(data_size);
             /* data_size = memory_layout::align_up(
               memory_layout::align_up(data_size, alignment), component.layout.align);*/
-            offsets.emplace(component.meta.hash, data_size); 
+            offsets.emplace(component.meta.hash, data_size);
             data_size += component.layout.size * max_capacity;
         }
 

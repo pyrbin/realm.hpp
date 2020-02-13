@@ -5,6 +5,8 @@
 
 * optimization (try to get results close to similar projects while iterating entities)
 
+* make archetype::from_identity* functions from_tuple* (using lamda in-direction)
+
 * better query api
   * paralell queries
     realm::query_par ? runs all chunks in parallell

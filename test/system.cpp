@@ -25,7 +25,7 @@ TEST_CASE("system_insert")
     world.batch<pos, vel>(N);
     auto sys = world.insert<example_system>((float) Arg1);
 
-    REQUIRE(sys->archetype.count() == 1);
+    REQUIRE(sys->compare(realm::archetype::mask_of<pos, vel>()));
     REQUIRE(world.system_count() == 1);
 }
 
