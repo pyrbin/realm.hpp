@@ -1,6 +1,7 @@
 set(
   BENCHS
   simple_bench
+  simple_bench_fetch
 )
 
 # TODO: link realm library
@@ -17,7 +18,7 @@ endforeach()
 
 # Enable optimization for benchmarks
 if(MSVC)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /Ox")
+    add_compile_options("/Ox")
 endif(MSVC)
 
 if(CMAKE_COMPILER_IS_GNUCXX)

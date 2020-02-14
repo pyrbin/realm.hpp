@@ -1,6 +1,8 @@
 #pragma once
 
 #include "../util/clean_query.hpp"
+#include "../util/type_traits.hpp"
+
 #include "archetype.hpp"
 #include "world.hpp"
 
@@ -8,6 +10,8 @@
 #include <memory>
 #include <vector>
 #include <execution>
+#include <experimental/generator>
+#include <experimental/coroutine>
 
 namespace realm {
 
@@ -78,6 +82,50 @@ inline constexpr void
 query_par(world* world, F&& f)
 {
     internal::__query_inner_par(world, &f, &F::operator());
+}
+
+
+namespace exp {
+    using std::experimental::generator;
+    std::expe
+    // TODO: allow realm::entity fetches.
+    template<typename... T>
+    struct query
+    {
+        using references = std::tuple<std::add_lvalue_reference_t<T>...>;
+        using components = internal::clean_query_tuple_t<std::tuple<internal::pure_t<T>...>>;
+
+        const size_t mask;
+
+        inline constexpr query() : mask
+        {
+            archetype::mask_from_identity(std::type_identity<components>{})
+        }
+        {};
+
+        generator<references> fetch(world* world)
+        {
+            for (auto& chunk : fetch_chunk(world)) {
+                for (uint32_t i{ 0 }; i < chunk->size(); i++) {
+                    co_yield std::forward_as_tuple(
+                      *chunk->template get<internal::pure_t<T>>(
+                        std::forward<uint32_t>(i))...);
+                }
+            }
+        }
+
+        generator<archetype_chunk*> fetch_chunk(world* world)
+        {
+            for (auto& [hash, root] : world->chunks) {
+                if (!root->archetype.subset(mask)) continue;
+                for (auto& chunk : root->chunks) {
+                    co_yield chunk.get();
+                }
+            }
+        }
+ 
+    };
+
 }
 
 } // namespace realm
