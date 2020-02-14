@@ -282,7 +282,7 @@ private:
     inline size_t offset_to(unsigned index, const component& type) const
     {
         auto offset = offsets.at(type.meta.hash);
-        return offset + (index * type.layout.size);
+        return offset + (size_t)(index * type.layout.size);
     }
 
     uint32_t len{ 0 };

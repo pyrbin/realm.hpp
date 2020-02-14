@@ -66,7 +66,7 @@ struct component_meta
     template<typename T>
     static inline constexpr internal::enable_if_component<T, component_meta> of()
     {
-        auto hash = internal::type_hash<std::unwrap_ref_decay_t<T>>::value;
+        size_t hash = internal::type_hash<std::unwrap_ref_decay_t<T>>::value;
         return { hash, (size_t)(1 << hash) };
     }
 };
