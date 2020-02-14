@@ -20,7 +20,7 @@ struct movement_system
 
     void update(double dt)
     {
-        realm::query(world, [dt](pos& p, const dir& d) {
+        realm::query_par(world, [dt](pos& p, const dir& d) {
             p.x += d.x * dt;
             p.y += d.y * dt;
         });
@@ -35,7 +35,7 @@ struct comflab_system
 
     void update(double dt)
     {
-        realm::query(world, [dt](wierd& comflab) {
+        realm::query_par(world, [dt](wierd& comflab) {
             comflab.thingy *= 1.000001f;
             comflab.mingy = !comflab.mingy;
             comflab.dingy++;
