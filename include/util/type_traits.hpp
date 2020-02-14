@@ -1,4 +1,6 @@
 
+#pragma once
+
 #include <tuple>
 #include <type_traits>
 #include <utility>
@@ -21,7 +23,7 @@ inline constexpr bool is_component = (std::is_class_v<T> &&
                                       !std::is_const_v<T>);
 template<typename... T>
 inline constexpr bool is_component_pack =
-  is_unique<std::remove_const_t<std::unwrap_ref_decay_t<T>>...> &&
+  is_unique<std::remove_const_t<pure_t<T>>...> &&
   (... && is_component<T>);
 
 template<typename T>
@@ -35,6 +37,9 @@ using enable_if_entity = std::enable_if_t<is_entity<T>, R>;
 
 template<typename R, typename... T>
 using enable_if_component_pack = std::enable_if_t<is_component_pack<T...>, R>;
+
+template<typename T>
+using pure_t = std::unwrap_ref_decay_t<T>;
 
 
 } // namespace internal
