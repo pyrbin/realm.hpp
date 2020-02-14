@@ -87,7 +87,7 @@ query_par(world* world, F&& f)
 
 namespace exp {
     using std::experimental::generator;
-    std::expe
+
     // TODO: allow realm::entity fetches.
     template<typename... T>
     struct query
