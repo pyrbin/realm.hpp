@@ -22,11 +22,9 @@ struct entity_handle
     uint32_t generation;
 };
 
-
 struct archetype_chunk;
 
 namespace internal {
-
 
 struct entity_location
 {
@@ -92,7 +90,6 @@ public:
         first_available = handle.index;
         internal::swap_remove(loc_index, slots);
         internal::swap_remove(loc_index, locations);
-
     }
 
     const entity_location* get(entity entt)
@@ -103,7 +100,7 @@ public:
                  ? &locations.at(handles.at(handle.index).index)
                  : nullptr;
     }
-    
+
     entity_location* get_mut(entity entt)
     {
         auto handle = extract_handle(entt);

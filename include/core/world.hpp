@@ -15,12 +15,15 @@ struct world
 {
     static const size_t DEFAULT_MAX_ENTITIES = 100000;
 
-    using chunks_t =
-      robin_hood::unordered_flat_map<size_t, std::unique_ptr<archetype_chunk_root>>;
+    using chunks_t = std::vector<std::unique_ptr<archetype_chunk_root>>;
+    using chunks_map_t = robin_hood::unordered_flat_map<size_t, unsigned>;
+
     using systems_t = std::vector<std::unique_ptr<system_base>>;
     using entities_t = internal::entity_pool;
 
     chunks_t chunks;
+    chunks_map_t chunks_map;
+
     entities_t entities;
     systems_t systems;
 
@@ -29,14 +32,15 @@ private:
     {
 
         archetype_chunk_root* root{ nullptr };
-        auto it = chunks.find(at.mask());
+        auto it = chunks_map.find(at.mask());
 
-        if (it == chunks.end()) {
+        if (it == chunks_map.end()) {
             auto ptr = std::make_unique<archetype_chunk_root>(at);
             root = ptr.get();
-            chunks.emplace(at.mask(), std::move(ptr));
+            chunks.emplace_back(std::move(ptr));
+            chunks_map.emplace(at.mask(), chunks.size() - 1);
         } else {
-            root = chunks.at(at.mask()).get();
+            root = chunks.at((*it).second).get();
         }
 
         return root->find_free();
@@ -58,7 +62,7 @@ private:
 
         // update switched entity
         entities.update(moved, { old_location->chunk_index, old_location->chunk });
-        
+
         // update location info of entity
         entities.update(entt, { idx, chunk });
     }
@@ -95,7 +99,7 @@ public:
 
     bool exists(entity entt) { return entities.exists(entt); }
 
-    void destroy(entity entt) 
+    void destroy(entity entt)
     {
         if (!exists(entt)) return;
 
@@ -108,7 +112,6 @@ public:
         entities.update(moved, { location->chunk_index, location->chunk });
         entities.free(entt);
     }
-
 
     template<typename T>
     internal::enable_if_component<T, T&> get(entity entt)
@@ -130,7 +133,7 @@ public:
     }
 
     template<typename... T>
-    inline constexpr internal::enable_if_component_pack<void, T...> remove(entity entt)
+    inline internal::enable_if_component_pack<void, T...> remove(entity entt)
     {
         auto at = get_archetype(entt);
         auto to_remove = archetype::of<T...>();
@@ -142,22 +145,20 @@ public:
         info -= to_remove_info;
 
         for (auto& comp : at.components) {
-            if (!to_remove.has(comp)) {
-                new_components.push_back(component{ comp });
-            }
+            if (!to_remove.has(comp)) { new_components.push_back(component{ comp }); }
         }
 
         modify_archetype(entt, { new_components, info });
     }
 
     template<typename... T>
-    inline constexpr internal::enable_if_component_pack<bool, T...> has(entity entt)
+    inline internal::enable_if_component_pack<bool, T...> has(entity entt)
     {
         auto at = get_archetype(entt);
         return (... && at.has<T>());
     }
 
-    const archetype& get_archetype(entity entt)
+    inline const archetype& get_archetype(entity entt)
     {
         return entities.get(entt)->chunk->archetype;
     }
@@ -173,24 +174,6 @@ public:
     inline void update()
     {
         for (auto& sys : systems) { sys->operator()(this); }
-    }
-
-    template<typename T>
-    void iter_chunks(const archetype& at, T&& fn)
-    {
-        for (auto& [hash, root] : chunks) {
-            if (at.subset(hash)) {
-                for (auto& chunk : root->chunks) { fn(chunk.get()); }
-            }
-        }
-    }
-
-    template<typename T>
-    void iter_chunk_roots(const archetype& at, T&& fn)
-    {
-        for (auto& [hash, root] : chunks) {
-            if (at.subset(hash)) { fn(root.get()); }
-        }
     }
 
     int32_t size() const noexcept { return entities.size(); }
