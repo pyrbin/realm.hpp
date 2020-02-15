@@ -6,6 +6,7 @@
 - [Introduction](#introduction)
 - [Features](#features)
 - [API](#api)
+- [Benchmark](#benchmark)
 - [TODO](#todo)
 - [Thanks](#thanks)
 - [Developer](#developer)
@@ -54,17 +55,19 @@ auto entt = world.create(at);
 auto& p_write = world.get<pos>(entt);
 auto& p_read = world.get<const pos>(entt);
 
-// query the world using only a lamdba where each argument is 
-// an component you want to fetch
-realm::query(&world, [](pos&, const vel&) {
-    pos.x += vel.x;
-    pos.y += vel.y;
+// you can query a world with a lambda where
+// each argument is a component you want to fetch
+world.fetch([](pos& p, const vel& v) {
+    p.x += v.x;
+    p.y += v.y;
 });
 
-// Add an realm::entity type to get the current entity
-realm::query(&world, [](pos&, const vel&, realm::entity entt) {
-    std::cout << "querying entity: " << entt << "\n";
-});
+// you can also use the query class to create a query
+realm::query<pos, const vel> query;
+for(auto& [p, v] : query.fetch()) {
+    p.x += v.x;
+    p.y += v.y;
+}
 
 // You can also create a system class and insert it to the world
 // The query lambda is taken from the update function
@@ -75,12 +78,15 @@ struct example_system {
     }
 }
 
+// Insert into world
 world.insert<example_system>(/* args */);
 
 // All systems can be invokable by calling world.update
 world.update();
 world.update(/* execution policy? */);
 ```
+## Benchmark
+TODO
 
 ## TODO
 * See `TODO` file
