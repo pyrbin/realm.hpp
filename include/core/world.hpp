@@ -67,6 +67,23 @@ private:
         entities.update(entt, { idx, chunk });
     }
 
+    template<typename F, typename... Args>
+    inline constexpr void fetch_helper(F* ftor, void (F::*f)(Args...) const)
+    {
+        using type =
+          internal::clean_query_tuple_t<std::tuple<std::unwrap_ref_decay_t<Args>...>>;
+        auto mask = archetype::mask_from_identity(std::type_identity<type>{});
+
+        for (auto& root : chunks) {
+            if (!root->archetype.subset(mask)) continue;
+            for (auto& chunk : root->chunks) {
+                for (uint32_t i{ 0 }; i < chunk->size(); i++) {
+                    (ftor->*f)(*chunk->template get<std::unwrap_ref_decay_t<Args>>(i)...);
+                }
+            }
+        }
+    }
+
 public:
     world(uint32_t capacity = DEFAULT_MAX_ENTITIES) : entities{ capacity } {}
 
@@ -174,6 +191,12 @@ public:
     inline void update()
     {
         for (auto& sys : systems) { sys->operator()(this); }
+    }
+
+    template<typename F>
+    inline constexpr void fetch(F&& f)
+    {
+        fetch_helper(&f, &F::operator());
     }
 
     int32_t size() const noexcept { return entities.size(); }
