@@ -1,3 +1,4 @@
+* add query entity fetch
 
 * add parallel-iteration support (using std::execution/tbb)
 
@@ -6,25 +7,6 @@
 * optimization (try to get results close to similar projects while iterating entities)
 
 * make archetype::from_identity* functions from_tuple* (using lamda in-direction)
-
-* better query api
-  * paralell queries
-    realm::query_par ? runs all chunks in parallell
-    maybe only allow par with systems in world?
-
-  * example fetch iterator (std::algo compatible iterator):
-    auto q = query::of<pos, const vel>();
-    alt. query<pos, const vel>(); if types cant be saved
-    for (auto [p, v] : query.fetch(&world)) {
-        // typeof pos = pos&
-        // typeof v = const vel&
-    }
-  * alt. if i want to use current "functional" approach of realm::query
-    for (auto [p, v] : realm::query_iter<pos, const vel>(&world)) {
-        // typeof pos = pos&
-        // typeof v = const vel&
-    }
-
 
 * add std::optional when getting components?
 
