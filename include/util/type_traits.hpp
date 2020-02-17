@@ -39,5 +39,12 @@ using enable_if_entity = std::enable_if_t<is_entity<T>, R>;
 template<typename R, typename... T>
 using enable_if_component_pack = std::enable_if_t<is_component_pack<T...>, R>;
 
+template<typename F, typename... Args>
+struct arg_types
+{
+    inline constexpr arg_types(void (F::*f)(Args...) const) {}
+    using type = typename std::tuple<std::remove_reference_t<Args>...>;
+};
+
 } // namespace internal
 } // namespace realm
