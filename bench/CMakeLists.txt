@@ -1,7 +1,7 @@
 set(
   BENCHS
   simple_bench
-  simple_bench_fetch
+  simple_bench_func
 )
 
 # TODO: link realm library

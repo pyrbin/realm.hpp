@@ -13,36 +13,35 @@
 // TODO: Use a benchmark library/framework
 
 
+
 struct movement_system
 {
     realm::world* world;
-    realm::exp::query<pos, const dir> query;
 
     movement_system(realm::world* world) : world{ world } {}
 
     void update(double dt)
     {
-        for (auto [p, d] : query.fetch(world)) {
+        world->fetch([dt](pos& p, const dir& d) {
             p.x += d.x * dt;
             p.y += d.y * dt;
-        }
+        });
     }
 };
 
 struct comflab_system
 {
     realm::world* world;
-    realm::exp::query<wierd> query;
 
     comflab_system(realm::world* world) : world{ world } {}
 
     void update(double dt)
     {
-        for (auto [comflab] : query.fetch(world)) {
+        world->fetch([dt](wierd& comflab) {
             comflab.thingy *= 1.000001f;
             comflab.mingy = !comflab.mingy;
             comflab.dingy++;
-        }
+        });
     }
 };
 

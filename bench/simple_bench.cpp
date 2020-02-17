@@ -15,31 +15,33 @@
 struct movement_system
 {
     realm::world* world;
+    realm::query<pos, const dir> query;
 
     movement_system(realm::world* world) : world{ world } {}
 
     void update(double dt)
     {
-        realm::query(world, [dt](pos& p, const dir& d) {
+        for (auto [p, d] : query.fetch(world)) {
             p.x += d.x * dt;
             p.y += d.y * dt;
-        });
+        }
     }
 };
 
 struct comflab_system
 {
     realm::world* world;
+    realm::query<wierd> query;
 
     comflab_system(realm::world* world) : world{ world } {}
 
     void update(double dt)
     {
-        realm::query(world, [dt](wierd& comflab) {
+        for (auto [comflab] : query.fetch(world)) {
             comflab.thingy *= 1.000001f;
             comflab.mingy = !comflab.mingy;
             comflab.dingy++;
-        });
+        }
     }
 };
 
