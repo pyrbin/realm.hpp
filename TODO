@@ -1,5 +1,6 @@
 * add query entity fetch
 
+
 * add parallel-iteration support (using std::execution/tbb)
 
 * add docs generation and documentation
@@ -7,6 +8,10 @@
 * optimization (try to get results close to similar projects while iterating entities)
 
 * make archetype::from_identity* functions from_tuple* (using lamda in-direction)
+
+* either keep query<T...> struct & optimize or use functional query impl
+    maybe keep chunk_view & chunk_entity_view but make query api
+    strictly functional to match the update func in system.
 
 * add std::optional when getting components?
 

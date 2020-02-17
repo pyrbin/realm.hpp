@@ -64,6 +64,8 @@ world.fetch([](pos& p, const vel& v) {
 
 // you can also use the query class to create a query
 realm::query<pos, const vel> query;
+
+// and call a STL compatiple iterator with the fetch() function
 for(auto& [p, v] : query.fetch()) {
     p.x += v.x;
     p.y += v.y;
@@ -72,9 +74,9 @@ for(auto& [p, v] : query.fetch()) {
 // You can also create a system class and insert it to the world
 // The query lambda is taken from the update function
 struct example_system {
-    void update(pos&, const vel&, realm::entity entt) const {
-        pos.x += vel.x;
-        pos.y += vel.y;
+    void update(pos& p, const vel& v, realm::entity entt) const {
+        p.x += v.x;
+        p.y += v.y;
     }
 }
 
