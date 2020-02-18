@@ -20,8 +20,7 @@ constexpr bool is_unique<T, Rest...> =
 template<typename T>
 inline constexpr bool is_component = (std::is_class_v<T> &&
                                       std::is_copy_constructible_v<T> &&
-                                      std::is_move_constructible_v<T> &&
-                                      !std::is_const_v<T>);
+                                      std::is_move_constructible_v<T>);
 template<typename... T>
 inline constexpr bool is_component_pack = is_unique<std::remove_const_t<pure_t<T>>...> &&
                                           (... && is_component<T>);

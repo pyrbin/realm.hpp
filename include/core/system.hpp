@@ -16,13 +16,28 @@ namespace realm {
 
 struct world;
 
+template<typename... Ts>
+struct view;
+
 namespace internal {
 
 template<typename F, typename... Args>
 inline constexpr void
 query_helper(world* world, F* obj, void (F::*f)(Args...) const);
 
-}
+template<typename F, typename... Args>
+inline constexpr void
+query_helper(world* world, F* obj, void (F::*f)(view<Args...>) const);
+
+template<typename F, typename... Args>
+inline constexpr size_t
+query_mask(void (F::*f)(Args...) const);
+
+template<typename F, typename... Args>
+inline constexpr size_t
+query_mask(void (F::*f)(view<Args...>) const);
+
+} // namespace internal
 
 struct system_ref
 {
@@ -40,19 +55,11 @@ struct system_proxy : public system_ref
 private:
     const std::unique_ptr<T> system;
 
-    template<typename R = void, typename... Args>
-    static inline size_t make_mask(R (T::*f)(Args...) const)
-    {
-        using tuple =
-          internal::clean_query_tuple_t<std::tuple<std::unwrap_ref_decay_t<Args>...>>;
-        return archetype::mask_from_tuple<tuple>();
-    }
-
 public:
     template<typename... Args>
     inline system_proxy(Args&&... args)
       : system{ std::make_unique<T>(std::forward<Args>(args)...) }
-      , system_ref{ make_mask(&T::update) }
+      , system_ref{ internal::query_mask(&T::update) }
     {}
 
     inline constexpr bool compare(size_t other) const override

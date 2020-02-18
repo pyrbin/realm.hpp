@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../util/clean_query.hpp"
+#include "../util/tuple_util.hpp"
 #include "../util/type_traits.hpp"
 
 #include "archetype.hpp"
@@ -19,17 +20,13 @@ namespace internal {
  */
 template<typename F, typename... Args>
 inline constexpr void
-query_helper(world* world, F* ftor, void (F::*f)(Args...) const)
+query_helper(world* world, F* object, void (F::*f)(Args...) const)
 {
-
-    using tuple = internal::clean_query_tuple_t<std::tuple<internal::pure_t<Args>...>>;
-    auto mask = archetype::mask_from_tuple<tuple>();
-
     for (auto& root : world->chunks) {
-        if (!root->archetype.subset(mask)) continue;
+        if (!root->archetype.subset(view<Args...>::mask)) continue;
         for (auto& chunk : root->chunks) {
             for (uint32_t i{ 0 }; i < chunk->size(); i++) {
-                (ftor->*f)(*chunk->template get<internal::pure_t<Args>>(i)...);
+                (object->*f)(*chunk->template get<internal::pure_t<Args>>(i)...);
             }
         }
     }
@@ -41,13 +38,26 @@ query_helper(world* world, F* ftor, void (F::*f)(Args...) const)
  */
 template<typename F, typename... Args>
 inline constexpr void
-query_helper(world* world, F* ftor, void (F::*f)(view<Args...>) const)
+query_helper(world* world, F* object, void (F::*f)(view<Args...>) const)
 {
-
     for (auto& root : world->chunks) {
         if (!root->archetype.subset(view<Args...>::mask)) continue;
-        for (auto& chunk : root->chunks) { (ftor->*f)(view<Args...>(chunk.get())); }
+        for (auto& chunk : root->chunks) { (object->*f)(view<Args...>(chunk.get())); }
     }
+}
+
+template<typename F, typename... Args>
+inline constexpr size_t
+query_mask(void (F::*f)(Args...) const)
+{
+    return (view<Args...>::mask);
+}
+
+template<typename F, typename... Args>
+inline constexpr size_t
+query_mask(void (F::*f)(view<Args...>) const)
+{
+    return (view<Args...>::mask);
 }
 
 } // namespace internal
