@@ -1,5 +1,9 @@
-* add query entity fetch
 
+Version 0.1:
+
+* add world & view (per chunk) queries
+    update(realm::view<pos, vel> view) const
+    update(world& wo) const
 
 * add parallel-iteration support (using std::execution/tbb)
 
@@ -9,21 +13,21 @@
 
 * make archetype::from_identity* functions from_tuple* (using lamda in-direction)
 
-* either keep query<T...> struct & optimize or use functional query impl
-    maybe keep chunk_view & chunk_entity_view but make query api
-    strictly functional to match the update func in system.
-
-* add std::optional when getting components?
-
-* allow undefined allocation capacity, eg. grow when needed
+* add a snapshotting feature for syncing of entities in ex multiplayer games
 
 * better tests/benchs (and link library)
 
-* add a snapshotting feature for syncing of entities in ex multiplayer games
+Further features:
+
+* when more c++20 features are default impl. modules, coroutines & ranges
+
+* allow undefined allocation capacity, eg. grow when needed
 
 * add tag/flag components (components who doesnt occupy memory, no data)
 
 * add static components/instances (components whose data never changes doesnt have to be reallocated)
+
+* add std::optional when getting components?
 
 * integrate conan
 
@@ -45,5 +49,3 @@
 * event-based reactive queries
     example: query::changed(&world, [](pos& p){ /* do stuff */} )
     note: query is only called if an archetype_chunk the query matches has changed since last check
-
-* when more c++20 features are default impl. modules, coroutines & ranges

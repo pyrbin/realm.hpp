@@ -32,60 +32,26 @@ perfect aligned contiguous memory of components & easy parallelization of system
 ## API
 
 ```c++
-// components are just structs
-struct pos {
-    int x, y = 0;
-};
 
-struct vel {
-    int x, y = 0;
-};
-
-// create a world of capacity 10000
-auto world = realm::world(10000);
-
-// an entity is just a 64-bit integer
-auto entt = world.create<vel, pos>();
-
-// can also create an entity with an archetype
-auto at = realm::archetype::of<vel, pos>();
-auto entt = world.create(at);
-
-// use the type system for mutable/immutable fetch of comps
-auto& p_write = world.get<pos>(entt);
-auto& p_read = world.get<const pos>(entt);
-
-// you can query a world with a lambda where
-// each argument is a component you want to fetch
-world.fetch([](pos& p, const vel& v) {
-    p.x += v.x;
-    p.y += v.y;
-});
-
-// you can also use the query class to create a query
-realm::query<pos, const vel> query;
-
-// and call a STL compatiple iterator with the fetch() function
-for(auto& [p, v] : query.fetch()) {
-    p.x += v.x;
-    p.y += v.y;
-}
-
-// You can also create a system class and insert it to the world
-// The query lambda is taken from the update function
 struct example_system {
-    void update(pos& p, const vel& v, realm::entity entt) const {
+    void update(pos& p, const vel& v) const {
         p.x += v.x;
         p.y += v.y;
     }
+
+    void update(realm::entity e, realm::world& w) const {
+
+    }
+    
+    void update(realm::view<pos, vel> view) const {
+        for(auto& [p, v] : view) {
+            p.x += v.x;
+            p.y += v.y;
+        }
+    }
 }
 
-// Insert into world
-world.insert<example_system>(/* args */);
 
-// All systems can be invokable by calling world.update
-world.update();
-world.update(/* execution policy? */);
 ```
 ## Benchmark
 TODO
