@@ -39,6 +39,7 @@ TEST_CASE("system_insert")
     auto at = realm::archetype::of<pos, vel, name>();
 
     world.batch<pos, vel>(N);
+    world.insert<example_system>(Arg1);
     world.insert<example_view_system>(Arg1);
 
     REQUIRE(world.system_count() == 2);
