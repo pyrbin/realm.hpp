@@ -9,7 +9,6 @@
 #include "../util/swap_remove.hpp"
 
 namespace realm {
-
 /**
  * @brief Entities are represented as 64-bit integers split in half,
  * where each 32-bit half represents an index & generation
@@ -25,7 +24,6 @@ struct entity_handle
 struct archetype_chunk;
 
 namespace internal {
-
 struct entity_location
 {
     uint32_t chunk_index{ 0 };
@@ -176,7 +174,5 @@ private:
     std::vector<uint32_t> slots;
     int first_available;
 };
-
 } // namespace internal
-
 } // namespace realm

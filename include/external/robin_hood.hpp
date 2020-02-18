@@ -210,7 +210,6 @@ counts()
 #endif
 
 namespace robin_hood {
-
 #if ROBIN_HOOD(CXX) >= ROBIN_HOOD(CXX14)
 #define ROBIN_HOOD_STD std
 #else
@@ -292,13 +291,11 @@ using make_index_sequence = make_integer_sequence<std::size_t, N>;
 
 template<class... T>
 using index_sequence_for = make_index_sequence<sizeof...(T)>;
-
 } // namespace ROBIN_HOOD_STD
 
 #endif
 
 namespace detail {
-
 // umul
 #if defined(__SIZEOF_INT128__)
 #define ROBIN_HOOD_PRIVATE_DEFINITION_HAS_UMUL128() 1
@@ -578,7 +575,6 @@ struct NodeAllocator;
 template<typename T, size_t MinSize, size_t MaxSize>
 struct NodeAllocator<T, MinSize, MaxSize, true>
 {
-
     // we are not using the data, so just free it.
     void addOrFree(void* ptr, size_t ROBIN_HOOD_UNUSED(numBytes) /*unused*/) noexcept
     {
@@ -610,9 +606,7 @@ struct nothrow
 {
     static const bool value = noexcept(swap(std::declval<T&>(), std::declval<T&>()));
 };
-
 } // namespace swappable
-
 } // namespace detail
 
 struct is_transparent_tag
@@ -644,19 +638,22 @@ struct pair
 
     // pair constructors are explicit so we don't accidentally call this ctor when we
     // don't have to.
-    explicit constexpr pair(std::pair<T1, T2>&& o) noexcept(noexcept(T1(
-      std::move(std::declval<T1&&>()))) && noexcept(T2(std::move(std::declval<T2&&>()))))
+    explicit constexpr pair(std::pair<T1, T2>&& o) noexcept(
+      noexcept(T1(std::move(std::declval<T1&&>()))) &&
+      noexcept(T2(std::move(std::declval<T2&&>()))))
       : first(std::move(o.first)), second(std::move(o.second))
     {}
 
-    constexpr pair(T1&& a, T2&& b) noexcept(noexcept(T1(
-      std::move(std::declval<T1&&>()))) && noexcept(T2(std::move(std::declval<T2&&>()))))
+    constexpr pair(T1&& a,
+                   T2&& b) noexcept(noexcept(T1(std::move(std::declval<T1&&>()))) &&
+                                    noexcept(T2(std::move(std::declval<T2&&>()))))
       : first(std::move(a)), second(std::move(b))
     {}
 
     template<typename U1, typename U2>
-    constexpr pair(U1&& a, U2&& b) noexcept(noexcept(T1(std::forward<U1>(
-      std::declval<U1&&>()))) && noexcept(T2(std::forward<U2>(std::declval<U2&&>()))))
+    constexpr pair(U1&& a, U2&& b) noexcept(
+      noexcept(T1(std::forward<U1>(std::declval<U1&&>()))) &&
+      noexcept(T2(std::forward<U2>(std::declval<U2&&>()))))
       : first(std::forward<U1>(a)), second(std::forward<U2>(b))
     {}
 
@@ -677,21 +674,16 @@ struct pair
 
     // constructor called from the std::piecewise_construct_t ctor
     template<typename... U1, size_t... I1, typename... U2, size_t... I2>
-    pair(
-      std::tuple<U1...>& a,
-      std::tuple<U2...>& b,
-      ROBIN_HOOD_STD::index_sequence<I1...> /*unused*/,
-      ROBIN_HOOD_STD::index_sequence<
-        I2...> /*unused*/) noexcept(noexcept(T1(std::
-                                                  forward<U1>(std::get<I1>(
-                                                    std::declval<std::tuple<
-                                                      U1...>&>()))...)) && noexcept(T2(std::
-                                                                                         forward<
-                                                                                           U2>(std::get<
-                                                                                               I2>(
-                                                                                           std::declval<
-                                                                                             std::tuple<
-                                                                                               U2...>&>()))...)))
+    pair(std::tuple<U1...>& a,
+         std::tuple<U2...>& b,
+         ROBIN_HOOD_STD::index_sequence<I1...> /*unused*/,
+         ROBIN_HOOD_STD::index_sequence<
+           I2...> /*unused*/) noexcept(noexcept(T1(std::
+                                                     forward<U1>(std::get<I1>(
+                                                       std::declval<
+                                                         std::tuple<U1...>&>()))...)) &&
+                                       noexcept(T2(std::forward<U2>(std::get<I2>(
+                                         std::declval<std::tuple<U2...>&>()))...)))
       : first(std::forward<U1>(std::get<I1>(a))...)
       , second(std::forward<U2>(std::get<I2>(b))...)
     {
@@ -872,7 +864,6 @@ ROBIN_HOOD_HASH_INT(unsigned long long);
 #pragma GCC diagnostic pop
 #endif
 namespace detail {
-
 // using wrapper classes for hash and key_equal prevents the diamond problem when the same
 // type is used. see https://stackoverflow.com/a/28771920/48181
 template<typename T>
@@ -1532,8 +1523,8 @@ public:
     // bucket_count is dictated by the standard, but we can ignore it.
     explicit Table(size_t ROBIN_HOOD_UNUSED(bucket_count) /*unused*/ = 0,
                    const Hash& h = Hash{},
-                   const KeyEqual& equal =
-                     KeyEqual{}) noexcept(noexcept(Hash(h)) && noexcept(KeyEqual(equal)))
+                   const KeyEqual& equal = KeyEqual{}) noexcept(noexcept(Hash(h)) &&
+                                                                noexcept(KeyEqual(equal)))
       : WHash(h), WKeyEqual(equal)
     {
         ROBIN_HOOD_TRACE(this);
@@ -1599,7 +1590,6 @@ public:
                 DataPool::operator=(std::move(static_cast<DataPool&>(o)));
 
                 o.init();
-
             } else {
                 // nothing in the other map => just clear us.
                 clear();
@@ -2327,7 +2317,6 @@ private:
     InfoType mInfoHashShift = InitialInfoHashShift;      // 4 byte 48
                                                          // 16 byte 56 if NodeAllocator
 };
-
 } // namespace detail
 
 // map
@@ -2390,7 +2379,6 @@ using unordered_set = detail::Table<sizeof(Key) <= sizeof(size_t) * 6 &&
                                     void,
                                     Hash,
                                     KeyEqual>;
-
 } // namespace robin_hood
 
 #endif

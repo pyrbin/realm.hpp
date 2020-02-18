@@ -20,10 +20,6 @@
 #include "entity.hpp"
 
 namespace realm {
-
-/**
- * @brief archetype represents a set of components.
- */
 struct archetype
 {
     using components_t = std::vector<component>;
@@ -302,7 +298,6 @@ private:
 inline archetype_chunk*
 archetype_chunk_root::find_free()
 {
-
     if (cached_free && !cached_free->full()) return cached_free;
 
     auto it = std::find_if(
@@ -330,7 +325,6 @@ archetype_chunk_root::create_chunk()
 } // namespace realm
 
 namespace std {
-
 template<>
 struct hash<realm::archetype>
 {
@@ -348,5 +342,4 @@ struct hash<realm::archetype_chunk_root>
         return (hash<realm::archetype>{}(at.archetype));
     }
 };
-
 } // namespace std

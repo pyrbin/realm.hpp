@@ -4,12 +4,11 @@
 #include "entity.hpp"
 #include "system.hpp"
 
-#include <functional>
 #include <execution>
+#include <functional>
 #include <vector>
 
 namespace realm {
-
 template<typename F>
 inline constexpr void
 query(world* world, F&& f);
@@ -33,7 +32,6 @@ struct world
 private:
     inline archetype_chunk* get_free_chunk(const archetype& at)
     {
-
         archetype_chunk_root* root{ nullptr };
         auto it = chunks_map.find(at.mask());
 
@@ -175,9 +173,7 @@ public:
 
     inline void update()
     {
-        for (auto& sys : systems) { 
-            sys->invoke(this);
-        }
+        for (auto& sys : systems) { sys->invoke(this); }
     }
 
     template<typename ExePo>
@@ -190,5 +186,4 @@ public:
     int32_t capacity() const noexcept { return entities.capacity(); }
     int32_t system_count() const noexcept { return systems.size(); }
 };
-
 } // namespace realm

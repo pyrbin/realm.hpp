@@ -11,7 +11,6 @@
 #include "../util/type_hash.hpp"
 
 namespace realm {
-
 /**
  * @brief Describes a particular layout of memory. Inspired by rust
  * alloc::Layout.
@@ -73,7 +72,6 @@ struct component_meta
 
 struct component
 {
-
     using constructor_t = void(void*);
 
     const component_meta meta;
@@ -105,11 +103,9 @@ struct component
                  [](void* ptr) { ((T*) ptr)->~T(); } };
     }
 };
-
 } // namespace realm
 
 namespace std {
-
 template<>
 struct hash<realm::component>
 {
@@ -118,5 +114,4 @@ struct hash<realm::component>
         return (hash<size_t>{}(c.meta.hash));
     }
 };
-
 } // namespace std

@@ -12,7 +12,6 @@
 #include <vector>
 
 namespace realm {
-
 struct world;
 
 template<typename... Ts>
@@ -91,5 +90,4 @@ public:
 private:
     archetype_chunk* chunk;
 };
-
 } // namespace realm

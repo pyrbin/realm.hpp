@@ -6,7 +6,6 @@
 
 namespace realm {
 namespace internal {
-
 template<typename T>
 using pure_t = std::unwrap_ref_decay_t<T>;
 
@@ -43,6 +42,5 @@ struct arg_types
     inline constexpr arg_types(void (F::*f)(Args...) const) {}
     using type = typename std::tuple<std::remove_reference_t<Args>...>;
 };
-
 } // namespace internal
 } // namespace realm

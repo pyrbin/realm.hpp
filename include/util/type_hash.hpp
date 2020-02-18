@@ -15,7 +15,6 @@
 
 namespace realm {
 namespace internal {
-
 using hash_t = uint64_t;
 
 inline const hash_t fnv_basis = 14695981039346656037ull;
@@ -47,6 +46,5 @@ public:
     using value_type = internal::hash_t;
     static constexpr value_type value{ gen_hash() };
 };
-
 } // namespace internal
 } // namespace realm

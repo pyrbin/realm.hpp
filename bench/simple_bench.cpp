@@ -50,8 +50,6 @@ BENCH_CASE_1M()
 void
 BENCH_CASE_UPDATE_SIMPLE()
 {
-
-
     double min = 99999999;
 
     std::cout << "[BENCH] Updating " << N << " entities "
@@ -70,7 +68,6 @@ BENCH_CASE_UPDATE_SIMPLE()
 void
 BENCH_CASE_UPDATE_PAR()
 {
-
     double min = 99999999;
 
     std::cout << "[BENCH] Updating " << N << " entities in parallel "

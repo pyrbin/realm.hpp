@@ -19,6 +19,5 @@ swap_remove(unsigned index, T& target)
     std::swap(target[target.size() - 1], target[index]);
     target.resize(target.size() - 1);
 }
-
 } // namespace internal
 } // namespace realm

@@ -8,14 +8,12 @@
 #include "view.hpp"
 
 #include <algorithm>
+#include <execution>
 #include <memory>
 #include <vector>
-#include <execution>
 
 namespace realm {
-
 namespace internal {
-
 /**
  * View query
  * @return
@@ -37,7 +35,6 @@ template<typename F, typename... Args>
 inline constexpr void
 query_helper(world* world, F* object, void (F::*f)(Args...) const)
 {
-
     for (auto& root : world->chunks) {
         if (!root->archetype.subset(view<Args...>::mask)) continue;
         for (auto& chunk : root->chunks) {
@@ -48,18 +45,14 @@ query_helper(world* world, F* object, void (F::*f)(Args...) const)
     }
 }
 
-
 /**
  * View query
  * @return
  */
 template<typename ExePo, typename F, typename... Args>
 inline constexpr void
-query_helper(ExePo policy, world* world,
-             F* object,
-             void (F::*f)(view<Args...>) const)
+query_helper(ExePo policy, world* world, F* object, void (F::*f)(view<Args...>) const)
 {
-
     std::for_each(policy, world->chunks.begin(), world->chunks.end(), [&](auto& root) {
         if (!root->archetype.subset(view<Args...>::mask)) return;
         std::for_each(std::execution::par,
@@ -74,27 +67,21 @@ query_helper(ExePo policy, world* world,
  */
 template<typename ExePo, typename F, typename... Args>
 inline constexpr void
-query_helper(ExePo policy, world* world,
-             F* object,
-             void (F::*f)(Args...) const)
+query_helper(ExePo policy, world* world, F* object, void (F::*f)(Args...) const)
 {
-
-
-    std::for_each(policy, world->chunks.begin(), world->chunks.end(), 
-      [&](auto& root) {
+    std::for_each(policy, world->chunks.begin(), world->chunks.end(), [&](auto& root) {
         if (!root->archetype.subset(view<Args...>::mask)) return;
-          std::for_each(std::execution::par,
-                        root->chunks.begin(),
-                        root->chunks.end(),
-                        [&](auto& chunk) {
-                            for (uint32_t i{ 0 }; i < chunk->size(); i++) {
-                                (object->*f)(
-                                  *chunk->template get<internal::pure_t<Args>>(i)...);
-                            }
-                        });
-      });
+        std::for_each(std::execution::par,
+                      root->chunks.begin(),
+                      root->chunks.end(),
+                      [&](auto& chunk) {
+                          for (uint32_t i{ 0 }; i < chunk->size(); i++) {
+                              (object->*f)(
+                                *chunk->template get<internal::pure_t<Args>>(i)...);
+                          }
+                      });
+    });
 }
-
 
 template<typename F, typename... Args>
 inline constexpr size_t
@@ -109,7 +96,6 @@ query_mask(void (F::*f)(view<Args...>) const)
 {
     return (view<Args...>::mask);
 }
-
 } // namespace internal
 
 template<typename F>
@@ -129,5 +115,4 @@ query(ExePo policy, world* world, F&& f)
 
     internal::query_helper(policy, world, &f, &pure_t::operator());
 }
-
 } // namespace realm

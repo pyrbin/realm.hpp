@@ -21,6 +21,5 @@ apply_invoke(F&& func, T&& first, U&& tuple)
                       std::tuple_cat(std::forward_as_tuple(std::forward<T>(first)),
                                      std::forward<U>(tuple)));
 }
-
 } // namespace internal
 } // namespace realm

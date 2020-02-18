@@ -39,6 +39,5 @@ struct clean_query_tuple<std::tuple<T, Args...>>
 
 template<typename T>
 using clean_query_tuple_t = typename clean_query_tuple<T>::type;
-
 } // namespace internal
 } // namespace realm

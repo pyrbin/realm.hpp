@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstddef>
+#include <execution>
 #include <functional>
 #include <iostream>
 #include <memory>
@@ -8,30 +9,24 @@
 #include <string>
 #include <tuple>
 #include <utility>
-#include <execution>
 
 #include "../util/clean_query.hpp"
 #include "archetype.hpp"
 
 namespace realm {
-
 struct world;
 
 template<typename... Ts>
 struct view;
 
 namespace internal {
-
 template<typename F, typename... Args>
 inline constexpr void
 query_helper(world* world, F* obj, void (F::*f)(Args...) const);
 
 template<typename ExePo, typename F, typename... Args>
 inline constexpr void
-query_helper(ExePo policy,
-             world* world,
-             F* object,
-             void (F::*f)(Args...) const);
+query_helper(ExePo policy, world* world, F* object, void (F::*f)(Args...) const);
 
 template<typename F, typename... Args>
 inline constexpr void
@@ -39,10 +34,7 @@ query_helper(world* world, F* obj, void (F::*f)(view<Args...>) const);
 
 template<typename ExePo, typename F, typename... Args>
 inline constexpr void
-query_helper(ExePo policy,
-             world* world,
-             F* object,
-             void (F::*f)(view<Args...>) const);
+query_helper(ExePo policy, world* world, F* object, void (F::*f)(view<Args...>) const);
 
 template<typename F, typename... Args>
 inline constexpr size_t
@@ -51,7 +43,6 @@ query_mask(void (F::*f)(Args...) const);
 template<typename F, typename... Args>
 inline constexpr size_t
 query_mask(void (F::*f)(view<Args...>) const);
-
 } // namespace internal
 
 struct system_ref
@@ -63,7 +54,8 @@ struct system_ref
     virtual constexpr bool compare(size_t hash) const = 0;
     virtual void invoke(world*) const = 0;
     virtual void invoke(std::execution::parallel_policy policy, world* world) const = 0;
-    virtual void invoke(std::execution::parallel_unsequenced_policy policy, world* world) const = 0;
+    virtual void invoke(std::execution::parallel_unsequenced_policy policy,
+                        world* world) const = 0;
 };
 
 template<typename T>
@@ -101,5 +93,4 @@ public:
         internal::query_helper(policy, world, system.get(), &T::update);
     }
 };
-
 } // namespace realm
