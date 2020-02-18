@@ -1,3 +1,4 @@
+TODO/Roadmap
 
 Version 0.1:
 
@@ -7,23 +8,29 @@ Version 0.1:
 
 * optimization (try to get results close to similar projects while iterating entities)
 
-* add a snapshotting feature for syncing of entities in ex multiplayer games
-
 * solve compiler warnings / cleanup
 
 * better tests/benchs (and link library)
 
-Further features:
+* test latest versions of all major compilers (msvc, clang, gcc)
+
+Version 0.2:
+
+* add a snapshotting feature for syncing of entities in ex multiplayer games
+
+* re-add concepts instead of enable_if
 
 * fix view to support realm::entity
+
+* add static components/instances (components whose data never changes doesnt have to be reallocated)
+
+Further features:
 
 * when more c++20 features are default impl. modules, coroutines & ranges
 
 * allow undefined allocation capacity, eg. grow when needed
 
 * add tag/flag components (components who doesnt occupy memory, no data)
-
-* add static components/instances (components whose data never changes doesnt have to be reallocated)
 
 * add std::optional when getting components?
 
