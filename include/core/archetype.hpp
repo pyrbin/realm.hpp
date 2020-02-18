@@ -20,6 +20,9 @@
 #include "entity.hpp"
 
 namespace realm {
+
+// TODO: Add comments/doxygen
+
 struct archetype
 {
     using components_t = std::vector<component>;

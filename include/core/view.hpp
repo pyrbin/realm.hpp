@@ -12,8 +12,14 @@
 #include <vector>
 
 namespace realm {
+
 struct world;
 
+/**
+ * @brief View
+ * Describes a chunk view for iteration & manipulation of a single archetype chunk.
+ * @tparam Ts Component types to match
+ */
 template<typename... Ts>
 struct view
 {
@@ -22,6 +28,12 @@ public:
     typedef std::tuple<std::add_lvalue_reference_t<Ts>...> references;
     typedef internal::clean_query_tuple_t<std::tuple<internal::pure_t<Ts>...>> components;
 
+    /**
+     * Creates a view of a chunk.
+     * Beware, there is currently no assurance that the chunk contains
+     * the components defined by the view.
+     * @param chunk
+     */
     inline constexpr view(archetype_chunk* chunk) : chunk{ chunk } {}
 
     static inline const size_t mask = archetype::mask_from_tuple<components>();
@@ -81,6 +93,12 @@ public:
 
     inline iterator end() { return iterator(nullptr); }
 
+    /**
+     * Get a component from the chunk for a specific entity
+     * @tparam T Component type
+     * @param entt  Entity id
+     * @return A component reference of type T
+     */
     template<typename T>
     internal::enable_if_component<T, T&> get(entity entt)
     {

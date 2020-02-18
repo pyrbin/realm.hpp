@@ -2,7 +2,7 @@ TODO/Roadmap
 
 Version 0.1:
 
-* add docs generation and documentation
+* generate docs & comments for archetype
 
 * optimization (try to get results close to similar projects while iterating entities)
 
@@ -19,6 +19,8 @@ Version 0.2:
 * add a snapshotting feature for syncing of entities in ex multiplayer games
 
 * re-add concepts instead of enable_if
+
+* better/more comments
 
 * fix view to support realm::entity
 

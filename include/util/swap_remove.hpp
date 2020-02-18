@@ -3,9 +3,17 @@
 #include <algorithm>
 
 namespace realm {
+
+/**
+ * @cond TURN_OFF_DOXYGEN
+ * Internal details not to be documented.
+ */
+
 namespace internal {
 /**
- * @brief Removes element at index and swap with last value in a
+ * @brief Swap remove
+ *
+ * Removes element at index and swap with last value in a
  * vector. Does not free memory.
  *
  * @tparam T vector type

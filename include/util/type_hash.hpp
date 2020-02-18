@@ -14,14 +14,23 @@
 #endif
 
 namespace realm {
+
+/**
+ * @cond TURN_OFF_DOXYGEN
+ * Internal details not to be documented.
+ */
+
 namespace internal {
+
 using hash_t = uint64_t;
 
 inline const hash_t fnv_basis = 14695981039346656037ull;
 inline const hash_t fnv_prime = 1099511628211ull;
 
 /**
- * @brief https://notes.underscorediscovery.com/constexpr-fnv1a/
+ * @brief FNV1A Hash function
+ * Simple hash function. Implementation taken from
+ * https://notes.underscorediscovery.com/constexpr-fnv1a/
  * @param str
  * @param value
  * @return
@@ -33,6 +42,12 @@ hash_fnv1a(const char* const str, const hash_t value = fnv_basis) noexcept
                             : hash_fnv1a(&str[1], (value ^ hash_t(str[0])) * fnv_prime);
 }
 
+/**
+ * @brief Type hash
+ * Provides a compile-time and run-time unique hash/id of a type
+ * Uses __PRETTY_FUNCTION__ macro & an implementation of FNV1A hashing.
+ * @tparam T
+ */
 template<typename T>
 struct type_hash
 {

@@ -6,7 +6,21 @@
 #include "../core/entity.hpp"
 
 namespace realm {
+
+/**
+ * @cond TURN_OFF_DOXYGEN
+ * Internal details not to be documented.
+ */
+
 namespace internal {
+
+/**
+ * Removes entity types from a tuple
+ * Used to retrieve correct archetype of a query.
+ * As a query can contain either components (valid)
+ * or entity types.
+ */
+
 template<typename T, typename... Args>
 struct clean_query_tuple
 {};

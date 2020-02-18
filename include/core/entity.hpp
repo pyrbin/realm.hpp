@@ -9,12 +9,16 @@
 #include "../util/swap_remove.hpp"
 
 namespace realm {
+
 /**
  * @brief Entities are represented as 64-bit integers split in half,
  * where each 32-bit half represents an index & generation
  */
 using entity = uint64_t;
 
+/**
+ *  @brief Describes an entity handle
+ */
 struct entity_handle
 {
     uint32_t index;
@@ -23,21 +27,28 @@ struct entity_handle
 
 struct archetype_chunk;
 
-namespace internal {
+/**
+ *  @brief Describes an entity chunk location
+ */
 struct entity_location
 {
+    /*! @brief Index where in chunk the entity stored */
     uint32_t chunk_index{ 0 };
+    /*! @brief Which chunk the entity is stored */
     archetype_chunk* chunk{ nullptr };
 };
 
 /**
- * @brief entity_pool, based on a Rust slot-map/beach-map.
+ * @brief A collection of entities based on a Rust slot-map/beach-map.
  * @ref https://docs.rs/beach_map/
- *
  */
 class entity_pool
 {
 public:
+    /**
+     * Create an entity pool with specified capacity
+     * @param capacity
+     */
     entity_pool(uint32_t capacity) : first_available{ -1 }
     {
         slots.reserve(capacity);
@@ -53,8 +64,14 @@ public:
         }
     }
 
+    /**
+     * Create an entity with given location
+     * @param loc entity location
+     * @return The entity id for the entity
+     */
     entity create(const entity_location& loc)
     {
+        // TODO: add comments
         entity_handle handle;
         auto index = first_available;
         if (index != -1) {
@@ -75,8 +92,13 @@ public:
         return merge_handle(handle);
     }
 
+    /**
+     * Frees/destroys an entity from the pool
+     * @param entt The entity id to destroy
+     */
     void free(entity entt)
     {
+        // TODO: add comments
         auto handle = extract_handle(entt);
         auto [index, generation] = handles.at(handle.index);
         if (generation != handle.generation) return;
@@ -90,6 +112,11 @@ public:
         internal::swap_remove(loc_index, locations);
     }
 
+    /**
+     * Get a const pointer to a entity location of an entity
+     * @param entt The entity id
+     * @return The entity location
+     */
     const entity_location* get(entity entt)
     {
         auto handle = extract_handle(entt);
@@ -99,6 +126,11 @@ public:
                  : nullptr;
     }
 
+    /**
+     * Get a mutable pointer to a entity location of an entity
+     * @param entt The entity id
+     * @return The entity location
+     */
     entity_location* get_mut(entity entt)
     {
         auto handle = extract_handle(entt);
@@ -108,12 +140,22 @@ public:
                  : nullptr;
     }
 
+    /**
+     * Update an entities location
+     * @param entt The entity id
+     * @param loc The new entity location
+     */
     void update(entity entt, entity_location&& loc)
     {
         get_mut(entt)->chunk = std::move(loc.chunk);
         get_mut(entt)->chunk_index = std::move(loc.chunk_index);
     }
 
+    /**
+     * Check if an entity id exists in the pool/is valid
+     * @param entt The entity id
+     * @return
+     */
     bool exists(entity entt) const noexcept
     {
         auto handle = extract_handle(entt);
@@ -122,6 +164,10 @@ public:
                  : false;
     }
 
+    /**
+     * Iterate each entity immutable
+     * @param fn
+     */
     void each(std::function<void(const entity, const entity_location*)> fn)
     {
         for (unsigned i{ 0 }; i < handles.size(); i++) {
@@ -130,6 +176,10 @@ public:
         }
     }
 
+    /**
+     * Iterate each entity mutable
+     * @param fn
+     */
     void each_mut(std::function<void(const entity, entity_location*)> fn)
     {
         for (unsigned i{ 0 }; i < handles.size(); i++) {
@@ -138,31 +188,60 @@ public:
         }
     }
 
+    /*! @brief Pool size. */
     int32_t size() const noexcept { return slots.size(); }
+
+    /*! @brief Capacity size. */
     int32_t capacity() const noexcept { return slots.capacity(); }
 
+    /**
+     * Create an entity id from an index and generation
+     * @param index
+     * @param generation
+     * @return An entity id
+     */
     static inline constexpr entity merge_handle(uint32_t index,
                                                 uint32_t generation) noexcept
     {
         return entity{ generation } << 32 | entity{ index };
     }
 
+    /**
+     * Create an entity id from an entity handle
+     * @param handle
+     * @return
+     */
     static inline constexpr entity merge_handle(entity_handle handle) noexcept
     {
         auto [index, generation] = handle;
         return merge_handle(index, generation);
     }
 
+    /**
+     * Get the index of an entity id
+     * @param entt
+     * @return
+     */
     static inline constexpr uint32_t index(entity entt) noexcept
     {
         return static_cast<uint32_t>(entt);
     }
 
+    /**
+     * Get the generation of an entity id
+     * @param entt
+     * @return
+     */
     static inline constexpr uint32_t generation(entity entt) noexcept
     {
         return (entt >> 32);
     }
 
+    /**
+     * Create an entity handle from and entity id
+     * @param entt
+     * @return
+     */
     static inline constexpr entity_handle extract_handle(entity entt) noexcept
     {
         return { index(entt), generation(entt) };
@@ -174,5 +253,5 @@ private:
     std::vector<uint32_t> slots;
     int first_available;
 };
-} // namespace internal
+
 } // namespace realm

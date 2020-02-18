@@ -14,12 +14,22 @@
 #include "archetype.hpp"
 
 namespace realm {
+
+/**
+ * @cond TURN_OFF_DOXYGEN
+ * Internal details not to be documented.
+ */
+
 struct world;
 
 template<typename... Ts>
 struct view;
 
 namespace internal {
+
+/**
+ * Forward declarations of query functions
+ */
 template<typename F, typename... Args>
 inline constexpr void
 query_helper(world* world, F* obj, void (F::*f)(Args...) const);
@@ -43,8 +53,11 @@ query_mask(void (F::*f)(Args...) const);
 template<typename F, typename... Args>
 inline constexpr size_t
 query_mask(void (F::*f)(view<Args...>) const);
-} // namespace internal
 
+/**
+ * @brief System reference
+ * Base system reference holder
+ */
 struct system_ref
 {
     const size_t mask{ 0 };
@@ -58,16 +71,29 @@ struct system_ref
                         world* world) const = 0;
 };
 
+/**
+ * @brief System proxy
+ * A proxy class used to communicate with a defined system.
+ * Used to invoke the update function and uses query_helper functions to
+ * execute the query logic.
+ * @tparam T Underlying system class
+ */
 template<typename T>
 struct system_proxy : public system_ref
 {
 private:
-    const std::unique_ptr<T> system;
+    /*! @brief Underlying system pointer */
+    const std::unique_ptr<T> underlying_system;
 
 public:
+    /**
+     * Construct a system proxy with arguments for the underlying system.
+     * @tparam Args Argument types
+     * @param args Arguments for underlying system
+     */
     template<typename... Args>
     inline system_proxy(Args&&... args)
-      : system{ std::make_unique<T>(std::forward<Args>(args)...) }
+      : underlying_system{ std::make_unique<T>(std::forward<Args>(args)...) }
       , system_ref{ internal::query_mask(&T::update) }
     {}
 
@@ -76,21 +102,28 @@ public:
         return archetype::subset(other, mask);
     }
 
+    /**
+     * Call the system query on a world
+     * @param world
+     */
     inline void invoke(world* world) const override
     {
-        internal::query_helper(world, system.get(), &T::update);
+        internal::query_helper(world, underlying_system.get(), &T::update);
     }
 
     inline void invoke(std::execution::parallel_policy policy,
                        world* world) const override
     {
-        internal::query_helper(policy, world, system.get(), &T::update);
+        internal::query_helper(policy, world, underlying_system.get(), &T::update);
     }
 
     inline void invoke(std::execution::parallel_unsequenced_policy policy,
                        world* world) const override
     {
-        internal::query_helper(policy, world, system.get(), &T::update);
+        internal::query_helper(policy, world, underlying_system.get(), &T::update);
     }
 };
+
+} // namespace internal
+
 } // namespace realm

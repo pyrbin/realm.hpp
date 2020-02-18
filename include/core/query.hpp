@@ -1,7 +1,6 @@
 #pragma once
 
 #include "../util/clean_query.hpp"
-#include "../util/tuple_util.hpp"
 #include "../util/type_traits.hpp"
 
 #include "archetype.hpp"
@@ -13,10 +12,50 @@
 #include <vector>
 
 namespace realm {
-namespace internal {
+
 /**
- * View query
+ * Queries the world for components defined in the functor object
+ * @tparam F Lambda/functor type
+ * @param world World to query
+ * @param f Lambda/Functor object
  * @return
+ */
+template<typename F>
+inline constexpr void
+query(world* world, F&& f)
+{
+    using pure_t = internal::pure_t<F>;
+    internal::query_helper(world, &f, &pure_t::operator());
+}
+
+/**
+ * Queries the world for components defined in the functor object with an std::execution
+ * policy. Each chunk will be run in parallel using std::for_each with provided policy.
+ * @tparam ExePo Policy type
+ * @tparam F Lambda/functor type
+ * @param policy Policy (can be either par or par_unseq)
+ * @param world World to query
+ * @param f Lambda/Functor object
+ * @return
+ */
+template<typename ExePo, typename F>
+inline constexpr void
+query(ExePo policy, world* world, F&& f)
+{
+    using pure_t = internal::pure_t<F>;
+
+    internal::query_helper(policy, world, &f, &pure_t::operator());
+}
+
+/**
+ * @cond TURN_OFF_DOXYGEN
+ * Internal details not to be documented.
+ */
+
+namespace internal {
+
+/**
+ * @brief Per-chunk (view) query
  */
 template<typename F, typename... Args>
 inline constexpr void
@@ -29,7 +68,7 @@ query_helper(world* world, F* object, void (F::*f)(view<Args...>) const)
 }
 
 /**
- * Normal query
+ * @brief Per-entity query
  */
 template<typename F, typename... Args>
 inline constexpr void
@@ -46,8 +85,7 @@ query_helper(world* world, F* object, void (F::*f)(Args...) const)
 }
 
 /**
- * View query
- * @return
+ * @brief Parallel per-chunk (view) query
  */
 template<typename ExePo, typename F, typename... Args>
 inline constexpr void
@@ -63,7 +101,7 @@ query_helper(ExePo policy, world* world, F* object, void (F::*f)(view<Args...>) 
 }
 
 /**
- * Normal query
+ * @brief Parallel per-entity query
  */
 template<typename ExePo, typename F, typename... Args>
 inline constexpr void
@@ -83,6 +121,9 @@ query_helper(ExePo policy, world* world, F* object, void (F::*f)(Args...) const)
     });
 }
 
+/**
+ * @brief Retrieves mask from a query function (used in systems)
+ */
 template<typename F, typename... Args>
 inline constexpr size_t
 query_mask(void (F::*f)(Args...) const)
@@ -90,6 +131,9 @@ query_mask(void (F::*f)(Args...) const)
     return (view<Args...>::mask);
 }
 
+/**
+ * @brief Retrieves mask from a per-chunk (view) query function (used in systems)
+ */
 template<typename F, typename... Args>
 inline constexpr size_t
 query_mask(void (F::*f)(view<Args...>) const)
@@ -97,22 +141,4 @@ query_mask(void (F::*f)(view<Args...>) const)
     return (view<Args...>::mask);
 }
 } // namespace internal
-
-template<typename F>
-inline constexpr void
-query(world* world, F&& f)
-{
-    using pure_t = internal::pure_t<F>;
-
-    internal::query_helper(world, &f, &pure_t::operator());
-}
-
-template<typename ExePo, typename F>
-inline constexpr void
-query(ExePo policy, world* world, F&& f)
-{
-    using pure_t = internal::pure_t<F>;
-
-    internal::query_helper(policy, world, &f, &pure_t::operator());
-}
 } // namespace realm
