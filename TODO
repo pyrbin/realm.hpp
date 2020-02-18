@@ -1,23 +1,21 @@
 
 Version 0.1:
 
-* add world & view (per chunk) queries
-    update(realm::view<pos, vel> view) const
-    update(world& wo) const
-
 * add parallel-iteration support (using std::execution/tbb)
 
 * add docs generation and documentation
 
 * optimization (try to get results close to similar projects while iterating entities)
 
-* make archetype::from_identity* functions from_tuple* (using lamda in-direction)
-
 * add a snapshotting feature for syncing of entities in ex multiplayer games
+
+* solve compiler warnings / cleanup
 
 * better tests/benchs (and link library)
 
 Further features:
+
+* fix view to support realm::entity
 
 * when more c++20 features are default impl. modules, coroutines & ranges
 

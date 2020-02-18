@@ -39,7 +39,7 @@ TEST_CASE("query_par")
 }
 */
 
-TEST_CASE("query_chunk_iterator")
+TEST_CASE("query_with_view")
 {
     const size_t N = 10;
     auto at = realm::archetype::of<pos, vel, name>();
@@ -50,11 +50,7 @@ TEST_CASE("query_chunk_iterator")
         world.get<pos>(entt).x = i;
     }
 
-    realm::view<pos, const vel> chunk{ &world };
-
-    for (auto [p, v] : chunk) { p.x += 20; }
-
-    auto i = 0;
-
-    for (auto [p, v] : chunk) { REQUIRE(p.x == 20 + i++); }
+    realm::query(&world, [](realm::view<pos, vel> view) {
+        for (auto [p, v] : view) { p.x += 20; }
+    });
 }
