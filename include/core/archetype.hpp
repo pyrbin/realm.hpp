@@ -15,6 +15,7 @@
 #include "../util/swap_remove.hpp"
 #include "../util/type_traits.hpp"
 
+#include "../util/clean_query.hpp"
 #include "component.hpp"
 #include "entity.hpp"
 
@@ -71,11 +72,14 @@ public:
         return archetype{ { component::of<T>()... }, data::of<T...>() };
     }
 
-    template<typename... T>
-    static inline constexpr internal::enable_if_component_pack<archetype, T...>
-      from_identity(std::type_identity<std::tuple<T...>>)
+    template<typename T>
+    static inline archetype from_tuple()
     {
-        return archetype::of<T...>();
+        return [&]<typename... Ts>(std::type_identity<std::tuple<Ts...>>)
+        {
+            return archetype::of<Ts...>();
+        }
+        (std::type_identity<T>{});
     }
 
     template<typename... T>
@@ -90,11 +94,14 @@ public:
         return mask;
     }
 
-    template<typename... T>
-    static inline constexpr internal::enable_if_component_pack<size_t, T...>
-      mask_from_identity(std::type_identity<std::tuple<T...>>)
+    template<typename T>
+    static inline constexpr size_t mask_from_tuple()
     {
-        return archetype::mask_of<T...>();
+        return [&]<typename... Ts>(std::type_identity<std::tuple<Ts...>>)
+        {
+            return archetype::mask_of<Ts...>();
+        }
+        (std::type_identity<T>{});
     }
 
     static inline constexpr bool subset(size_t a, size_t b) { return (a & b) == b; }

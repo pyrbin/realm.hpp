@@ -43,9 +43,9 @@ private:
     template<typename R = void, typename... Args>
     static inline size_t make_mask(R (T::*f)(Args...) const)
     {
-        using type =
+        using tuple =
           internal::clean_query_tuple_t<std::tuple<std::unwrap_ref_decay_t<Args>...>>;
-        return archetype::mask_from_identity(std::type_identity<type>{});
+        return archetype::mask_from_tuple<tuple>();
     }
 
 public:
