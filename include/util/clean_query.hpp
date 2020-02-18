@@ -17,6 +17,12 @@ struct clean_query_tuple<std::tuple<entity>>
     using type = std::tuple<>;
 };
 
+template<>
+struct clean_query_tuple<std::tuple<>>
+{
+    using type = std::tuple<>;
+};
+
 template<typename T>
 struct clean_query_tuple<std::tuple<T>>
 {

@@ -2,8 +2,6 @@ TODO/Roadmap
 
 Version 0.1:
 
-* add parallel-iteration support (using std::execution/tbb)
-
 * add docs generation and documentation
 
 * optimization (try to get results close to similar projects while iterating entities)
@@ -13,6 +11,8 @@ Version 0.1:
 * better tests/benchs (and link library)
 
 * test latest versions of all major compilers (msvc, clang, gcc)
+
+* update readme
 
 Version 0.2:
 
@@ -25,6 +25,8 @@ Version 0.2:
 * add static components/instances (components whose data never changes doesnt have to be reallocated)
 
 Further features:
+
+* better multi-threading (eg. create a dependency graph on systems for even more parallelization)
 
 * when more c++20 features are default impl. modules, coroutines & ranges
 

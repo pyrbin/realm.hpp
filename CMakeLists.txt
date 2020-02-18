@@ -28,12 +28,6 @@ target_include_directories(
 # Settings
 target_compile_features(${PROJECT_NAME} INTERFACE cxx_std_20)
 
-# Coroutines support
-if(MSVC)
-    add_compile_options("/std:c++latest")
-    add_compile_options("/await")
-endif(MSVC)
-
 # Old way (CLion doesn't pickup  target_compile_features
 set(CMAKE_CXX_STANDARD 20)
 

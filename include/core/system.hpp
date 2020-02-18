@@ -8,6 +8,7 @@
 #include <string>
 #include <tuple>
 #include <utility>
+#include <execution>
 
 #include "../util/clean_query.hpp"
 #include "archetype.hpp"
@@ -25,9 +26,23 @@ template<typename F, typename... Args>
 inline constexpr void
 query_helper(world* world, F* obj, void (F::*f)(Args...) const);
 
+template<typename ExePo, typename F, typename... Args>
+inline constexpr void
+query_helper(ExePo policy,
+             world* world,
+             F* object,
+             void (F::*f)(Args...) const);
+
 template<typename F, typename... Args>
 inline constexpr void
 query_helper(world* world, F* obj, void (F::*f)(view<Args...>) const);
+
+template<typename ExePo, typename F, typename... Args>
+inline constexpr void
+query_helper(ExePo policy,
+             world* world,
+             F* object,
+             void (F::*f)(view<Args...>) const);
 
 template<typename F, typename... Args>
 inline constexpr size_t
@@ -46,7 +61,9 @@ struct system_ref
     inline system_ref(size_t mask) : mask{ mask } {};
     virtual inline ~system_ref() = default;
     virtual constexpr bool compare(size_t hash) const = 0;
-    virtual void operator()(world*) const = 0;
+    virtual void invoke(world*) const = 0;
+    virtual void invoke(std::execution::parallel_policy policy, world* world) const = 0;
+    virtual void invoke(std::execution::parallel_unsequenced_policy policy, world* world) const = 0;
 };
 
 template<typename T>
@@ -67,9 +84,21 @@ public:
         return archetype::subset(other, mask);
     }
 
-    inline void operator()(world* world) const override
+    inline void invoke(world* world) const override
     {
         internal::query_helper(world, system.get(), &T::update);
+    }
+
+    inline void invoke(std::execution::parallel_policy policy,
+                       world* world) const override
+    {
+        internal::query_helper(policy, world, system.get(), &T::update);
+    }
+
+    inline void invoke(std::execution::parallel_unsequenced_policy policy,
+                       world* world) const override
+    {
+        internal::query_helper(policy, world, system.get(), &T::update);
     }
 };
 

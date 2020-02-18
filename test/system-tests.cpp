@@ -52,6 +52,6 @@ TEST_CASE("system_update")
     world.update();
     REQUIRE(world.get<const vel>(2).x == Arg1);
 
-    world.update();
+    world.update(std::execution::par);
     // REQUIRE(world.get<const pos>(N - 1).x == Arg1);
 }

@@ -5,9 +5,14 @@
 #include "system.hpp"
 
 #include <functional>
+#include <execution>
 #include <vector>
 
 namespace realm {
+
+template<typename F>
+inline constexpr void
+query(world* world, F&& f);
 
 struct world
 {
@@ -170,7 +175,15 @@ public:
 
     inline void update()
     {
-        for (auto& sys : systems) { sys->operator()(this); }
+        for (auto& sys : systems) { 
+            sys->invoke(this);
+        }
+    }
+
+    template<typename ExePo>
+    inline void update(ExePo policy)
+    {
+        for (auto& sys : systems) { sys->invoke(policy, this); }
     }
 
     int32_t size() const noexcept { return entities.size(); }

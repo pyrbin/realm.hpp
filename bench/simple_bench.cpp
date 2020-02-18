@@ -50,17 +50,35 @@ BENCH_CASE_1M()
 void
 BENCH_CASE_UPDATE_SIMPLE()
 {
-    world.insert<movement_system>();
-    world.insert<comflab_system>();
+
 
     double min = 99999999;
 
     std::cout << "[BENCH] Updating " << N << " entities "
               << "with 2 systems\n";
 
-    for (int i = 0; i < 50; i++) {
+    for (int i = 0; i < 10; i++) {
         timer timer;
         world.update();
+        double elapsed = timer.elapsed();
+        if (elapsed < min) { min = elapsed; }
+    }
+
+    std::cout << "[BENCH] Results: " << min << " seconds\n";
+}
+
+void
+BENCH_CASE_UPDATE_PAR()
+{
+
+    double min = 99999999;
+
+    std::cout << "[BENCH] Updating " << N << " entities in parallel "
+              << "with 2 systems\n";
+
+    for (int i = 0; i < 10; i++) {
+        timer timer;
+        world.update(std::execution::par_unseq);
         double elapsed = timer.elapsed();
         if (elapsed < min) { min = elapsed; }
     }
@@ -72,5 +90,8 @@ int
 main()
 {
     BENCH_CASE_1M();
+    world.insert<movement_system>();
+    world.insert<comflab_system>();
     BENCH_CASE_UPDATE_SIMPLE();
+    BENCH_CASE_UPDATE_PAR();
 }
