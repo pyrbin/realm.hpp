@@ -1,8 +1,7 @@
 set(
   TESTS
-  entity
-  query
-  system
+  entity-tests
+  system-tests
 )
 
 # TODO: link realm library
