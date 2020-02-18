@@ -50,11 +50,11 @@ TEST_CASE("query_chunk_iterator")
         world.get<pos>(entt).x = i;
     }
 
-    realm::chunk_entity_view<pos, const vel> view{ &world };
+    realm::view<pos, const vel> chunk{ &world };
 
-    for (auto [p, v] : view) { p.x += 20; }
+    for (auto [p, v] : chunk) { p.x += 20; }
 
     auto i = 0;
 
-    for (auto [p, v] : view) { REQUIRE(p.x == 20 + i++); }
+    for (auto [p, v] : chunk) { REQUIRE(p.x == 20 + i++); }
 }

@@ -102,16 +102,15 @@ private:
 };
 
 template<typename... T>
-struct chunk_entity_view
+struct view
 {
 public:
     typedef std::tuple<T...> values;
     typedef std::tuple<std::add_lvalue_reference_t<T>...> references;
     typedef internal::clean_query_tuple_t<std::tuple<internal::pure_t<T>...>> components;
-    typedef chunk_view view_t;
 
-    inline constexpr chunk_entity_view(world* world)
-      : view(world, archetype::mask_from_identity(std::type_identity<components>{}))
+    inline constexpr view(world* world)
+      : chunks(world, archetype::mask_from_identity(std::type_identity<components>{}))
     {}
 
     class iterator
@@ -122,20 +121,20 @@ public:
         typedef references reference;
         typedef std::forward_iterator_tag iterator_category;
 
-        inline constexpr iterator(view_t* view) : view{ view }, index{ 0 }
+        inline constexpr iterator(chunk_view* chunks) : chunks{ chunks }, index{ 0 }
         {
-            if (valid()) { iter = view->begin(); }
+            if (valid()) { iter = chunks->begin(); }
         }
 
-        inline constexpr bool valid() { return view != nullptr; }
+        inline constexpr bool valid() { return chunks != nullptr; }
 
         inline void step()
         {
             if (index >= get_chunk().size()) {
                 iter++;
                 index = 0;
-                if (iter == view->end()) {
-                    view = nullptr;
+                if (iter == chunks->end()) {
+                    chunks = nullptr;
                     return;
                 }
             }
@@ -164,23 +163,23 @@ public:
 
         inline constexpr bool operator!=(const self_type& other)
         {
-            return view != other.view;
+            return chunks != other.chunks;
         }
 
     private:
         archetype_chunk& get_chunk() { return *iter; }
 
-        view_t* view;
-        typename view_t::iterator iter;
+        chunk_view* chunks;
+        typename chunk_view::iterator iter;
         unsigned int index;
     };
 
-    inline iterator begin() { return iterator(&view); }
+    inline iterator begin() { return iterator(&chunks); }
 
     inline iterator end() { return iterator(nullptr); }
 
 private:
-    view_t view;
+    chunk_view chunks;
 };
 
 } // namespace realm

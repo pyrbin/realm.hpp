@@ -30,8 +30,8 @@ struct clean_query_tuple<std::tuple<T, Args...>>
       tuple_cat(std::declval<typename clean_query_tuple<std::tuple<T>>::type>(),
                 std::declval<typename clean_query_tuple<std::tuple<Args...>>::type>()));
 };
-template<typename T>
 
+template<typename T>
 using clean_query_tuple_t = typename clean_query_tuple<T>::type;
 
 } // namespace internal

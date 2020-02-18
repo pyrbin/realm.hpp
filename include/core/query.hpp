@@ -3,36 +3,43 @@
 #include "../util/clean_query.hpp"
 #include "../util/type_traits.hpp"
 
-#include "chunk_view.hpp"
+#include "archetype.hpp"
+#include "world.hpp"
+
+#include <algorithm>
+#include <memory>
+#include <vector>
 
 namespace realm {
 
-// TODO: readd realm::entity to queries
+namespace internal {
 
-template<typename... T>
-struct query
+template<typename F, typename... Args>
+inline constexpr void
+query_helper(world* world, F* ftor, void (F::*f)(Args...) const)
 {
-    typedef std::tuple<T...> values;
-    typedef std::tuple<std::add_lvalue_reference_t<T>...> references;
-    typedef internal::clean_query_tuple_t<std::tuple<internal::pure_t<T>...>> components;
 
-    const size_t mask;
+    using type =
+      internal::clean_query_tuple_t<std::tuple<std::unwrap_ref_decay_t<Args>...>>;
+    auto mask = archetype::mask_from_identity(std::type_identity<type>{});
 
-    inline constexpr query()
-      : mask{ archetype::mask_from_identity(std::type_identity<components>{}) } {};
-
-    inline constexpr query(std::type_identity<std::tuple<T...>>)
-      : mask{ archetype::mask_from_identity(std::type_identity<components>{}) } {};
-
-    inline constexpr chunk_entity_view<T...> fetch(world* world)
-    {
-        return chunk_entity_view<T...>(world);
+    for (auto& root : world->chunks) {
+        if (!root->archetype.subset(mask)) continue;
+        for (auto& chunk : root->chunks) {
+            for (uint32_t i{ 0 }; i < chunk->size(); i++) {
+                (ftor->*f)(*chunk->template get<std::unwrap_ref_decay_t<Args>>(i)...);
+            }
+        }
     }
+}
 
-    inline constexpr chunk_view fetch_chunk(world* world)
-    {
-        return chunk_view(world, mask);
-    }
-};
+} // namespace internal
+
+template<typename F>
+inline constexpr void
+query(world* world, F&& f)
+{
+    internal::query_helper(world, &f, &F::operator());
+}
 
 } // namespace realm

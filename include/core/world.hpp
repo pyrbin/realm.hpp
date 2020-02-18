@@ -5,8 +5,6 @@
 #include "system.hpp"
 
 #include <functional>
-#include <optional>
-#include <unordered_map>
 #include <vector>
 
 namespace realm {
@@ -18,7 +16,7 @@ struct world
     using chunks_t = std::vector<std::unique_ptr<archetype_chunk_root>>;
     using chunks_map_t = robin_hood::unordered_flat_map<size_t, unsigned>;
 
-    using systems_t = std::vector<std::unique_ptr<system_base>>;
+    using systems_t = std::vector<std::unique_ptr<system_ref>>;
     using entities_t = internal::entity_pool;
 
     chunks_t chunks;
@@ -68,7 +66,7 @@ private:
     }
 
     template<typename F, typename... Args>
-    inline constexpr void fetch_helper(F* ftor, void (F::*f)(Args...) const)
+    inline constexpr void query_helper(F* ftor, void (F::*f)(Args...) const)
     {
         using type =
           internal::clean_query_tuple_t<std::tuple<std::unwrap_ref_decay_t<Args>...>>;
@@ -181,22 +179,15 @@ public:
     }
 
     template<typename T, typename... Args>
-    inline constexpr system_functor<T>* insert(Args&&... args)
+    inline constexpr system_proxy<T>* insert(Args&&... args)
     {
-        auto ptr = std::make_unique<system_functor<T>>(std::forward<Args>(args)...);
-        return static_cast<system_functor<T>*>(
-          systems.emplace_back(std::move(ptr)).get());
+        auto ptr = std::make_unique<system_proxy<T>>(std::forward<Args>(args)...);
+        return static_cast<system_proxy<T>*>(systems.emplace_back(std::move(ptr)).get());
     }
 
     inline void update()
     {
         for (auto& sys : systems) { sys->operator()(this); }
-    }
-
-    template<typename F>
-    inline constexpr void fetch(F&& f)
-    {
-        fetch_helper(&f, &F::operator());
     }
 
     int32_t size() const noexcept { return entities.size(); }

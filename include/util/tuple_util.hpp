@@ -1,4 +1,3 @@
-
 #pragma once
 
 #include <functional>
@@ -15,7 +14,7 @@ namespace internal {
  * @param target vector to target
  */
 template<typename F, typename T, typename U>
-decltype(auto)
+inline constexpr decltype(auto)
 apply_invoke(F&& func, T&& first, U&& tuple)
 {
     return std::apply(std::forward<F>(func),

@@ -14,49 +14,26 @@
 
 struct movement_system
 {
-    realm::world* world;
-    realm::query<pos, const dir> query;
-
-    movement_system(realm::world* world) : world{ world } {}
-
-    void update(double dt)
+    void update(pos& p, const dir& d) const
     {
-        for (auto [p, d] : query.fetch(world)) {
-            p.x += d.x * dt;
-            p.y += d.y * dt;
-        }
+        p.x += d.x;
+        p.y += d.y;
     }
 };
 
 struct comflab_system
 {
-    realm::world* world;
-    realm::query<wierd> query;
-
-    comflab_system(realm::world* world) : world{ world } {}
-
-    void update(double dt)
+    void update(wierd& comflab) const
     {
-        for (auto [comflab] : query.fetch(world)) {
-            comflab.thingy *= 1.000001f;
-            comflab.mingy = !comflab.mingy;
-            comflab.dingy++;
-        }
+        comflab.thingy *= 1.000001f;
+        comflab.mingy = !comflab.mingy;
+        comflab.dingy++;
     }
 };
 
 const int N = 1000000;
 
 inline realm::world world{ N };
-inline comflab_system comf_sys{ &world };
-inline movement_system move_sys{ &world };
-
-inline void
-game_update(double dt)
-{
-    comf_sys.update(dt);
-    move_sys.update(dt);
-}
 
 void
 BENCH_CASE_1M()
@@ -73,6 +50,9 @@ BENCH_CASE_1M()
 void
 BENCH_CASE_UPDATE_SIMPLE()
 {
+    world.insert<movement_system>();
+    world.insert<comflab_system>();
+
     double min = 99999999;
 
     std::cout << "[BENCH] Updating " << N << " entities "
@@ -80,7 +60,7 @@ BENCH_CASE_UPDATE_SIMPLE()
 
     for (int i = 0; i < 50; i++) {
         timer timer;
-        game_update(1.0);
+        world.update();
         double elapsed = timer.elapsed();
         if (elapsed < min) { min = elapsed; }
     }
