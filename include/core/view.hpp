@@ -15,17 +15,17 @@ namespace realm {
 
 struct world;
 
-template<typename... T>
+template<typename... Ts>
 struct view
 {
 public:
-    typedef std::tuple<T...> values;
-    typedef std::tuple<std::add_lvalue_reference_t<T>...> references;
-    typedef internal::clean_query_tuple_t<std::tuple<internal::pure_t<T>...>> components;
+    typedef std::tuple<Ts...> values;
+    typedef std::tuple<std::add_lvalue_reference_t<Ts>...> references;
+    typedef internal::clean_query_tuple_t<std::tuple<internal::pure_t<Ts>...>> components;
 
     inline constexpr view(archetype_chunk* chunk) : chunk{ chunk } {}
 
-    static inline const size_t mask = archetype::mask_of<T...>();
+    static inline const size_t mask = archetype::mask_from_tuple<components>();
 
     class iterator
     {
@@ -65,7 +65,7 @@ public:
         inline reference operator*()
         {
             return std::forward_as_tuple(
-              *chunk_view->chunk->template get<internal::pure_t<T>>(index)...);
+              chunk_view->template get<internal::pure_t<Ts>>(index)...);
         }
 
         inline constexpr bool operator!=(const self_type& other)
@@ -81,6 +81,12 @@ public:
     inline iterator begin() { return iterator(this); }
 
     inline iterator end() { return iterator(nullptr); }
+
+    template<typename T>
+    internal::enable_if_component<T, T&> get(entity entt)
+    {
+        return *chunk->get<T>(entt);
+    }
 
 private:
     archetype_chunk* chunk;

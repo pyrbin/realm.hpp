@@ -12,10 +12,10 @@
 #include <type_traits>
 
 #include "../external/robin_hood.hpp"
+#include "../util/clean_query.hpp"
 #include "../util/swap_remove.hpp"
 #include "../util/type_traits.hpp"
 
-#include "../util/clean_query.hpp"
 #include "component.hpp"
 #include "entity.hpp"
 
@@ -282,6 +282,7 @@ public:
 
     inline bool full() const noexcept { return len >= max_capacity; }
     inline bool allocated() const noexcept { return data != nullptr; }
+
     // todo: move to private
     pointer data{ nullptr };
 
