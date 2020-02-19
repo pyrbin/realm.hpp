@@ -3,7 +3,7 @@
 #include "../util/clean_query.hpp"
 #include "../util/type_traits.hpp"
 
-#include "archetype.hpp"
+#include "world.hpp"
 #include "view.hpp"
 
 #include <algorithm>
@@ -43,7 +43,6 @@ inline constexpr void
 query(ExePo policy, world* world, F&& f)
 {
     using pure_t = internal::pure_t<F>;
-
     internal::query_helper(policy, world, &f, &pure_t::operator());
 }
 
@@ -53,6 +52,8 @@ query(ExePo policy, world* world, F&& f)
  */
 
 namespace internal {
+
+// TODO: insert all helper functions into a struct that is friend of world & make world->chunks private
 
 /**
  * @brief Per-chunk (view) query

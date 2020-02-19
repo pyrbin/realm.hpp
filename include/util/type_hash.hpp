@@ -61,5 +61,9 @@ public:
     using value_type = internal::hash_t;
     static constexpr value_type value{ gen_hash() };
 };
+
+template<typename T>
+inline constexpr internal::hash_t type_hash_v = internal::type_hash<T>::value;
+
 } // namespace internal
 } // namespace realm

@@ -4,7 +4,6 @@
 #include "../util/type_traits.hpp"
 
 #include "archetype.hpp"
-#include "world.hpp"
 
 #include <algorithm>
 #include <memory>
@@ -12,8 +11,6 @@
 #include <vector>
 
 namespace realm {
-
-struct world;
 
 /**
  * @brief View

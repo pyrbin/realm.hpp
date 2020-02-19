@@ -16,13 +16,10 @@ struct example_system
 
 struct example_view_system
 {
-    const float value;
-
-    example_view_system(float value) : value{ value } {};
-
     void update(realm::view<pos, const vel> view) const
     {
-        for (auto [p, v] : view) {
+
+        for (auto& [p, v] : view) {
             p.x += v.x;
             p.y += v.y;
             p.z += v.z;
@@ -39,17 +36,27 @@ TEST_CASE("system_insert")
     auto at = realm::archetype::of<pos, vel, name>();
 
     world.batch<pos, vel>(N);
+
+    // Update order
+    world.insert(example_view_system{});
     world.insert<example_system>(Arg1);
-    world.insert<example_view_system>(Arg1);
 
     REQUIRE(world.system_count() == 2);
 }
 
-TEST_CASE("system_update")
+TEST_CASE("system_update/eject")
 {
     world.update();
-    REQUIRE(world.get<const vel>(2).x == Arg1);
+
+    REQUIRE(world.get<const vel>(0).x == Arg1);
 
     world.update(std::execution::par);
-    // REQUIRE(world.get<const pos>(N - 1).x == Arg1);
-}
+
+    REQUIRE(world.get<const pos>(N/2).x == Arg1);
+
+    world.eject<example_view_system>();
+
+    world.update(std::execution::par);
+
+    REQUIRE(world.get<const pos>(N - 1).x == Arg1);
+}    

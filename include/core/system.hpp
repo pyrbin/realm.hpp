@@ -60,9 +60,10 @@ query_mask(void (F::*f)(view<Args...>) const);
  */
 struct system_ref
 {
+    const size_t id{ 0 };
     const size_t mask{ 0 };
     inline system_ref(){};
-    inline system_ref(size_t mask) : mask{ mask } {};
+    inline system_ref(size_t id, size_t mask) : id{ id }, mask{ mask } {};
     virtual inline ~system_ref() = default;
     virtual constexpr bool compare(size_t hash) const = 0;
     virtual void invoke(world*) const = 0;
@@ -87,6 +88,15 @@ private:
 
 public:
     /**
+     * Construct a system proxy from an object
+     * @param t Underlying system to make a proxy to
+     */
+    inline system_proxy(T& t)
+      : underlying_system{ std::unique_ptr<T>(std::move(t)) }
+      , system_ref{ internal::type_hash_v<T>, internal::query_mask(&T::update) }
+    {}
+    
+    /**
      * Construct a system proxy with arguments for the underlying system.
      * @tparam Args Argument types
      * @param args Arguments for underlying system
@@ -94,7 +104,7 @@ public:
     template<typename... Args>
     inline system_proxy(Args&&... args)
       : underlying_system{ std::make_unique<T>(std::forward<Args>(args)...) }
-      , system_ref{ internal::query_mask(&T::update) }
+      , system_ref{ internal::type_hash_v<T>, internal::query_mask(&T::update) }
     {}
 
     inline constexpr bool compare(size_t other) const override

@@ -10,6 +10,10 @@
 
 namespace realm {
 
+namespace internal {
+    struct query_main;
+}
+
 /**
  * @brief World
  * The world is the core collection of the ECS.
@@ -24,15 +28,22 @@ struct world
     using chunks_map_t = robin_hood::unordered_flat_map<size_t, unsigned>;
 
     using systems_t = std::vector<std::unique_ptr<internal::system_ref>>;
+    using systems_map_t = robin_hood::unordered_flat_map<size_t, unsigned>;
+
     using entities_t = entity_pool;
 
+    // TODO: make private & put query functions inside a struct & make it friend of world
     chunks_t chunks;
-    chunks_map_t chunks_map;
-
-    entities_t entities;
-    systems_t systems;
 
 private:
+    // chunks_t chunks;
+    chunks_map_t chunks_map;
+
+    systems_t systems;
+    systems_map_t systems_map;
+
+    entities_t entities;
+
     /**
      * Returns a free (has available space) chunk of a specified archetype.
      * If no archetype is found a new one will be allocated.
@@ -252,7 +263,7 @@ public:
     }
 
     /**
-     * Insert a system into the world with optional arguments for the system constructor.
+     * Insert a system into the world with optional arguments for the systems constructor.
      * @tparam T System type
      * @tparam Args System constructor argument type
      * @param args System constructor arguments
@@ -263,13 +274,52 @@ public:
     {
         auto ptr =
           std::make_unique<internal::system_proxy<T>>(std::forward<Args>(args)...);
-        systems.emplace_back(std::move(ptr));
+        systems_map.emplace(ptr->id, systems.size());
+        systems.push_back(std::move(ptr));
+
+    }
+
+     /**
+     * Insert a system into the world.
+     * @tparam T System type
+     * @param t System object
+     * @return
+     */
+    template<typename T>
+    inline constexpr void insert(T& t)
+    {
+        auto ptr = std::make_unique<internal::system_proxy<T>>(std::move(t));
+        systems_map.emplace(ptr->id, systems.size());
+        systems.push_back(std::move(ptr));
+    }
+
+    /**
+     * Ejects/removes a system from the world.
+     * @warning calls the systems destructor
+     * @tparam T System type
+     * @return
+    */
+    // TODO: dont destroy the system, just remove & return a pointer
+    template<typename T>
+    inline constexpr void eject()
+    {
+        size_t id = internal::type_hash<T>::value;
+        size_t idx = systems_map.find(id)->second;
+
+        systems.at(idx).reset();
+
+        internal::swap_remove(idx, systems);
+
+        size_t other_id = systems.at(idx)->id;
+
+        systems_map.find(other_id)->second = idx;
     }
 
     /**
      * @brief Update
      * Calls update on every system that has been inserted in the world on matching
-     * archetype chunks
+     * archetype chunks. The call order is determined by the insert order of the 
+     * systems where the first inserted will be the first to be called.
      */
     inline void update()
     {
@@ -279,7 +329,9 @@ public:
     /**
      * @brief Update
      * Calls update on every system that has been inserted in the world on matching
-     * archetype chunks using specified execution policy (eg. execution::par).
+     * archetype chunks using specified execution policy (eg. execution::par). 
+     * The call order is determined by the insert order of the  systems where the first 
+     * inserted will be the first to be called.
      */
     template<typename ExePo>
     inline void update(ExePo policy)
