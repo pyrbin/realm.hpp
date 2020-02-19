@@ -16,6 +16,10 @@ Version 0.1:
 
 Version 0.2:
 
+* system functions such as disable, enable, un 
+
+* better safety & error checking
+
 * add a snapshotting feature for syncing of entities in ex multiplayer games
 
 * re-add concepts instead of enable_if
