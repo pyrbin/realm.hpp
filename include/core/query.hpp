@@ -14,6 +14,7 @@
 namespace realm {
 
 /**
+ * @brief Query
  * Queries the world for components defined in the functor object
  * @tparam F Lambda/functor type
  * @param world World to query
@@ -29,6 +30,7 @@ query(world* world, F&& f)
 }
 
 /**
+ * @brief Query with policy
  * Queries the world for components defined in the functor object with an std::execution
  * policy. Each chunk will be run in parallel using std::for_each with provided policy.
  * @tparam ExePo Policy type
@@ -53,7 +55,7 @@ query(ExePo policy, world* world, F&& f)
 
 namespace internal {
 
-// TODO: insert all helper functions into a struct that is friend of world & make world->chunks private
+// TODO: insert all helper functions into a struct that is friend of world & make world::chunks private
 
 /**
  * @brief Per-chunk (view) query

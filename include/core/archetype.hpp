@@ -294,7 +294,7 @@ public:
     entities_t entities;
 
     /**
-     * Create a chunk of specified arcetype and max capacity (maximum entities)
+     * Create a chunk of specified archetype and max capacity (maximum entities)
      * @param archetype
      * @param max_capacity
      */

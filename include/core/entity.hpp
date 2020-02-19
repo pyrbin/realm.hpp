@@ -11,13 +11,15 @@
 namespace realm {
 
 /**
- * @brief Entities are represented as 64-bit integers split in half,
- * where each 32-bit half represents an index & generation
+ * @brief Entity
+ * Entities are represented as 64-bit integers split in half,
+ * where respective 32-bit half represents an index & generation
  */
 using entity = uint64_t;
 
 /**
- *  @brief Describes an entity handle
+ *  @brief Entity handle
+ *  Describes an entity handle
  */
 struct entity_handle
 {
@@ -28,7 +30,8 @@ struct entity_handle
 struct archetype_chunk;
 
 /**
- *  @brief Describes an entity chunk location
+ *  @brief Entity location
+ *  Describes an entity chunk location
  */
 struct entity_location
 {
@@ -39,7 +42,9 @@ struct entity_location
 };
 
 /**
- * @brief A collection of entities based on a Rust slot-map/beach-map.
+ * @brief Entity pool
+ * A collection of entities based on a Rust slot-map/beach-map.
+ * Uses indirection to guarantee a dense/packed storage of entities.
  * @ref https://docs.rs/beach_map/
  */
 class entity_pool
@@ -188,10 +193,8 @@ public:
         }
     }
 
-    /*! @brief Pool size. */
     int32_t size() const noexcept { return slots.size(); }
 
-    /*! @brief Capacity size. */
     int32_t capacity() const noexcept { return slots.capacity(); }
 
     /**
@@ -238,7 +241,7 @@ public:
     }
 
     /**
-     * Create an entity handle from and entity id
+     * Create an entity handle from ab entity id
      * @param entt
      * @return
      */
