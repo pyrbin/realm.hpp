@@ -11,7 +11,6 @@
 #include <vector>
 
 namespace realm {
-
 /**
  * @brief View
  * Describes a chunk view for iteration & manipulation of a single archetype chunk.

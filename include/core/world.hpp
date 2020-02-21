@@ -9,9 +9,8 @@
 #include <vector>
 
 namespace realm {
-
 namespace internal {
-    struct query_main;
+struct query_main;
 }
 
 /**
@@ -270,23 +269,22 @@ public:
      * @return
      */
     template<typename T, typename... Args>
-    inline constexpr void insert(Args&&... args)
+    inline constexpr internal::enable_if_system<T, void> insert(Args&&... args)
     {
         auto ptr =
           std::make_unique<internal::system_proxy<T>>(std::forward<Args>(args)...);
         systems_map.emplace(ptr->id, systems.size());
         systems.push_back(std::move(ptr));
-
     }
 
-     /**
+    /**
      * Insert a system into the world.
      * @tparam T System type
      * @param t System object
      * @return
      */
     template<typename T>
-    inline constexpr void insert(T& t)
+    inline constexpr internal::enable_if_system<T, void> insert(T& t)
     {
         auto ptr = std::make_unique<internal::system_proxy<T>>(std::move(t));
         systems_map.emplace(ptr->id, systems.size());
@@ -298,10 +296,10 @@ public:
      * @warning calls the systems destructor
      * @tparam T System type
      * @return
-    */
+     */
     // TODO: dont destroy the system, just remove & return a pointer
     template<typename T>
-    inline constexpr void eject()
+    inline constexpr internal::enable_if_system<T, void> eject()
     {
         size_t id = internal::type_hash<T>::value;
         size_t idx = systems_map.find(id)->second;
@@ -318,7 +316,7 @@ public:
     /**
      * @brief Update
      * Calls update on every system that has been inserted in the world on matching
-     * archetype chunks. The call order is determined by the insert order of the 
+     * archetype chunks. The call order is determined by the insert order of the
      * systems where the first inserted will be the first to be called.
      */
     inline void update()
@@ -329,8 +327,9 @@ public:
     /**
      * @brief Update
      * Calls update on every system that has been inserted in the world on matching
-     * archetype chunks using specified execution policy (eg. execution::par). 
-     * The call order is determined by the insert order of the  systems where the first 
+     * archetype chunks using specified execution policy (eg. execution::par).
+     * Systems won't run in parallel but each matching chunk per system will.
+     * The call order is determined by the insert order of the  systems where the first
      * inserted will be the first to be called.
      */
     template<typename ExePo>

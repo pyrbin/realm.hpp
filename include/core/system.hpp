@@ -14,7 +14,6 @@
 #include "archetype.hpp"
 
 namespace realm {
-
 /**
  * @cond TURN_OFF_DOXYGEN
  * Internal details not to be documented.
@@ -30,15 +29,14 @@ template<typename... Ts>
 struct view;
 
 template<typename F>
-inline constexpr void
+inline constexpr internal::enable_if_query_fn<F, void>
 query(world* world, F&& f);
 
 template<typename ExePo, typename F>
-inline constexpr void
+inline constexpr internal::enable_if_query_fn<F, void>
 query(ExePo policy, world* world, F&& f);
 
 namespace internal {
-
 template<typename F, typename... Args>
 inline constexpr size_t
 query_mask(void (F::*f)(Args...) const);
@@ -46,7 +44,6 @@ query_mask(void (F::*f)(Args...) const);
 template<typename F, typename... Args>
 inline constexpr size_t
 query_mask(void (F::*f)(view<Args...>) const);
-
 
 /**
  * @brief System reference
@@ -82,7 +79,8 @@ private:
 
     /*! @brief Creates a functor object to system update function */
     template<typename R = void, typename... Args>
-    static inline constexpr auto update_functor(const system_proxy<T>* proxy, void (T::*f)(Args...) const)
+    static inline constexpr auto update_functor(const system_proxy<T>* proxy,
+                                                void (T::*f)(Args...) const)
     {
         return [proxy, f](Args... args) -> void {
             (proxy->underlying_system.get()->*f)(std::forward<Args>(args)...);
@@ -98,7 +96,7 @@ public:
       : underlying_system{ std::unique_ptr<T>(std::move(t)) }
       , system_ref{ internal::type_hash_v<T>, internal::query_mask(&T::update) }
     {}
-    
+
     /**
      * Construct a system proxy with arguments for the underlying system.
      * @tparam Args Argument types
@@ -136,7 +134,5 @@ public:
         query(policy, world, update_functor(this, &T::update));
     }
 };
-
 } // namespace internal
-
 } // namespace realm

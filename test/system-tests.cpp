@@ -18,7 +18,6 @@ struct example_view_system
 {
     void update(realm::view<pos, const vel> view) const
     {
-
         for (auto& [p, v] : view) {
             p.x += v.x;
             p.y += v.y;
@@ -39,6 +38,7 @@ TEST_CASE("system_insert")
 
     // Update order
     world.insert(example_view_system{});
+
     world.insert<example_system>(Arg1);
 
     REQUIRE(world.system_count() == 2);
@@ -52,11 +52,11 @@ TEST_CASE("system_update/eject")
 
     world.update(std::execution::par);
 
-    REQUIRE(world.get<const pos>(N/2).x == Arg1);
+    REQUIRE(world.get<const pos>(N / 2).x == Arg1);
 
     world.eject<example_view_system>();
 
     world.update(std::execution::par);
 
     REQUIRE(world.get<const pos>(N - 1).x == Arg1);
-}    
+}
