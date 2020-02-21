@@ -148,11 +148,22 @@ public:
 
     /**
      * Check if an archetype is a subset of another archetype
-     * @param a Potential superset archetype
-     * @param b Potential subset archetype
+     * @param a Potential superset archetypes mask
+     * @param b Potential subset archetypes mask
      * @return If archetype b is a subset of archetype
      */
     static inline constexpr bool subset(size_t a, size_t b) { return (a & b) == b; }
+
+    /**
+     * Check for intersection between two archetypes
+     * @param a Archetype a's mask
+     * @param b Archetype b's mask
+     * @return If archetypes shares atleast one component
+     */
+    static inline constexpr bool intersection(size_t a, size_t b)
+    {
+        return (a & b) == b || (b & a) == a;
+    }
 
     /**
      * Check if an archetype mask is a subset of this archetype
