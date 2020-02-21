@@ -6,7 +6,7 @@ struct example_system
 
     example_system(float value) : value{ value } {};
 
-    void update(vel& v) const
+    void update(vel& v, pos&, realm::entity) const
     {
         v.x += value;
         v.y += value;

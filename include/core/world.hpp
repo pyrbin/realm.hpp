@@ -336,6 +336,12 @@ public:
         for (auto& sys : systems) { sys->invoke(policy, this); }
     }
 
+    template<typename F>
+    inline void each_system(F&& f)
+    {
+        for (auto& sys : systems) { f(sys); }
+    }
+
     int32_t size() const noexcept { return entities.size(); }
     int32_t capacity() const noexcept { return entities.capacity(); }
     int32_t system_count() const noexcept { return systems.size(); }

@@ -10,7 +10,8 @@
 #include <tuple>
 #include <utility>
 
-#include "../util/clean_query.hpp"
+#include "../util/tuple_util.hpp"
+
 #include "archetype.hpp"
 
 namespace realm {
@@ -46,17 +47,64 @@ inline constexpr size_t
 query_mask(void (F::*f)(view<Args...>) const);
 
 /**
+ * @brief System meta
+ * Contains meta information about a system.
+ * Eg. which components it mutates/reads, mask etc.
+ */
+struct system_meta
+{
+    const size_t mask{ 0 };
+    const size_t read_mask{ 0 };
+    const size_t mut_mask{ 0 };
+
+    template<typename... Args>
+    static inline constexpr system_meta from_pack()
+    {
+        using components = internal::component_tuple<Args...>;
+        size_t read{ 0 };
+        size_t mut{ 0 };
+        (from_pack_helper<Args>(read, mut), ...);
+        return { archetype::mask_from_tuple<components>(), read, mut };
+    }
+
+    template<typename F, typename... Args>
+    static inline constexpr system_meta of(void (F::*f)(Args...) const)
+    {
+        return from_pack<Args...>();
+    }
+
+    template<typename F, typename... Args>
+    static inline constexpr system_meta of(void (F::*f)(view<Args...>) const)
+    {
+        return from_pack<Args...>();
+    }
+
+private:
+    template<typename T>
+    static inline constexpr void from_pack_helper(size_t& read, size_t& mut)
+    {
+        if constexpr (!internal::is_entity<T> && std::is_const_v<T>) {
+            read |= component_meta::of<internal::pure_t<T>>().mask;
+        } else if constexpr (!internal::is_entity<T>) {
+            mut |= component_meta::of<internal::pure_t<T>>().mask;
+        }
+    }
+};
+
+/**
  * @brief System reference
  * Base system reference holder
  */
 struct system_ref
 {
     const size_t id{ 0 };
-    const size_t mask{ 0 };
+    const system_meta meta{ 0, 0 };
     inline system_ref(){};
-    inline system_ref(size_t id, size_t mask) : id{ id }, mask{ mask } {};
+    inline system_ref(size_t id, system_meta meta) : id{ id }, meta{ meta } {};
     virtual inline ~system_ref() = default;
     virtual constexpr bool compare(size_t hash) const = 0;
+    virtual constexpr bool mutates(size_t hash) const = 0;
+    virtual constexpr bool reads(size_t hash) const = 0;
     virtual void invoke(world*) const = 0;
     virtual void invoke(std::execution::parallel_policy policy, world* world) const = 0;
     virtual void invoke(std::execution::parallel_unsequenced_policy policy,
@@ -94,7 +142,7 @@ public:
      */
     inline system_proxy(T& t)
       : underlying_system{ std::unique_ptr<T>(std::move(t)) }
-      , system_ref{ internal::type_hash_v<T>, internal::query_mask(&T::update) }
+      , system_ref{ internal::type_hash_v<T>, system_meta::of(&T::update) }
     {}
 
     /**
@@ -105,12 +153,22 @@ public:
     template<typename... Args>
     inline system_proxy(Args&&... args)
       : underlying_system{ std::make_unique<T>(std::forward<Args>(args)...) }
-      , system_ref{ internal::type_hash_v<T>, internal::query_mask(&T::update) }
+      , system_ref{ internal::type_hash_v<T>, system_meta::of(&T::update) }
     {}
 
     inline constexpr bool compare(size_t other) const override
     {
-        return archetype::subset(other, mask);
+        return archetype::subset(other, meta.mask);
+    }
+
+    inline constexpr bool mutates(size_t other) const override
+    {
+        return archetype::subset(meta.mut_mask, other);
+    }
+
+    inline constexpr bool reads(size_t other) const override
+    {
+        return archetype::subset(meta.read_mask, other);
     }
 
     /**
