@@ -6,7 +6,7 @@ struct example_system
 
     example_system(float value) : value{ value } {};
 
-    void update(vel& v, pos&, realm::entity) const
+    void update(vel& v, const pos&, realm::entity) const
     {
         v.x += value;
         v.y += value;
@@ -38,25 +38,18 @@ TEST_CASE("system_insert")
 
     // Update order
     world.insert(example_view_system{});
-
     world.insert<example_system>(Arg1);
 
     REQUIRE(world.system_count() == 2);
 }
 
-TEST_CASE("system_update/eject")
+TEST_CASE("system_update")
 {
     world.update();
 
     REQUIRE(world.get<const vel>(0).x == Arg1);
 
-    world.update(std::execution::par);
+    world.update();
 
     REQUIRE(world.get<const pos>(N / 2).x == Arg1);
-
-    world.eject<example_view_system>();
-
-    world.update(std::execution::par);
-
-    REQUIRE(world.get<const pos>(N - 1).x == Arg1);
 }
