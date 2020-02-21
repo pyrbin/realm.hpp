@@ -2,6 +2,7 @@
 
 #include "archetype.hpp"
 #include "entity.hpp"
+#include "scheduler.hpp"
 #include "system.hpp"
 
 #include <execution>
@@ -9,9 +10,6 @@
 #include <vector>
 
 namespace realm {
-namespace internal {
-struct query_main;
-}
 
 /**
  * @brief World
@@ -26,22 +24,13 @@ struct world
     using chunks_t = std::vector<std::unique_ptr<archetype_chunk_root>>;
     using chunks_map_t = robin_hood::unordered_flat_map<size_t, unsigned>;
 
-    using systems_t = std::vector<std::unique_ptr<internal::system_ref>>;
-    using systems_map_t = robin_hood::unordered_flat_map<size_t, unsigned>;
-
-    using entities_t = entity_manager;
-
     // TODO: make private & put query functions inside a struct & make it friend of world
     chunks_t chunks;
-
-private:
-    // chunks_t chunks;
     chunks_map_t chunks_map;
 
-    systems_t systems;
-    systems_map_t systems_map;
-
-    entities_t entities;
+private:
+    scheduler systems;
+    entity_manager entities;
 
     /**
      * Returns a free (has available space) chunk of a specified archetype.
@@ -271,10 +260,7 @@ public:
     template<typename T, typename... Args>
     inline constexpr internal::enable_if_system<T, void> insert(Args&&... args)
     {
-        auto ptr =
-          std::make_unique<internal::system_proxy<T>>(std::forward<Args>(args)...);
-        systems_map.emplace(ptr->id, systems.size());
-        systems.push_back(std::move(ptr));
+        systems.insert<T>(std::forward<Args>(args)...);
     }
 
     /**
@@ -286,64 +272,32 @@ public:
     template<typename T>
     inline constexpr internal::enable_if_system<T, void> insert(T& t)
     {
-        auto ptr = std::make_unique<internal::system_proxy<T>>(std::move(t));
-        systems_map.emplace(ptr->id, systems.size());
-        systems.push_back(std::move(ptr));
-    }
-
-    /**
-     * Ejects/removes a system from the world.
-     * @warning calls the systems destructor
-     * @tparam T System type
-     * @return
-     */
-    // TODO: dont destroy the system, just remove & return a pointer
-    template<typename T>
-    inline constexpr internal::enable_if_system<T, void> eject()
-    {
-        size_t id = internal::type_hash<T>::value;
-        size_t idx = systems_map.find(id)->second;
-
-        systems.at(idx).reset();
-        internal::swap_remove(idx, systems);
-
-        size_t other_id = systems.at(idx)->id;
-        systems_map.find(other_id)->second = idx;
-    }
-
-    /**
-     * @brief Update
-     * Calls update on every system that has been inserted in the world on matching
-     * archetype chunks. The call order is determined by the insert order of the
-     * systems where the first inserted will be the first to be called.
-     */
-    inline void update()
-    {
-        for (auto& sys : systems) { sys->invoke(this); }
+        systems.insert(std::forward<T>(t));
     }
 
     /**
      * @brief Update in parallel
      * Calls update on every system that has been inserted in the world on matching
-     * archetype chunks using specified execution policy (eg. execution::par).
-     * Systems won't run in parallel but each matching chunk per system will.
-     * The call order is determined by the insert order of the  systems where the first
-     * inserted will be the first to be called.
+     * archetype chunks. The call order is determined by the insert order of the
+     * systems where the first inserted will be the first to be called.
      */
-    template<typename ExePo>
-    inline void update(ExePo policy)
-    {
-        for (auto& sys : systems) { sys->invoke(policy, this); }
+    inline void update() { 
+        systems.exec(this);
     }
 
-    template<typename F>
-    inline void each_system(F&& f)
-    {
-        for (auto& sys : systems) { f(sys); }
+    /**
+     * @brief Update sequentially (no parallelization)
+     * Calls update on every system that has been inserted in the world on matching
+     * archetype chunks. The call order is determined by the insert order of the
+     * systems where the first inserted will be the first to be called.
+     */
+    inline void update_seq()
+    { 
+        systems.exec_seq(this);
     }
 
     int32_t size() const noexcept { return entities.size(); }
     int32_t capacity() const noexcept { return entities.capacity(); }
     int32_t system_count() const noexcept { return systems.size(); }
 };
-} // namespace realm
+} // namespace internal

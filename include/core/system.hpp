@@ -9,16 +9,13 @@
 #include <string>
 #include <tuple>
 #include <utility>
+#include <string>
 
 #include "../util/tuple_util.hpp"
 
 #include "archetype.hpp"
 
 namespace realm {
-/**
- * @cond TURN_OFF_DOXYGEN
- * Internal details not to be documented.
- */
 
 /**
  * Forward declarations
@@ -33,18 +30,9 @@ template<typename F>
 inline constexpr internal::enable_if_query_fn<F, void>
 query(world* world, F&& f);
 
-template<typename ExePo, typename F>
+template<typename F>
 inline constexpr internal::enable_if_query_fn<F, void>
-query(ExePo policy, world* world, F&& f);
-
-namespace internal {
-template<typename F, typename... Args>
-inline constexpr size_t
-query_mask(void (F::*f)(Args...) const);
-
-template<typename F, typename... Args>
-inline constexpr size_t
-query_mask(void (F::*f)(view<Args...>) const);
+query_seq(world* world, F&& f);
 
 /**
  * @brief System meta
@@ -54,8 +42,8 @@ query_mask(void (F::*f)(view<Args...>) const);
 struct system_meta
 {
     const size_t mask{ 0 };
-    const size_t read_mask{ 0 };
     const size_t mut_mask{ 0 };
+    const size_t read_mask{ 0 };
 
     template<typename... Args>
     static inline constexpr system_meta from_pack()
@@ -64,7 +52,7 @@ struct system_meta
         size_t read{ 0 };
         size_t mut{ 0 };
         (from_pack_helper<Args>(read, mut), ...);
-        return { archetype::mask_from_tuple<components>(), read, mut };
+        return { archetype::mask_from_tuple<components>(), mut, read };
     }
 
     template<typename F, typename... Args>
@@ -83,11 +71,12 @@ private:
     template<typename T>
     static inline constexpr void from_pack_helper(size_t& read, size_t& mut)
     {
-        if constexpr (!internal::is_entity<T> && std::is_const_v<T>) {
+        if constexpr (!internal::is_entity<T> && std::is_const_v<std::remove_reference_t<T>>) {
             read |= component_meta::of<internal::pure_t<T>>().mask;
         } else if constexpr (!internal::is_entity<T>) {
             mut |= component_meta::of<internal::pure_t<T>>().mask;
         }
+
     }
 };
 
@@ -99,16 +88,19 @@ struct system_ref
 {
     const size_t id{ 0 };
     const system_meta meta{ 0, 0 };
+    const std::string name{ "" };
+
     inline system_ref(){};
-    inline system_ref(size_t id, system_meta meta) : id{ id }, meta{ meta } {};
     virtual inline ~system_ref() = default;
     virtual constexpr bool compare(size_t hash) const = 0;
     virtual constexpr bool mutates(size_t hash) const = 0;
     virtual constexpr bool reads(size_t hash) const = 0;
     virtual void invoke(world*) const = 0;
-    virtual void invoke(std::execution::parallel_policy policy, world* world) const = 0;
-    virtual void invoke(std::execution::parallel_unsequenced_policy policy,
-                        world* world) const = 0;
+    virtual void invoke_seq(world*) const = 0;
+
+protected:
+    inline system_ref(size_t id, system_meta meta, std::string name)
+      : id{ id }, meta{ meta }, name{ name } {};
 };
 
 /**
@@ -142,7 +134,9 @@ public:
      */
     inline system_proxy(T& t)
       : underlying_system{ std::unique_ptr<T>(std::move(t)) }
-      , system_ref{ internal::type_hash_v<T>, system_meta::of(&T::update) }
+      , system_ref{ internal::type_hash_v<T>, 
+                    system_meta::of(&T::update), 
+                    typeid(T).name() }
     {}
 
     /**
@@ -153,7 +147,9 @@ public:
     template<typename... Args>
     inline system_proxy(Args&&... args)
       : underlying_system{ std::make_unique<T>(std::forward<Args>(args)...) }
-      , system_ref{ internal::type_hash_v<T>, system_meta::of(&T::update) }
+      , system_ref{ internal::type_hash_v<T>,
+                    system_meta::of(&T::update),
+                    typeid(T).name() }
     {}
 
     inline constexpr bool compare(size_t other) const override
@@ -172,7 +168,7 @@ public:
     }
 
     /**
-     * Call the system query on a world
+     * Call the system query on a world in parallel
      * @param world
      */
     inline void invoke(world* world) const override
@@ -180,17 +176,14 @@ public:
         query(world, update_functor(this, &T::update));
     }
 
-    inline void invoke(std::execution::parallel_policy policy,
-                       world* world) const override
+    /**
+     * Call the system query on a world sequentially
+     * @param world
+     */
+    inline void invoke_seq(world* world) const override
     {
-        query(policy, world, update_functor(this, &T::update));
-    }
-
-    inline void invoke(std::execution::parallel_unsequenced_policy policy,
-                       world* world) const override
-    {
-        query(policy, world, update_functor(this, &T::update));
+        query_seq(world, update_functor(this, &T::update));
     }
 };
-} // namespace internal
+
 } // namespace realm

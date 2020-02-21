@@ -2,6 +2,7 @@ set(
   TESTS
   entity-tests
   system-tests
+  scheduler-tests
 )
 
 # TODO: link realm library

@@ -24,7 +24,7 @@ inline constexpr internal::enable_if_query_fn<F, void>
 query(world* world, F&& f)
 {
     using pure_t = internal::pure_t<F>;
-    internal::query_helper(world, &f, &pure_t::operator());
+    internal::query_helper(std::execution::par_unseq, world, &f, &pure_t::operator());
 }
 
 /**
@@ -38,12 +38,12 @@ query(world* world, F&& f)
  * @param f Lambda/Functor object
  * @return
  */
-template<typename ExePo, typename F>
+template<typename F>
 inline constexpr internal::enable_if_query_fn<F, void>
-query(ExePo policy, world* world, F&& f)
+query_seq(world* world, F&& f)
 {
     using pure_t = internal::pure_t<F>;
-    internal::query_helper(policy, world, &f, &pure_t::operator());
+    internal::query_helper(world, &f, &pure_t::operator());
 }
 
 /**

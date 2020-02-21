@@ -58,7 +58,7 @@ BENCH_CASE_UPDATE_SIMPLE()
 
     for (int i = 0; i < 10; i++) {
         timer timer;
-        world.update();
+        world.update_seq();
         double elapsed = timer.elapsed();
         if (elapsed < min) { min = elapsed; }
     }
@@ -76,7 +76,7 @@ BENCH_CASE_UPDATE_PAR()
 
     for (int i = 0; i < 10; i++) {
         timer timer;
-        world.update(std::execution::par_unseq);
+        world.update();
         double elapsed = timer.elapsed();
         if (elapsed < min) { min = elapsed; }
     }
