@@ -20,31 +20,24 @@ namespace realm {
  * Internal details not to be documented.
  */
 
+/**
+ * Forward declarations
+ */
+
 struct world;
 
 template<typename... Ts>
 struct view;
 
+template<typename F>
+inline constexpr void
+query(world* world, F&& f);
+
+template<typename ExePo, typename F>
+inline constexpr void
+query(ExePo policy, world* world, F&& f);
+
 namespace internal {
-
-/**
- * Forward declarations of query functions
- */
-template<typename F, typename... Args>
-inline constexpr void
-query_helper(world* world, F* obj, void (F::*f)(Args...) const);
-
-template<typename ExePo, typename F, typename... Args>
-inline constexpr void
-query_helper(ExePo policy, world* world, F* object, void (F::*f)(Args...) const);
-
-template<typename F, typename... Args>
-inline constexpr void
-query_helper(world* world, F* obj, void (F::*f)(view<Args...>) const);
-
-template<typename ExePo, typename F, typename... Args>
-inline constexpr void
-query_helper(ExePo policy, world* world, F* object, void (F::*f)(view<Args...>) const);
 
 template<typename F, typename... Args>
 inline constexpr size_t
@@ -53,6 +46,7 @@ query_mask(void (F::*f)(Args...) const);
 template<typename F, typename... Args>
 inline constexpr size_t
 query_mask(void (F::*f)(view<Args...>) const);
+
 
 /**
  * @brief System reference
@@ -86,6 +80,15 @@ private:
     /*! @brief Underlying system pointer */
     const std::unique_ptr<T> underlying_system;
 
+    /*! @brief Creates a functor object to system update function */
+    template<typename R = void, typename... Args>
+    static inline constexpr auto update_functor(const system_proxy<T>* proxy, void (T::*f)(Args...) const)
+    {
+        return [proxy, f](Args... args) -> void {
+            (proxy->underlying_system.get()->*f)(std::forward<Args>(args)...);
+        };
+    }
+
 public:
     /**
      * Construct a system proxy from an object
@@ -118,19 +121,19 @@ public:
      */
     inline void invoke(world* world) const override
     {
-        internal::query_helper(world, underlying_system.get(), &T::update);
+        query(world, update_functor(this, &T::update));
     }
 
     inline void invoke(std::execution::parallel_policy policy,
                        world* world) const override
     {
-        internal::query_helper(policy, world, underlying_system.get(), &T::update);
+        query(policy, world, update_functor(this, &T::update));
     }
 
     inline void invoke(std::execution::parallel_unsequenced_policy policy,
                        world* world) const override
     {
-        internal::query_helper(policy, world, underlying_system.get(), &T::update);
+        query(policy, world, update_functor(this, &T::update));
     }
 };
 
