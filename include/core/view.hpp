@@ -1,14 +1,16 @@
 #pragma once
 
-#include "../util/clean_query.hpp"
-#include "../util/type_traits.hpp"
-
-#include "archetype.hpp"
-
 #include <algorithm>
 #include <memory>
 #include <tuple>
+#include <type_traits>
+#include <utility>
 #include <vector>
+
+#include "../util/tuple_util.hpp"
+#include "../util/type_traits.hpp"
+
+#include "archetype.hpp"
 
 namespace realm {
 /**
@@ -22,7 +24,7 @@ struct view
 public:
     typedef std::tuple<Ts...> values;
     typedef std::tuple<std::add_lvalue_reference_t<Ts>...> references;
-    typedef internal::clean_query_tuple_t<std::tuple<internal::pure_t<Ts>...>> components;
+    typedef internal::component_tuple<Ts...> components;
 
     /**
      * Creates a view of a chunk.

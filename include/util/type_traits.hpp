@@ -38,6 +38,7 @@ constexpr bool is_unique<T, Rest...> =
  */
 template<typename T>
 inline constexpr bool is_component = (std::is_class_v<T> &&
+                                      std::is_default_constructible_v<T> &&
                                       std::is_copy_constructible_v<T> &&
                                       std::is_move_constructible_v<T>);
 /**

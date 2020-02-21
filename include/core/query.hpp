@@ -1,6 +1,5 @@
 #pragma once
 
-#include "../util/clean_query.hpp"
 #include "../util/type_traits.hpp"
 
 #include "view.hpp"

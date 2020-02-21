@@ -12,7 +12,6 @@
 #include <type_traits>
 
 #include "../external/robin_hood.hpp"
-#include "../util/clean_query.hpp"
 #include "../util/swap_remove.hpp"
 #include "../util/type_traits.hpp"
 
@@ -20,7 +19,6 @@
 #include "entity.hpp"
 
 namespace realm {
-
 struct world;
 
 /**

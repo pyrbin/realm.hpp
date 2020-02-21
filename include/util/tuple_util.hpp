@@ -4,54 +4,55 @@
 #include <type_traits>
 
 #include "../core/entity.hpp"
+#include "type_traits.hpp"
 
 namespace realm {
-
 /**
  * @cond TURN_OFF_DOXYGEN
  * Internal details not to be documented.
  */
 
 namespace internal {
-
 /**
  * Removes entity types from a tuple
  * Used to retrieve correct archetype of a query.
  * As a query can contain either components (valid)
  * or entity types.
  */
-
 template<typename T, typename... Args>
-struct clean_query_tuple
+struct remove_entity
 {};
 
 template<>
-struct clean_query_tuple<std::tuple<entity>>
+struct remove_entity<std::tuple<entity>>
 {
     using type = std::tuple<>;
 };
 
 template<>
-struct clean_query_tuple<std::tuple<>>
+struct remove_entity<std::tuple<>>
 {
     using type = std::tuple<>;
 };
 
 template<typename T>
-struct clean_query_tuple<std::tuple<T>>
+struct remove_entity<std::tuple<T>>
 {
     using type = std::tuple<T>;
 };
 
 template<typename T, typename... Args>
-struct clean_query_tuple<std::tuple<T, Args...>>
+struct remove_entity<std::tuple<T, Args...>>
 {
     using type = decltype(
-      tuple_cat(std::declval<typename clean_query_tuple<std::tuple<T>>::type>(),
-                std::declval<typename clean_query_tuple<std::tuple<Args...>>::type>()));
+      tuple_cat(std::declval<typename remove_entity<std::tuple<T>>::type>(),
+                std::declval<typename remove_entity<std::tuple<Args...>>::type>()));
 };
 
 template<typename T>
-using clean_query_tuple_t = typename clean_query_tuple<T>::type;
+using remove_entity_t = typename remove_entity<T>::type;
+
+template<typename... T>
+using component_tuple = remove_entity_t<std::tuple<pure_t<T>...>>;
 } // namespace internal
 } // namespace realm
