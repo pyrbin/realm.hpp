@@ -2,9 +2,11 @@ TODO/Roadmap
 
 Version 0.1:
 
-* generate docs & comments for archetype
+* generate docs
 
-* optimization (try to get results close to similar projects while iterating entities)
+* better multi-threading (eg. create a dependency graph on systems for even more parallelization)
+
+* static_components
 
 * solve compiler warnings / cleanup
 
@@ -28,11 +30,9 @@ Version 0.2:
 
 * fix view to support realm::entity
 
-* add static components/instances (components whose data never changes doesnt have to be reallocated)
+* add shared components (components that will never change)
 
 Further features:
-
-* better multi-threading (eg. create a dependency graph on systems for even more parallelization)
 
 * when more c++20 features are default impl. modules, coroutines & ranges
 

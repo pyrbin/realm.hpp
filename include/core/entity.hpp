@@ -9,7 +9,6 @@
 #include "../util/swap_remove.hpp"
 
 namespace realm {
-
 /**
  * @brief Entity
  * Entities are represented as 64-bit integers split in half,
@@ -42,26 +41,26 @@ struct entity_location
 };
 
 /**
- * @brief Entity pool
+ * @brief Entity Manager
  * A collection of entities based on a Rust slot-map/beach-map.
  * Uses indirection to guarantee a dense/packed storage of entities.
  * @ref https://docs.rs/beach_map/
  */
-class entity_pool
+class entity_manager
 {
 public:
     /**
      * Create an entity pool with specified capacity
      * @param capacity
      */
-    entity_pool(uint32_t capacity) : first_available{ -1 }
+    entity_manager(uint32_t capacity) : first_available{ -1 }
     {
         slots.reserve(capacity);
         locations.reserve(capacity);
         handles.reserve(capacity);
     }
 
-    ~entity_pool()
+    ~entity_manager()
     {
         for (auto&& loc : locations) {
             loc.chunk_index = 0;
@@ -98,10 +97,10 @@ public:
     }
 
     /**
-     * Frees/destroys an entity from the pool
-     * @param entt The entity id to destroy
+     * Remove an entity.
+     * @param entt The entity id to remove
      */
-    void free(entity entt)
+    void remove(entity entt)
     {
         // TODO: add comments
         auto handle = extract_handle(entt);
@@ -256,5 +255,4 @@ private:
     std::vector<uint32_t> slots;
     int first_available;
 };
-
 } // namespace realm

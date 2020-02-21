@@ -14,6 +14,7 @@
 
 struct movement_system
 {
+    int collection{ 0 };
     void update(pos& p, const dir& d) const
     {
         p.x += d.x;

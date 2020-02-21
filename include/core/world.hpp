@@ -29,7 +29,7 @@ struct world
     using systems_t = std::vector<std::unique_ptr<internal::system_ref>>;
     using systems_map_t = robin_hood::unordered_flat_map<size_t, unsigned>;
 
-    using entities_t = entity_pool;
+    using entities_t = entity_manager;
 
     // TODO: make private & put query functions inside a struct & make it friend of world
     chunks_t chunks;
@@ -174,7 +174,7 @@ public:
 
         // update switched entity (as defragmentation is done on removal)
         entities.update(moved, { location->chunk_index, location->chunk });
-        entities.free(entt);
+        entities.remove(entt);
     }
 
     /**
@@ -305,11 +305,9 @@ public:
         size_t idx = systems_map.find(id)->second;
 
         systems.at(idx).reset();
-
         internal::swap_remove(idx, systems);
 
         size_t other_id = systems.at(idx)->id;
-
         systems_map.find(other_id)->second = idx;
     }
 
@@ -325,7 +323,7 @@ public:
     }
 
     /**
-     * @brief Update
+     * @brief Update in parallel
      * Calls update on every system that has been inserted in the world on matching
      * archetype chunks using specified execution policy (eg. execution::par).
      * Systems won't run in parallel but each matching chunk per system will.
