@@ -1,8 +1,10 @@
 set(
   TESTS
-  entity-tests
-  system-tests
-  scheduler-tests
+  entity_tests
+  system_tests
+  scheduler_tests
+  singleton_tests
+  example_test
 )
 
 # TODO: link realm library

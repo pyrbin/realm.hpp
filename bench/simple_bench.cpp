@@ -15,7 +15,7 @@
 struct movement_system
 {
     int collection{ 0 };
-    void update(pos& p, const dir& d) const
+    void update(pos& p, const dir& d, const runtime&) const
     {
         p.x += d.x;
         p.y += d.y;
@@ -44,6 +44,9 @@ BENCH_CASE_1M()
     timer timer;
 
     world.batch<pos, dir, wierd>(N);
+
+    world.singleton<runtime>();
+
     // for (int i = 0; i < N; i++) { world.create<pos, dir, wierd>(); }
     std::cout << "[BENCH] Results: " << timer.elapsed() << " seconds\n";
 }

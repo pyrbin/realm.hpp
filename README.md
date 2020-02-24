@@ -1,12 +1,12 @@
 <h1 align="center">realm.hpp</h1>
-<p align="center">(WIP) An <b>experimental</b> header-only ECS framework. Written in C++20/17.</p>
+<p align="center">An <b>WIP</b>, <b>experimental</b> header-only ECS framework. Written in C++20/17.</p>
 
 ### Table of Contents
 
 - [Introduction](#introduction)
-- [Features](#features)
 - [API](#api)
-- [Benchmark](#benchmark)
+  - [Example](###example)
+- [Benchmarks](#benchmarks)
 - [TODO](#todo)
 - [Thanks](#thanks)
 - [Developer](#developer)
@@ -22,38 +22,93 @@ This is an archetype-based ECS taking inspiration from
 [entt](https://github.com/skypjack/entt). 
 
 The main focus is a clean & minimal API with acceptable performance, 
-perfect aligned contiguous memory of components & easy parallelization of systems (compatible with STL algorithms).
+perfect aligned contiguous memory of components & easy parallelization of systems.
 
-## Features
-* ~~Using C++20 Concepts for a more implicit & non error-prone API~~
-    * ~~Eg. `component::of<vel&, vel>` would not compile.~~
-    * Concept features not used atm due to problems with IntelliSense on VStudio w/ cmake.
+Project is currently very WIP and should not be used in anything serious.
     
 ## API
 
+### Components
+Components are just simple structs of data. The only requirement is that they have to be default, move & copy constructible.
 ```c++
+struct pos
+{
+    float x{0};
+    float y{0};
+}
+```
 
-struct example_system {
+### Systems
+Systems are defined by their update function where each argument is a 
+component + access (const or not) they want to fetch.
+```c++
+struct example_system
+{
+    // Per entity
     void update(pos& p, const vel& v) const {
-        p.x += v.x;
-        p.y += v.y;
+        // do system logic
     }
+}
 
-    void update(realm::entity e, realm::world& w) const {
-
-    }
-    
+struct example_system_perchunk
+{
+    // You can use a single realm::view as an argument
+    // to access components on a per-chunk basis
     void update(realm::view<pos, vel> view) const {
-        for(auto& [p, v] : view) {
-            p.x += v.x;
-            p.y += v.y;
+        for(auto [p, v] : view) {
+            // do system logic
         }
     }
 }
 
+// Insert systems to a world
+world.insert<example_system>();
+world.insert<example_per_chunk>();
+```
+
+### Example
+```c++
+struct pos
+{
+    float x{0};
+    float y{0};
+}
+
+struct time
+{
+    float dt{1/60};
+}
+
+struct move_system
+{
+    void update(pos& p, const vel& v, const time& t) const {
+        p.x += v.x * t.dt;
+        p.y += v.y * t.dt;
+    }
+}
+
+
+// Create a world with capacity of 1000 entities.
+auto world = realm::world(1000);
+
+// Create a singleton component
+world.singleton<time>();
+
+// Create entities of components pos & vel.
+for(auto i{0}; i < 1000; ++i) {
+    auto entt = world.create<pos, vel>();
+    world.set<vel>(entt, {10, 10});
+}
+
+// Insert move_system to the world
+world.insert<move_system>();
+
+// Update systems in parallel
+world.update();
 
 ```
-## Benchmark
+
+## Benchmarks
 TODO
 
 ## TODO

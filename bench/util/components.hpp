@@ -10,6 +10,11 @@ struct dir
     float y = 0.0f;
 };
 
+struct runtime
+{
+    float dt = 4.0f;
+};
+
 struct wierd
 {
     float thingy = 0.0;

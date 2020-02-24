@@ -4,6 +4,7 @@ build/
 dist/
 out/
 bin/
+cmake-build*/
 
 # Visual C++ cache files
 ipch/
