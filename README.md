@@ -1,5 +1,5 @@
 <h1 align="center">realm.hpp</h1>
-<p align="center">An <b>WIP</b>, <b>experimental</b> header-only ECS framework. Written in C++20/17.</p>
+<p align="center">A <b>WIP</b>, <b>experimental</b> header-only ECS framework. Written in C++20/17.</p>
 
 ### Table of Contents
 
