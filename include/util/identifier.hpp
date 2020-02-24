@@ -1,8 +1,6 @@
 #pragma once
 
 #include <atomic>
-#include <cstddef>
-#include <type_traits>
 
 // TODO: implement a fallback id generation
 #if defined(__GNUC__)
@@ -37,7 +35,7 @@ const hash_t fnv_prime = 1099511628211ull;
  * @param value
  * @return
  */
-inline constexpr hash_t
+constexpr hash_t
 hash_fnv1a(const char* const str, const hash_t value = fnv_basis) noexcept
 {
     return (str[0] == '\0') ? value
@@ -59,7 +57,7 @@ private:
 public:
     using value_type = hash_t;
     static constexpr value_type hash{ get() };
-    static constexpr value_type mask{ (uint64_t) 0x1L << (uint64_t)((hash) % 63L) };
+    static constexpr value_type mask{ static_cast<uint64_t>(0x1L) << static_cast<uint64_t>((hash) % 63L) };
 };
 
 template<typename T>

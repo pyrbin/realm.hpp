@@ -21,7 +21,7 @@ namespace internal {
  * @param target vector to target
  */
 template<typename T>
-inline constexpr void
+constexpr void
 swap_remove(unsigned index, T& target)
 {
     std::swap(target[target.size() - 1], target[index]);

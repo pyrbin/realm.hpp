@@ -41,7 +41,7 @@ TEST_CASE("scheduler_block_order")
     world.batch<pos, vel, name>(10);
     realm::scheduler scheduler;
 
-    scheduler.insert<example_system>((float) 20);
+    scheduler.insert<example_system>(static_cast<float>(20));
     scheduler.insert<example_system_const>();
     scheduler.insert<example_system_mutate>();
     scheduler.insert<example_system_name>();

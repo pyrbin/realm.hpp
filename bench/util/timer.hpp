@@ -4,7 +4,7 @@ struct timer final
 
     double elapsed()
     {
-        auto now = std::chrono::system_clock::now();
+        const auto now = std::chrono::system_clock::now();
         return std::chrono::duration<double>(now - start).count();
     }
 

@@ -2,8 +2,6 @@
 
 #include <cstdint>
 #include <functional>
-#include <memory>
-#include <numeric>
 #include <vector>
 
 #include "../util/swap_remove.hpp"
@@ -53,7 +51,7 @@ public:
      * Create an entity pool with specified capacity
      * @param capacity
      */
-    entity_manager(uint32_t capacity) : first_available{ -1 }
+    explicit entity_manager(const uint32_t capacity) : first_available{ -1 }
     {
         slots.reserve(capacity);
         locations.reserve(capacity);
@@ -76,20 +74,20 @@ public:
     entity create(const entity_location& loc)
     {
         // TODO: add comments
-        entity_handle handle;
-        auto index = first_available;
+        entity_handle handle{};
+        const auto index = first_available;
         if (index != -1) {
             first_available =
               handles.at(index).index == index ? -1 : handles.at(index).index;
 
-            handles.at(index).index = ((uint32_t) locations.size());
-            handle = { (uint32_t) index, handles.at(index).generation };
+            handles.at(index).index = uint32_t(locations.size());
+            handle = { uint32_t(index), handles.at(index).generation };
         } else {
             handles.push_back({
-              (uint32_t) locations.size(),
+              static_cast<uint32_t>(locations.size()),
               0,
             });
-            handle = { ((uint32_t) handles.size()) - 1, 0 };
+            handle = { uint32_t(handles.size()) - 1, 0 };
         }
         slots.push_back(handle.index);
         locations.push_back(loc);
@@ -100,13 +98,13 @@ public:
      * Remove an entity.
      * @param entt The entity id to remove
      */
-    void remove(entity entt)
+    void remove(const entity entt)
     {
         // TODO: add comments
-        auto handle = extract_handle(entt);
+        const auto handle = extract_handle(entt);
         auto [index, generation] = handles.at(handle.index);
         if (generation != handle.generation) return;
-        auto loc_index = handles.at(handle.index).index;
+        const auto loc_index = handles.at(handle.index).index;
         handles.at(slots.at(slots.size() - 1)).index = loc_index;
         handles.at(handle.index).generation++;
         handles.at(handle.index).index =
@@ -121,9 +119,9 @@ public:
      * @param entt The entity id
      * @return The entity location
      */
-    const entity_location* get(entity entt)
+    const entity_location* get(const entity entt) const
     {
-        auto handle = extract_handle(entt);
+        const auto handle = extract_handle(entt);
         auto [index, generation] = handles.at(handle.index);
         return generation == handle.generation
                  ? &locations.at(handles.at(handle.index).index)
@@ -135,9 +133,9 @@ public:
      * @param entt The entity id
      * @return The entity location
      */
-    entity_location* get_mut(entity entt)
+    entity_location* get_mut(const entity entt)
     {
-        auto handle = extract_handle(entt);
+        const auto handle = extract_handle(entt);
         auto [index, generation] = handles.at(handle.index);
         return generation == handle.generation
                  ? &locations.at(handles.at(handle.index).index)
@@ -149,10 +147,10 @@ public:
      * @param entt The entity id
      * @param loc The new entity location
      */
-    void update(entity entt, entity_location&& loc)
+    void update(const entity entt, entity_location&& loc)
     {
-        get_mut(entt)->chunk = std::move(loc.chunk);
-        get_mut(entt)->chunk_index = std::move(loc.chunk_index);
+        get_mut(entt)->chunk = loc.chunk;
+        get_mut(entt)->chunk_index = loc.chunk_index;
     }
 
     /**
@@ -160,9 +158,9 @@ public:
      * @param entt The entity id
      * @return
      */
-    bool exists(entity entt) const noexcept
+    [[nodiscard]] bool exists(const entity entt) const noexcept
     {
-        auto handle = extract_handle(entt);
+        const auto handle = extract_handle(entt);
         return handle.index <= handles.size()
                  ? handle.generation == handles.at(handle.index).generation
                  : false;
@@ -172,10 +170,10 @@ public:
      * Iterate each entity immutable
      * @param fn
      */
-    void each(std::function<void(const entity, const entity_location*)> fn)
+    void each(const std::function<void(entity, const entity_location*)> fn)
     {
         for (unsigned i{ 0 }; i < handles.size(); i++) {
-            auto id = merge_handle(handles[i]);
+            const auto id = merge_handle(handles[i]);
             fn(id, const_cast<const entity_location*>(get(id)));
         }
     }
@@ -184,17 +182,17 @@ public:
      * Iterate each entity mutable
      * @param fn
      */
-    void each_mut(std::function<void(const entity, entity_location*)> fn)
+    void each_mut(const std::function<void(entity, entity_location*)> fn)
     {
         for (unsigned i{ 0 }; i < handles.size(); i++) {
-            auto id = merge_handle(handles[i]);
+            const auto id = merge_handle(handles[i]);
             fn(id, (get_mut(id)));
         }
     }
 
-    int32_t size() const noexcept { return slots.size(); }
+    [[nodiscard]] int32_t size() const noexcept { return slots.size(); }
 
-    int32_t capacity() const noexcept { return slots.capacity(); }
+    [[nodiscard]] int32_t capacity() const noexcept { return slots.capacity(); }
 
     /**
      * Create an entity id from an index and generation
@@ -202,8 +200,8 @@ public:
      * @param generation
      * @return An entity id
      */
-    static inline constexpr entity merge_handle(uint32_t index,
-                                                uint32_t generation) noexcept
+    static constexpr entity merge_handle(const uint32_t index,
+                                         const uint32_t generation) noexcept
     {
         return entity{ generation } << 32 | entity{ index };
     }
@@ -213,7 +211,7 @@ public:
      * @param handle
      * @return
      */
-    static inline constexpr entity merge_handle(entity_handle handle) noexcept
+    static constexpr entity merge_handle(const entity_handle handle) noexcept
     {
         auto [index, generation] = handle;
         return merge_handle(index, generation);
@@ -224,7 +222,7 @@ public:
      * @param entt
      * @return
      */
-    static inline constexpr uint32_t index(entity entt) noexcept
+    static constexpr uint32_t index(entity entt) noexcept
     {
         return static_cast<uint32_t>(entt);
     }
@@ -234,7 +232,7 @@ public:
      * @param entt
      * @return
      */
-    static inline constexpr uint32_t generation(entity entt) noexcept
+    static constexpr uint32_t generation(entity entt) noexcept
     {
         return (entt >> 32);
     }
@@ -244,7 +242,7 @@ public:
      * @param entt
      * @return
      */
-    static inline constexpr entity_handle extract_handle(entity entt) noexcept
+    static constexpr entity_handle extract_handle(entity entt) noexcept
     {
         return { index(entt), generation(entt) };
     }

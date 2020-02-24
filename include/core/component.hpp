@@ -1,11 +1,8 @@
 #pragma once
 
-#include <assert.h>
 #include <cstddef>
 #include <functional>
 #include <iostream>
-#include <string>
-#include <typeinfo>
 #include <vector>
 
 #include "../util/identifier.hpp"
@@ -21,8 +18,8 @@ struct memory_layout
     const unsigned size{ 0 };
     const unsigned align{ 0 };
 
-    inline constexpr memory_layout() {}
-    inline constexpr memory_layout(unsigned size, unsigned align)
+    constexpr memory_layout() = default;
+    constexpr memory_layout(const unsigned size, const unsigned align)
       : size{ size }, align{ align }
     {
         /**
@@ -37,7 +34,7 @@ struct memory_layout
      * @return
      */
     template<typename T>
-    inline static constexpr memory_layout of()
+    static constexpr memory_layout of()
     {
         return { sizeof(T), alignof(T) };
     }
@@ -49,12 +46,12 @@ struct memory_layout
      * @param align
      * @return Padding to insert
      */
-    static inline constexpr int align_up(const int size, const int align) noexcept
+    static constexpr int align_up(const int size, const int align) noexcept
     {
         return (size + (align - 1)) & !(align - 1);
     }
 
-    inline constexpr int align_up(const int size) const noexcept
+    [[nodiscard]] constexpr int align_up(const int size) const noexcept
     {
         return align_up(size, align);
     }
@@ -69,8 +66,9 @@ struct component_meta
     const uint64_t hash{ 0 };
     const uint64_t mask{ 0 };
 
-    inline constexpr component_meta() {}
-    inline constexpr component_meta(uint64_t hash, uint64_t mask)
+    constexpr component_meta() = default;
+
+    constexpr component_meta(const uint64_t hash, const uint64_t mask)
       : hash{ hash }, mask{ mask } {};
 
     /**
@@ -101,15 +99,16 @@ struct component
     constructor_t* alloc{ nullptr };
     constructor_t* destroy{ nullptr };
 
-    inline constexpr component(){};
-    inline constexpr component(component_meta meta,
-                               memory_layout layout,
-                               constructor_t* alloc,
-                               constructor_t* destroy)
+    constexpr component() = default;
+
+    constexpr component(component_meta meta,
+                        memory_layout layout,
+                        constructor_t* alloc,
+                        constructor_t* destroy)
       : meta{ meta }, layout{ layout }, alloc{ alloc }, destroy{ destroy }
     {}
 
-    inline constexpr bool operator==(const component& other) const
+    constexpr bool operator==(const component& other) const
     {
         return other.meta.hash == meta.hash;
     }
@@ -120,12 +119,12 @@ struct component
      * @return
      */
     template<typename T>
-    static inline constexpr internal::enable_if_component<T, component> of()
+    static constexpr internal::enable_if_component<T, component> of()
     {
         return { component_meta::of<T>(),
                  memory_layout::of<T>(),
                  [](void* ptr) { new (ptr) T{}; },
-                 [](void* ptr) { ((T*) ptr)->~T(); } };
+                 [](void* ptr) { static_cast<T*>(ptr)->~T(); } };
     }
 };
 
@@ -135,9 +134,9 @@ struct component
  */
 struct singleton_component
 {
-    inline singleton_component(){};
-    inline singleton_component(component&& comp) : component_info{ comp } {};
-    virtual inline ~singleton_component() = default;
+    singleton_component() = default;
+    singleton_component(component&& comp) : component_info{ comp } {};
+    virtual ~singleton_component() = default;
     const component component_info;
 };
 
@@ -148,26 +147,26 @@ struct singleton_component
  * @tparam T
  */
 template<typename T>
-struct singleton_instance : singleton_component
+struct singleton_instance final : singleton_component
 {
     const std::unique_ptr<T> instance;
 
-    inline singleton_instance(T& t)
-      : instance{ std::unique_ptr<T>(std::move(t)) }
-      , singleton_component{ component::of<T>() }
+    explicit singleton_instance(T& t)
+      : singleton_component{ component::of<T>() }
+      , instance{ std::unique_ptr<T>(std::move(t)) }
     {}
 
     template<typename... Args>
-    inline singleton_instance(Args&&... args)
-      : instance{ std::make_unique<T>(std::forward<Args>(args)...) }
-      , singleton_component{ component::of<T>() }
+    explicit singleton_instance(Args&&... args)
+      : singleton_component{ component::of<T>() }
+      , instance{ std::make_unique<T>(std::forward<Args>(args)...) }
     {}
 
     /**
      * Get the underlying component instance
      * @return Pointer to component instance
      */
-    inline T* get() { return (T*) instance.get(); }
+    T* get() { return static_cast<T*>(instance.get()); }
 };
 
 } // namespace realm
@@ -181,7 +180,7 @@ namespace std {
 template<>
 struct hash<realm::component>
 {
-    size_t operator()(const realm::component& c) const
+    size_t operator()(const realm::component& c) const noexcept
     {
         return (hash<size_t>{}(c.meta.hash));
     }

@@ -1,11 +1,8 @@
 #pragma once
 
-#include <algorithm>
-#include <memory>
 #include <tuple>
 #include <type_traits>
 #include <utility>
-#include <vector>
 
 #include "../util/tuple_util.hpp"
 #include "../util/type_traits.hpp"
@@ -34,7 +31,7 @@ public:
      * the components defined by the view.
      * @param chunk
      */
-    inline constexpr view(archetype_chunk* chunk) : chunk{ chunk } {}
+    constexpr view(archetype_chunk* chunk) : chunk{ chunk } {}
 
     /**
      * Creates a view of a chunk with a world.
@@ -42,8 +39,9 @@ public:
      * the view will fetch that component instead
      * of from the chunk.
      * @param chunk
+     * @param world_ptr
      */
-    inline constexpr view(archetype_chunk* chunk, world* world_ptr)
+    constexpr view(archetype_chunk* chunk, world* world_ptr)
       : chunk{ chunk }, world_ptr{ world_ptr }
     {}
 
@@ -57,62 +55,62 @@ public:
         typedef references reference;
         typedef std::forward_iterator_tag iterator_category;
 
-        inline constexpr iterator(view* chunk_view) : chunk_view{ chunk_view }, index{ 0 }
+        constexpr iterator(view* chunk_view) : _chunk_view{ chunk_view }, _index{ 0 }
         {}
 
-        inline constexpr bool valid() { return chunk_view->chunk != nullptr; }
+        constexpr bool valid() { return _chunk_view->chunk != nullptr; }
 
-        inline void step()
+        void step()
         {
-            index++;
-            if (index >= chunk_view->chunk->size()) {
-                chunk_view = nullptr;
+            _index++;
+            if (_index >= _chunk_view->chunk->size()) {
+                _chunk_view = nullptr;
                 return;
             }
         }
 
-        inline self_type operator++()
+        self_type operator++()
         {
             self_type i = *this;
             step();
             return i;
         }
 
-        inline self_type operator++(int junk)
+        self_type operator++(int junk)
         {
             step();
             return *this;
         }
 
-        inline auto operator*()
+        auto operator*()
         {
             return (std::forward_as_tuple(
-              chunk_view->template get<internal::pure_t<Ts>>(index)...));
+              _chunk_view->template get<internal::pure_t<Ts>>(_index)...));
         }
 
-        inline constexpr bool operator!=(const self_type& other)
+        constexpr bool operator!=(const self_type& other)
         {
-            return chunk_view != other.chunk_view;
+            return _chunk_view != other._chunk_view;
         }
 
     private:
-        view* chunk_view;
-        unsigned int index;
+        view* _chunk_view;
+        unsigned int _index;
     };
 
-    inline iterator begin() { return iterator(this); }
+    iterator begin() { return iterator(this); }
 
-    inline iterator end() { return iterator(nullptr); }
+    iterator end() { return iterator(nullptr); }
 
     /**
      * Get a component from the chunk for a specific entity
      * If the provided component is registered as a singleton, fetch it from world instead.
      * @tparam T Component type
-     * @param entt  Entity id
+     * @param index
      * @return A component reference of type T
      */
     template<typename T>
-    inline internal::enable_if_component<T, T&> get(uint32_t index) const
+    [[nodiscard]] internal::enable_if_component<T, T&> get(const uint32_t index) const
     {
 
         if (world_ptr != nullptr && world_ptr->is_singleton<T>()) {
@@ -125,13 +123,14 @@ public:
     }
 
     template<typename T>
-    inline internal::enable_if_entity<T, const entity&> get(uint32_t index) const
+    [[nodiscard]] internal::enable_if_entity<T, const entity&> get(
+      const uint32_t index) const
     {
         return *chunk->get_entity_at(index);
     }
 
     template<typename T>
-    inline internal::enable_if_component<T, T&> get_singleton() const
+    [[nodiscard]] internal::enable_if_component<T, T&> get_singleton() const
     {
         return world_ptr->get_singleton<T>();
     }

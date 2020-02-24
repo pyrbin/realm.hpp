@@ -1,12 +1,9 @@
 #pragma once
 
 #include <cstddef>
-#include <functional>
-#include <iostream>
 #include <memory>
 #include <stdexcept>
 #include <string>
-#include <tuple>
 #include <utility>
 
 #include "../util/tuple_util.hpp"
@@ -25,11 +22,11 @@ template<typename... Ts>
 struct view;
 
 template<typename F>
-inline constexpr internal::enable_if_query_fn<F, void>
+constexpr internal::enable_if_query_fn<F, void>
 query(world* world, F&& f);
 
 template<typename F>
-inline constexpr internal::enable_if_query_fn<F, void>
+constexpr internal::enable_if_query_fn<F, void>
 query_seq(world* world, F&& f);
 
 /**
@@ -44,7 +41,7 @@ struct system_meta
     const size_t read_mask{ 0 };
 
     template<typename... Args>
-    static inline constexpr system_meta from_pack()
+    static constexpr system_meta from_pack()
     {
         using components = internal::component_tuple<Args...>;
         size_t read{ 0 };
@@ -54,20 +51,20 @@ struct system_meta
     }
 
     template<typename F, typename... Args>
-    static inline constexpr system_meta of(void (F::*f)(Args...) const)
+    static constexpr system_meta of(void (F::*f)(Args...) const)
     {
         return from_pack<Args...>();
     }
 
     template<typename F, typename... Args>
-    static inline constexpr system_meta of(void (F::*f)(view<Args...>) const)
+    static constexpr system_meta of(void (F::*f)(view<Args...>) const)
     {
         return from_pack<Args...>();
     }
 
 private:
     template<typename T>
-    static inline constexpr void from_pack_helper(size_t& read, size_t& mut)
+    static constexpr void from_pack_helper(size_t& read, size_t& mut)
     {
         if constexpr (!internal::is_entity<T> &&
                       std::is_const_v<std::remove_reference_t<T>>) {
@@ -84,12 +81,12 @@ private:
  */
 struct system_ref
 {
-    const size_t id{ 0 };
+    const uint64_t id{ 0 };
     const system_meta meta{ 0, 0 };
     const std::string name{ "" };
 
-    inline system_ref(){};
-    virtual inline ~system_ref() = default;
+    system_ref() = default;;
+    virtual ~system_ref() = default;
     virtual bool compare(size_t hash) const = 0;
     virtual bool mutates(size_t hash) const = 0;
     virtual bool reads(size_t hash) const = 0;
@@ -97,8 +94,8 @@ struct system_ref
     virtual void invoke_seq(world*) const = 0;
 
 protected:
-    inline system_ref(size_t id, system_meta meta, std::string name)
-      : id{ id }, meta{ meta }, name{ name } {};
+    system_ref(const uint64_t id, system_meta meta, std::string name)
+      : id{ id }, meta{ meta }, name{ std::move(name) } {};
 };
 
 /**
@@ -109,19 +106,19 @@ protected:
  * @tparam T Underlying system class
  */
 template<typename T>
-struct system_proxy : public system_ref
+struct system_proxy final : public system_ref
 {
 private:
     /*! @brief Underlying system pointer */
-    const std::unique_ptr<T> instance;
+    const std::unique_ptr<T> _instance;
 
     /*! @brief Creates a lamdba object to system update function */
     template<typename R = void, typename... Args>
-    static inline constexpr auto update_lambda(const system_proxy<T>* proxy,
-                                                void (T::*f)(Args...) const)
+    static constexpr auto update_lambda(const system_proxy<T>* proxy,
+                                        void (T::*f)(Args...) const)
     {
         return [proxy, f](Args... args) -> void {
-            (proxy->instance.get()->*f)(std::forward<Args>(args)...);
+            (proxy->_instance.get()->*f)(std::forward<Args>(args)...);
         };
     }
 
@@ -130,11 +127,11 @@ public:
      * Construct a system proxy from an object
      * @param t Underlying system to make a proxy to
      */
-    inline system_proxy(T& t)
-      : instance{ std::unique_ptr<T>(std::move(t)) }
-      , system_ref{ internal::identifier_hash_v<T>,
+    explicit system_proxy(T& t)
+      : system_ref{ internal::identifier_hash_v<T>,
                     system_meta::of(&T::update),
                     typeid(T).name() }
+      , _instance{ std::unique_ptr<T>(std::move(t)) }
     {}
 
     /**
@@ -143,24 +140,24 @@ public:
      * @param args Arguments for underlying system
      */
     template<typename... Args>
-    inline system_proxy(Args&&... args)
-      : instance{ std::make_unique<T>(std::forward<Args>(args)...) }
-      , system_ref{ internal::identifier_hash_v<T>,
+    explicit system_proxy(Args&&... args)
+      : system_ref{ internal::identifier_hash_v<T>,
                     system_meta::of(&T::update),
                     typeid(T).name() }
+      , _instance{ std::make_unique<T>(std::forward<Args>(args)...) }
     {}
 
-    inline constexpr bool compare(size_t other) const override
+    bool compare(const size_t other) const override
     {
         return archetype::subset(other, meta.mask);
     }
 
-    inline constexpr bool mutates(size_t other) const override
+    bool mutates(const size_t other) const override
     {
         return archetype::subset(meta.mut_mask, other);
     }
 
-    inline constexpr bool reads(size_t other) const override
+    bool reads(const size_t other) const override
     {
         return archetype::subset(meta.read_mask, other);
     }
@@ -169,7 +166,7 @@ public:
      * Call the system query on a world in parallel
      * @param world
      */
-    inline void invoke(world* world) const override
+    [[ nodiscard ]] void invoke(world* world) const override
     {
         query(world, update_lambda(this, &T::update));
     }
@@ -178,7 +175,7 @@ public:
      * Call the system query on a world sequentially
      * @param world
      */
-    inline void invoke_seq(world* world) const override
+    [[nodiscard]] void invoke_seq(world* world) const override
     {
         query_seq(world, update_lambda(this, &T::update));
     }

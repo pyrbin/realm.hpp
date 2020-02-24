@@ -1,4 +1,6 @@
+#include "../include/core/world.hpp"
 #include "util/catch.cpp"
+#include "util/components.hpp"
 
 struct runtime
 {

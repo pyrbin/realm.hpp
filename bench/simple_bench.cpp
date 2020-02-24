@@ -1,11 +1,3 @@
-#include <chrono>
-#include <functional>
-#include <memory>
-#include <numeric>
-#include <random>
-#include <string>
-#include <vector>
-
 #include "../include/realm.hpp"
 #include "util/components.hpp"
 #include "util/timer.hpp"
@@ -62,7 +54,7 @@ BENCH_CASE_UPDATE_SIMPLE()
     for (int i = 0; i < 10; i++) {
         timer timer;
         world.update_seq();
-        double elapsed = timer.elapsed();
+        const double elapsed = timer.elapsed();
         if (elapsed < min) { min = elapsed; }
     }
 
@@ -80,7 +72,7 @@ BENCH_CASE_UPDATE_PAR()
     for (int i = 0; i < 10; i++) {
         timer timer;
         world.update();
-        double elapsed = timer.elapsed();
+        const double elapsed = timer.elapsed();
         if (elapsed < min) { min = elapsed; }
     }
 

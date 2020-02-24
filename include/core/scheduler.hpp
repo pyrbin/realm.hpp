@@ -1,6 +1,5 @@
 #pragma once
 
-#include "../util/type_traits.hpp"
 #include "system.hpp"
 
 #include <execution>
@@ -25,7 +24,7 @@ struct execution_block
      * Execute each system on a world
      * @param world The world to operate on
      */
-    inline void exec(world* world) const noexcept
+    void exec(world* world) const noexcept
     {
         for (auto& sys : systems) { sys->invoke(world); }
     }
@@ -35,7 +34,7 @@ struct execution_block
      * is not executed in parallel.
      * @param world
      */
-    inline void exec_seq(world* world) const noexcept
+    void exec_seq(world* world) const noexcept
     {
         for (auto& sys : systems) { sys->invoke_seq(world); }
     }
@@ -52,7 +51,7 @@ struct scheduler
     std::vector<execution_block> blocks;
     size_t system_count{ 0 };
 
-    inline scheduler()
+    scheduler()
     {
         // Create the readonly execution block
         // will always be the first block in the vector
@@ -76,7 +75,7 @@ struct scheduler
      * @param args
      */
     template<typename T, typename... Args>
-    inline void insert(Args&&... args)
+    void insert(Args&&... args)
     {
         insert(T{ std::forward<Args>(args)... });
     }
@@ -87,12 +86,12 @@ struct scheduler
      * @param t
      */
     template<typename T>
-    inline void insert(T&& t)
+    void insert(T&& t)
     {
-        auto ref = new system_proxy<T>(std::move(t));
+        auto ref = new system_proxy<T>(std::forward<T>(t));
         system_count++;
 
-        // If system doesnt mutate any component
+        // If system doesn't mutate any component
         // add to readonly execution block
         if (ref->meta.mut_mask == 0) {
             blocks[0].systems.push_back(ref);
@@ -102,7 +101,7 @@ struct scheduler
         execution_block* curr{ nullptr };
 
         // Skip first block as its the readonly block
-        for (int i{ 1 }; i < blocks.size(); i++) {
+        for (auto i{ 1 }; i < blocks.size(); i++) {
             auto& block = blocks[i];
             // If system matches this block
             if (archetype::intersection(ref->meta.mut_mask, block.component_mask)) {
@@ -133,7 +132,7 @@ struct scheduler
      * Execute each block in parallel on provided world
      * @param world The world to operate on
      */
-    inline void exec(world* world)
+    void exec(world* world)
     {
 
         // Execute each block in parallel.
@@ -148,7 +147,7 @@ struct scheduler
      * Execute each block sequentially (not parallel) on provided world
      * @param world The world to operate on
      */
-    inline void exec_seq(world* world)
+    void exec_seq(world* world)
     {
         // Execute each block in parallel.
         // Blocks are guaranteed to have no write/read dependencies
@@ -156,7 +155,7 @@ struct scheduler
           blocks.begin(), blocks.end(), [world](auto& block) { block.exec_seq(world); });
     }
 
-    inline size_t size() const noexcept { return system_count; }
+    [[nodiscard]] size_t size() const noexcept { return system_count; }
 };
 
 } // namespace realm

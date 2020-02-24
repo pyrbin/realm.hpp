@@ -23,7 +23,7 @@ namespace internal {
 
 /** @brief Gets the mask of a query. Excludes singleton components */
 template<typename... Args>
-inline constexpr size_t
+constexpr size_t
 query_mask(world* world)
 {
     auto at = archetype::from_tuple<typename view<Args...>::components>();
@@ -39,7 +39,7 @@ query_mask(world* world)
 
 /** @brief Per-chunk (view) query */
 template<typename F, typename... Args>
-inline constexpr internal::enable_if_query_fn<F, void>
+constexpr internal::enable_if_query_fn<F, void>
 query_helper(world* world, F* object, void (F::*f)(view<Args...>) const)
 {
     auto mask = query_mask<Args...>(world);
@@ -54,7 +54,7 @@ query_helper(world* world, F* object, void (F::*f)(view<Args...>) const)
 
 /** @brief Per-entity query */
 template<typename F, typename... Args>
-inline constexpr internal::enable_if_query_fn<F, void>
+constexpr internal::enable_if_query_fn<F, void>
 query_helper(world* world, F* object, void (F::*f)(Args...) const)
 {
     auto mask = query_mask<Args...>(world);
@@ -71,7 +71,7 @@ query_helper(world* world, F* object, void (F::*f)(Args...) const)
 
 /** @brief Parallel per-chunk (view) query */
 template<typename ExePo, typename F, typename... Args>
-inline constexpr internal::enable_if_query_fn<F, void>
+constexpr internal::enable_if_query_fn<F, void>
 query_helper(ExePo policy, world* world, F* object, void (F::*f)(view<Args...>) const)
 {
     auto mask = query_mask<Args...>(world);
@@ -88,7 +88,7 @@ query_helper(ExePo policy, world* world, F* object, void (F::*f)(view<Args...>) 
 
 /** @brief Parallel per-entity query */
 template<typename ExePo, typename F, typename... Args>
-inline constexpr internal::enable_if_query_fn<F, void>
+constexpr internal::enable_if_query_fn<F, void>
 query_helper(ExePo policy, world* world, F* object, void (F::*f)(Args...) const)
 {
     auto mask = query_mask<Args...>(world);
@@ -110,11 +110,6 @@ query_helper(ExePo policy, world* world, F* object, void (F::*f)(Args...) const)
 } // namespace internal
 
 /**
- * @cond TURN_ON_DOXYGEN
- * Internal details not to be documented.
- */
-
-/**
  * @brief Query
  * Queries the world for components defined in the functor object
  * @tparam F Lambda/functor type
@@ -123,7 +118,7 @@ query_helper(ExePo policy, world* world, F* object, void (F::*f)(Args...) const)
  * @return
  */
 template<typename F>
-inline constexpr internal::enable_if_query_fn<F, void>
+constexpr internal::enable_if_query_fn<F, void>
 query(world* world, F&& f)
 {
     using pure_t = internal::pure_t<F>;
@@ -142,7 +137,7 @@ query(world* world, F&& f)
  * @return
  */
 template<typename F>
-inline constexpr internal::enable_if_query_fn<F, void>
+constexpr internal::enable_if_query_fn<F, void>
 query_seq(world* world, F&& f)
 {
     using pure_t = internal::pure_t<F>;
