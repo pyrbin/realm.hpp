@@ -5,7 +5,6 @@
 #include "scheduler.hpp"
 #include "system.hpp"
 
-#include <execution>
 #include <functional>
 #include <vector>
 
@@ -22,15 +21,20 @@ struct world
     static const size_t DEFAULT_MAX_ENTITIES = 100000;
 
     using chunks_t = std::vector<std::unique_ptr<archetype_chunk_root>>;
-    using chunks_map_t = robin_hood::unordered_flat_map<size_t, unsigned>;
+    using hash_map_t = robin_hood::unordered_flat_map<size_t, unsigned>;
+    using singletons_t = std::vector<std::unique_ptr<singleton_component>>;
 
     // TODO: make private & put query functions inside a struct & make it friend of world
     chunks_t chunks;
-    chunks_map_t chunks_map;
+    hash_map_t chunks_map;
 
 private:
     scheduler systems;
     entity_manager entities;
+
+    uint64_t singleton_mask{ 0 };
+    singletons_t singletons;
+    hash_map_t singletons_map;
 
     /**
      * Returns a free (has available space) chunk of a specified archetype.
@@ -90,8 +94,64 @@ public:
      * Allocate a world with specified capacity
      * @param capacity
      */
-    world(uint32_t capacity = DEFAULT_MAX_ENTITIES) : entities{ capacity } {}
+    inline world(uint32_t capacity = DEFAULT_MAX_ENTITIES) : entities{ capacity } {}
 
+    /**
+     * Create a singleton component of a type
+     * @tparam T The type of the singleton component
+     * @return
+     */
+    template<typename T>
+    inline internal::enable_if_component<T, void> singleton()
+    {
+        auto meta = component_meta::of<T>();
+
+        // If singleton is already registered
+        if (is_singleton<T>()) { return; }
+
+        // Update mask and insert singleton instance
+        singleton_mask |= meta.mask;
+        singletons.push_back(std::make_unique<singleton_instance<T>>(T{}));
+        singletons_map.emplace(meta.hash, singletons.size() - 1);
+    }
+
+    /**
+     * Get a singleton component instance from the world.
+     * @tparam T The type of the singleton component
+     * @return Reference to the component
+     */
+    template<typename T>
+    inline internal::enable_if_component<T, T&> get_singleton()
+    {
+        auto meta = component_meta::of<internal::pure_t<T>>();
+        auto idx = singletons_map.at(meta.hash);
+        auto singleton = static_cast<singleton_instance<T>*>(singletons.at(idx).get());
+        return *singleton->get();
+    }
+
+    /**
+     * Check if a component is stored as a singleton in the world
+     * @param component Component to check
+     * @return If component is a singleton
+     */
+    inline bool is_singleton(const component& component)
+    {
+        if (singleton_mask == 0) return false;
+        return archetype::subset(singleton_mask, component.meta.mask);
+    }
+
+    /**
+     * Check if a component type is stored as a singleton in the world
+     * @tparam T The type of the singleton component
+     * @return If component type is a singleton
+     */
+    template<typename T>
+    inline internal::enable_if_component<T, bool> is_singleton()
+    {
+        auto meta = component_meta::of<internal::pure_t<T>>();
+        if (singleton_mask == 0) return false;
+        return archetype::subset(singleton_mask, meta.mask);
+    }
     /**
      * Create an entity with components from an archetype
      * @param at The archetype
@@ -176,7 +236,20 @@ public:
     internal::enable_if_component<T, T&> get(entity entt)
     {
         auto [index, chunk_ptr] = *entities.get(entt);
-        return static_cast<T&>(*chunk_ptr->get<std::unwrap_ref_decay_t<T>>(index));
+        return static_cast<T&>(*chunk_ptr->get<internal::pure_t<T>>(index));
+    }
+
+    /**
+     * Get a specific component reference from an entity.
+     * @tparam T Component type
+     * @param entt  Entity id
+     * @return A component reference of type T&
+     */
+    template<typename T>
+    internal::enable_if_component<T, T&> set(entity entt, T&& data)
+    {
+        auto [index, chunk_ptr] = *entities.get(entt);
+        return static_cast<T&>(*chunk_ptr->set<internal::pure_t<T>>(index, std::forward<T>(data)));
     }
 
     /**
@@ -270,20 +343,17 @@ public:
      * @return
      */
     template<typename T>
-    inline constexpr internal::enable_if_system<T, void> insert(T& t)
+    inline constexpr internal::enable_if_system<T, void> insert(T&& t)
     {
-        systems.insert(std::forward<T>(t));
+        systems.insert(std::move(t));
     }
 
     /**
      * @brief Update in parallel
      * Calls update on every system that has been inserted in the world on matching
-     * archetype chunks. The call order is determined by the insert order of the
-     * systems where the first inserted will be the first to be called.
+     * archetype chunks.
      */
-    inline void update() { 
-        systems.exec(this);
-    }
+    inline void update() { systems.exec(this); }
 
     /**
      * @brief Update sequentially (no parallelization)
@@ -291,13 +361,10 @@ public:
      * archetype chunks. The call order is determined by the insert order of the
      * systems where the first inserted will be the first to be called.
      */
-    inline void update_seq()
-    { 
-        systems.exec_seq(this);
-    }
+    inline void update_seq() { systems.exec_seq(this); }
 
     int32_t size() const noexcept { return entities.size(); }
     int32_t capacity() const noexcept { return entities.capacity(); }
     int32_t system_count() const noexcept { return systems.size(); }
 };
-} // namespace internal
+} // namespace realm

@@ -1,6 +1,8 @@
 #pragma once
 
+#include <atomic>
 #include <cstddef>
+#include <type_traits>
 
 // TODO: implement a fallback id generation
 #if defined(__GNUC__)
@@ -43,27 +45,29 @@ hash_fnv1a(const char* const str, const hash_t value = fnv_basis) noexcept
 }
 
 /**
- * @brief Type hash
- * Provides a compile-time and run-time unique hash/id of a type
+ * @brief Identifier
+ * Provides a constexpr unique mask/hash for a type.
  * Uses __PRETTY_FUNCTION__ macro & an implementation of FNV1A hashing.
  * @tparam T
  */
 template<typename T>
-struct type_hash
+struct identifier
 {
 private:
-    static constexpr auto gen_hash() noexcept
-    {
-        return internal::hash_fnv1a(__VALID_PRETTY_FUNC__);
-    }
+    static constexpr auto get() noexcept { return hash_fnv1a(__VALID_PRETTY_FUNC__); }
 
 public:
-    using value_type = internal::hash_t;
-    static constexpr value_type value{ gen_hash() };
+    using value_type = hash_t;
+    static constexpr value_type hash{ get() };
+    static constexpr value_type mask{ (uint64_t) 0x1L << (uint64_t)((hash) % 63L) };
 };
 
 template<typename T>
-inline constexpr internal::hash_t type_hash_v = internal::type_hash<T>::value;
+inline constexpr hash_t identifier_hash_v = internal::identifier<T>::hash;
+
+template<typename T>
+inline constexpr hash_t identifier_mask_v = internal::identifier<T>::mask;
 
 } // namespace internal
+
 } // namespace realm

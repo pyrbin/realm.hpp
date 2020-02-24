@@ -1,32 +1,28 @@
 TODO/Roadmap
 
-Version 0.1:
-
-* add comments & generate docs
-
-* solve compiler warnings / cleanup
-
-* better tests/benchs (and link library)
-
-* error checking
-
-* test latest versions of all major compilers (msvc, clang, gcc)
-
-* update readme
-
 Version 0.1.5 (Small fixes):
 
 * optimize get_singleton (currently 1.3x iteration time)
 
+* better tests/benchs (and link library)
+
 * better/more comments 
+
+* error checking
+
+* update readme, fix typos better explainations etc.
+
+* generate & host documentation
 
 Version 0.2:
 
 * add a snapshotting feature for syncing of entities in ex multiplayer games
 
-* system functions such as disable, enable, ejec´t 
+* system functions such as disable, enable, ejecï¿½t 
 
 * fix view to support realm::entity
+
+* re-add concepts instead of enable_if
 
 * add shared components (components that will never change)
 
@@ -37,8 +33,6 @@ Further features:
 * allow undefined allocation capacity, eg. grow when needed
 
 * add tag/flag components (components who doesnt occupy memory, no data)
-
-* re-add concepts instead of enable_if
 
 * integrate conan
 

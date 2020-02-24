@@ -11,8 +11,10 @@
 #include "../util/type_traits.hpp"
 
 #include "archetype.hpp"
+#include "world.hpp"
 
 namespace realm {
+
 /**
  * @brief View
  * Describes a chunk view for iteration & manipulation of a single archetype chunk.
@@ -33,6 +35,17 @@ public:
      * @param chunk
      */
     inline constexpr view(archetype_chunk* chunk) : chunk{ chunk } {}
+
+    /**
+     * Creates a view of a chunk with a world.
+     * If a component is a singleton in the provided world
+     * the view will fetch that component instead
+     * of from the chunk.
+     * @param chunk
+     */
+    inline constexpr view(archetype_chunk* chunk, world* world_ptr)
+      : chunk{ chunk }, world_ptr{ world_ptr }
+    {}
 
     static inline const size_t mask = archetype::mask_from_tuple<components>();
 
@@ -71,10 +84,10 @@ public:
             return *this;
         }
 
-        inline reference operator*()
+        inline auto operator*()
         {
-            return std::forward_as_tuple(
-              chunk_view->template get<internal::pure_t<Ts>>(index)...);
+            return (std::forward_as_tuple(
+              chunk_view->template get<internal::pure_t<Ts>>(index)...));
         }
 
         inline constexpr bool operator!=(const self_type& other)
@@ -93,17 +106,38 @@ public:
 
     /**
      * Get a component from the chunk for a specific entity
+     * If the provided component is registered as a singleton, fetch it from world instead.
      * @tparam T Component type
      * @param entt  Entity id
      * @return A component reference of type T
      */
     template<typename T>
-    internal::enable_if_component<T, T&> get(entity entt)
+    inline internal::enable_if_component<T, T&> get(uint32_t index) const
     {
-        return *chunk->get<T>(entt);
+
+        if (world_ptr != nullptr && world_ptr->is_singleton<T>()) {
+            // TODO: this call increases system update by a lot
+            // definitely something to look into for performance
+            return get_singleton<T>();
+        } else {
+            return *chunk->get<T>(index);
+        }
+    }
+
+    template<typename T>
+    inline internal::enable_if_entity<T, const entity&> get(uint32_t index) const
+    {
+        return *chunk->get_entity_at(index);
+    }
+
+    template<typename T>
+    inline internal::enable_if_component<T, T&> get_singleton() const
+    {
+        return world_ptr->get_singleton<T>();
     }
 
 private:
-    archetype_chunk* chunk;
+    archetype_chunk* chunk{ nullptr };
+    world* world_ptr{ nullptr };
 };
 } // namespace realm

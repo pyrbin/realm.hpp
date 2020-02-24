@@ -1,7 +1,6 @@
 #pragma once
 
 #include <cstddef>
-#include <execution>
 #include <functional>
 #include <iostream>
 #include <memory>
@@ -9,7 +8,6 @@
 #include <string>
 #include <tuple>
 #include <utility>
-#include <string>
 
 #include "../util/tuple_util.hpp"
 
@@ -71,12 +69,12 @@ private:
     template<typename T>
     static inline constexpr void from_pack_helper(size_t& read, size_t& mut)
     {
-        if constexpr (!internal::is_entity<T> && std::is_const_v<std::remove_reference_t<T>>) {
+        if constexpr (!internal::is_entity<T> &&
+                      std::is_const_v<std::remove_reference_t<T>>) {
             read |= component_meta::of<internal::pure_t<T>>().mask;
         } else if constexpr (!internal::is_entity<T>) {
             mut |= component_meta::of<internal::pure_t<T>>().mask;
         }
-
     }
 };
 
@@ -115,7 +113,7 @@ struct system_proxy : public system_ref
 {
 private:
     /*! @brief Underlying system pointer */
-    const std::unique_ptr<T> underlying_system;
+    const std::unique_ptr<T> instance;
 
     /*! @brief Creates a functor object to system update function */
     template<typename R = void, typename... Args>
@@ -123,7 +121,7 @@ private:
                                                 void (T::*f)(Args...) const)
     {
         return [proxy, f](Args... args) -> void {
-            (proxy->underlying_system.get()->*f)(std::forward<Args>(args)...);
+            (proxy->instance.get()->*f)(std::forward<Args>(args)...);
         };
     }
 
@@ -133,9 +131,9 @@ public:
      * @param t Underlying system to make a proxy to
      */
     inline system_proxy(T& t)
-      : underlying_system{ std::unique_ptr<T>(std::move(t)) }
-      , system_ref{ internal::type_hash_v<T>, 
-                    system_meta::of(&T::update), 
+      : instance{ std::unique_ptr<T>(std::move(t)) }
+      , system_ref{ internal::identifier_hash_v<T>,
+                    system_meta::of(&T::update),
                     typeid(T).name() }
     {}
 
@@ -146,8 +144,8 @@ public:
      */
     template<typename... Args>
     inline system_proxy(Args&&... args)
-      : underlying_system{ std::make_unique<T>(std::forward<Args>(args)...) }
-      , system_ref{ internal::type_hash_v<T>,
+      : instance{ std::make_unique<T>(std::forward<Args>(args)...) }
+      , system_ref{ internal::identifier_hash_v<T>,
                     system_meta::of(&T::update),
                     typeid(T).name() }
     {}

@@ -11,7 +11,7 @@
 #include <tuple>
 #include <type_traits>
 
-#include "../external/robin_hood.hpp"
+#include "../extern/robin_hood.hpp"
 #include "../util/swap_remove.hpp"
 #include "../util/type_traits.hpp"
 
@@ -231,7 +231,7 @@ public:
 };
 
 /**
- * @brief Archetype Chunk Root
+ * @brief Archetype chunk root
  * Contains all the chunks of a certain archetype, currently stored as a vector with
  * unqiue pointers. Every archetype has a root which is the access point to that
  * archetypes chunks. Also contains some metadata for the chunks such as max entities per
@@ -242,10 +242,9 @@ struct archetype_chunk_root
     using chunk_ptr = std::unique_ptr<archetype_chunk>;
 
     static const uint32_t CHUNK_SIZE_16KB{ 16 * 1024 };
-    static const uint32_t CHUNK_COMPONENT_ALIGNMENT{ 64 };
+    static const uint32_t CHUNK_ALIGNMENT{ 64 };
 
-    static constexpr const memory_layout CHUNK_LAYOUT{ CHUNK_SIZE_16KB,
-                                                       CHUNK_COMPONENT_ALIGNMENT };
+    static constexpr const memory_layout CHUNK_LAYOUT{ CHUNK_SIZE_16KB, CHUNK_ALIGNMENT };
 
     std::vector<chunk_ptr> chunks;
 
@@ -411,17 +410,27 @@ public:
     }
 
     /**
+     * Set the component T of an entity at a specific index.
+     * @tparam T Component type
+     * @param index Index in chunk
+     * @param data Component data to set
+     * @return Component pointer
+     */
+    template<typename T>
+    inline internal::enable_if_component<T, T*> set(uint32_t index, T&& data) const
+    {
+        auto component = component::of<T>();
+        std::memcpy(get_pointer(index, component), &data, component.layout.size);
+        return get<T>(index);
+    }
+
+    /**
      * Get pointer to entity id at specified index. Used in queries when trying to fetch
      * entity.
-     * @tparam T Entity type
      * @param index Index in chunk
      * @return Pointer to entity id
      */
-    template<typename T>
-    inline internal::enable_if_entity<T, const entity*> get(uint32_t index) const
-    {
-        return &entities[index];
-    }
+    inline const entity* get_entity_at(uint32_t index) const { return &entities[index]; }
 
     /**
      * Get a void pointer for the address of a certain component in the chunk.

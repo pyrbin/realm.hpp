@@ -8,7 +8,7 @@
 #include <typeinfo>
 #include <vector>
 
-#include "../util/type_hash.hpp"
+#include "../util/identifier.hpp"
 
 namespace realm {
 /**
@@ -66,8 +66,12 @@ struct memory_layout
  */
 struct component_meta
 {
-    const size_t hash{ 0 };
-    const size_t mask{ 0 };
+    const uint64_t hash{ 0 };
+    const uint64_t mask{ 0 };
+
+    inline constexpr component_meta() {}
+    inline constexpr component_meta(uint64_t hash, uint64_t mask)
+      : hash{ hash }, mask{ mask } {};
 
     /**
      * Create component meta of a type.
@@ -75,10 +79,10 @@ struct component_meta
      * @return
      */
     template<typename T>
-    static inline constexpr internal::enable_if_component<T, component_meta> of()
+    static constexpr internal::enable_if_component<T, component_meta> of()
     {
-        size_t hash = internal::type_hash_v<std::unwrap_ref_decay_t<T>>;
-        return { hash, (size_t)(1 << hash) };
+        return component_meta{ internal::identifier_hash_v<internal::pure_t<T>>,
+                               internal::identifier_mask_v<internal::pure_t<T>> };
     }
 };
 
@@ -98,7 +102,6 @@ struct component
     constructor_t* destroy{ nullptr };
 
     inline constexpr component(){};
-
     inline constexpr component(component_meta meta,
                                memory_layout layout,
                                constructor_t* alloc,
@@ -125,6 +128,48 @@ struct component
                  [](void* ptr) { ((T*) ptr)->~T(); } };
     }
 };
+
+/**
+ * @brief Singleton component
+ * Singleton component base class
+ */
+struct singleton_component
+{
+    inline singleton_component(){};
+    inline singleton_component(component&& comp) : component_info{ comp } {};
+    virtual inline ~singleton_component() = default;
+    const component component_info;
+};
+
+/**
+ * @brief Singleton instance
+ * Stores a single component using a unique_ptr.
+ * Currently used in world to store singleton components.
+ * @tparam T
+ */
+template<typename T>
+struct singleton_instance : singleton_component
+{
+    const std::unique_ptr<T> instance;
+
+    inline singleton_instance(T& t)
+      : instance{ std::unique_ptr<T>(std::move(t)) }
+      , singleton_component{ component::of<T>() }
+    {}
+
+    template<typename... Args>
+    inline singleton_instance(Args&&... args)
+      : instance{ std::make_unique<T>(std::forward<Args>(args)...) }
+      , singleton_component{ component::of<T>() }
+    {}
+
+    /**
+     * Get the underlying component instance
+     * @return Pointer to component instance
+     */
+    inline T* get() { return (T*) instance.get(); }
+};
+
 } // namespace realm
 
 /**
