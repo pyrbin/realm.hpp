@@ -24,7 +24,9 @@ The main focus is a clean & minimal API with acceptable performance,
 perfect aligned contiguous memory of components & easy parallelization of systems.
 
 Project is currently very WIP and should not be used in anything serious.
-    
+
+Requires a C++20 compatible compiler.   
+
 ## API
 
 ### Components
