@@ -90,9 +90,9 @@ struct system_ref
 
     inline system_ref(){};
     virtual inline ~system_ref() = default;
-    virtual constexpr bool compare(size_t hash) const = 0;
-    virtual constexpr bool mutates(size_t hash) const = 0;
-    virtual constexpr bool reads(size_t hash) const = 0;
+    virtual bool compare(size_t hash) const = 0;
+    virtual bool mutates(size_t hash) const = 0;
+    virtual bool reads(size_t hash) const = 0;
     virtual void invoke(world*) const = 0;
     virtual void invoke_seq(world*) const = 0;
 
@@ -115,9 +115,9 @@ private:
     /*! @brief Underlying system pointer */
     const std::unique_ptr<T> instance;
 
-    /*! @brief Creates a functor object to system update function */
+    /*! @brief Creates a lamdba object to system update function */
     template<typename R = void, typename... Args>
-    static inline constexpr auto update_functor(const system_proxy<T>* proxy,
+    static inline constexpr auto update_lambda(const system_proxy<T>* proxy,
                                                 void (T::*f)(Args...) const)
     {
         return [proxy, f](Args... args) -> void {
@@ -171,7 +171,7 @@ public:
      */
     inline void invoke(world* world) const override
     {
-        query(world, update_functor(this, &T::update));
+        query(world, update_lambda(this, &T::update));
     }
 
     /**
@@ -180,7 +180,7 @@ public:
      */
     inline void invoke_seq(world* world) const override
     {
-        query_seq(world, update_functor(this, &T::update));
+        query_seq(world, update_lambda(this, &T::update));
     }
 };
 

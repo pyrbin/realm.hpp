@@ -26,8 +26,8 @@ namespace internal {
 
 using hash_t = uint64_t;
 
-inline const hash_t fnv_basis = 14695981039346656037ull;
-inline const hash_t fnv_prime = 1099511628211ull;
+const hash_t fnv_basis = 14695981039346656037ull;
+const hash_t fnv_prime = 1099511628211ull;
 
 /**
  * @brief FNV1A Hash function
