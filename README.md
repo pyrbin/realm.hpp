@@ -9,7 +9,6 @@
 - [Benchmarks](#benchmarks)
 - [TODO](#todo)
 - [Thanks](#thanks)
-- [Developer](#developer)
 
 ## Introduction
 Goal of this project is to create a simple ECS (Entity Component System) framework in `C++20/17` to increase
