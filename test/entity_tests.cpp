@@ -10,7 +10,9 @@ TEST_CASE("entity_batch")
     auto entts = world.batch<pos, vel, name>(N);
     REQUIRE(world.size() == N);
 
-    for (auto entt : entts) { REQUIRE(world.get_archetype(entt) == at); }
+    for (auto entt : entts) {
+        REQUIRE(world.get_archetype(entt) == at);
+    }
 }
 
 TEST_CASE("entity_transfer")

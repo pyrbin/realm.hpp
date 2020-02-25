@@ -26,7 +26,9 @@ struct execution_block
      */
     void exec(world* world) const noexcept
     {
-        for (auto& sys : systems) { sys->invoke(world); }
+        for (auto& sys : systems) {
+            sys->invoke(world);
+        }
     }
 
     /**
@@ -36,7 +38,9 @@ struct execution_block
      */
     void exec_seq(world* world) const noexcept
     {
-        for (auto& sys : systems) { sys->invoke_seq(world); }
+        for (auto& sys : systems) {
+            sys->invoke_seq(world);
+        }
     }
 };
 
@@ -74,7 +78,7 @@ struct scheduler
      * @tparam Args
      * @param args
      */
-    template<typename T, typename... Args>
+    template <typename T, typename... Args>
     void insert(Args&&... args)
     {
         insert(T{ std::forward<Args>(args)... });
@@ -85,7 +89,7 @@ struct scheduler
      * @tparam T
      * @param t
      */
-    template<typename T>
+    template <typename T>
     void insert(T&& t)
     {
         auto ref = new system_proxy<T>(std::forward<T>(t));
@@ -111,8 +115,8 @@ struct scheduler
                     // Merge execution blocks because a cross dependecy is found
                     // eg. if ref = Sys(A,B) & we have blocks A, B they have to be merged
                     curr->component_mask |= block.component_mask;
-                    curr->systems.insert(
-                      curr->systems.end(), block.systems.begin(), block.systems.end());
+                    curr->systems.insert(curr->systems.end(), block.systems.begin(),
+                                         block.systems.end());
                     blocks.erase(blocks.begin() + i--);
                 }
             }
@@ -134,12 +138,9 @@ struct scheduler
      */
     void exec(world* world)
     {
-
         // Execute each block in parallel.
         // Blocks are guaranteed to have no write/read dependencies
-        std::for_each(std::execution::par_unseq,
-                      blocks.begin(),
-                      blocks.end(),
+        std::for_each(std::execution::par_unseq, blocks.begin(), blocks.end(),
                       [world](auto& block) { block.exec(world); });
     }
 
@@ -151,11 +152,14 @@ struct scheduler
     {
         // Execute each block in parallel.
         // Blocks are guaranteed to have no write/read dependencies
-        std::for_each(
-          blocks.begin(), blocks.end(), [world](auto& block) { block.exec_seq(world); });
+        std::for_each(blocks.begin(), blocks.end(),
+                      [world](auto& block) { block.exec_seq(world); });
     }
 
-    [[nodiscard]] size_t size() const noexcept { return system_count; }
+    [[nodiscard]] size_t size() const noexcept
+    {
+        return system_count;
+    }
 };
 
-} // namespace realm
+}  // namespace realm

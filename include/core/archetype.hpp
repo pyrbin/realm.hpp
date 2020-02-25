@@ -59,7 +59,7 @@ struct archetype
          * @tparam T Component type
          * @return
          */
-        template<typename... T>
+        template <typename... T>
         static constexpr internal::enable_if_component_pack<data, T...> of()
         {
             return { (sizeof(T) + ... + 0), mask_of<T...>() };
@@ -78,8 +78,11 @@ private:
      * @param info
      */
     archetype(const components_t& components, const data& info)
-      : _info{ info }, _component_count{ components.size() }, components{ components }  // NOLINT(clang-diagnostic-reorder)
-    {}
+        : _info{ info }
+        , _component_count{ components.size() }
+        , components{ components }  // NOLINT(clang-diagnostic-reorder)
+    {
+    }
 
 public:
     const components_t components;
@@ -91,7 +94,7 @@ public:
      * @tparam T Component types
      * @return An archetype of types T
      */
-    template<typename... T>
+    template <typename... T>
     static constexpr internal::enable_if_component_pack<archetype, T...> of()
     {
         return archetype{ { component::of<T>()... }, data::of<T...>() };
@@ -102,7 +105,7 @@ public:
      * @tparam T Tuple of component types
      * @return An archetype of types in tuple T
      */
-    template<typename T>
+    template <typename T>
     static archetype from_tuple()
     {
         return [&]<typename... Ts>(std::type_identity<std::tuple<Ts...>>)
@@ -117,15 +120,15 @@ public:
      * @tparam T Component types
      * @return
      */
-    template<typename... T>
+    template <typename... T>
     static constexpr internal::enable_if_component_pack<size_t, T...> mask_of()
     {
         size_t mask{ 0 };
-        ( // Iterate each type and get component mask
-          [&](component&& component) mutable {
-              mask |= component.meta.mask;
-          }(component::of<T>()),
-          ...);
+        (  // Iterate each type and get component mask
+            [&](component&& component) mutable {
+                mask |= component.meta.mask;
+            }(component::of<T>()),
+            ...);
         return mask;
     }
 
@@ -134,7 +137,7 @@ public:
      * @tparam T Tuple of component types
      * @return
      */
-    template<typename T>
+    template <typename T>
     static constexpr size_t mask_from_tuple()
     {
         return [&]<typename... Ts>(std::type_identity<std::tuple<Ts...>>)
@@ -150,7 +153,10 @@ public:
      * @param b Potential subset archetypes mask
      * @return If archetype b is a subset of archetype
      */
-    static constexpr bool subset(const size_t a, const size_t b) { return (a & b) == b; }
+    static constexpr bool subset(const size_t a, const size_t b)
+    {
+        return (a & b) == b;
+    }
 
     /**
      * Check for intersection between two archetypes
@@ -193,7 +199,7 @@ public:
      * @tparam T Component type
      * @return
      */
-    template<typename T>
+    template <typename T>
     constexpr internal::enable_if_component<T, bool> has() const
     {
         return has(component::of<T>());
@@ -215,17 +221,28 @@ public:
      * @param f Lambda object
      * @return
      */
-    template<typename F>
+    template <typename F>
     constexpr void iter(F&& f) const
     {
-        for (auto& component : components) { f(component); }
+        for (auto& component : components) {
+            f(component);
+        }
     }
     /*! @brief Combined mask of all components in archetype */
-    [[nodiscard]] constexpr size_t mask() const { return _info.mask; }
+    [[nodiscard]] constexpr size_t mask() const
+    {
+        return _info.mask;
+    }
     /*! @brief The data size of all components in archetype */
-    [[nodiscard]] constexpr size_t size() const { return _info.size; }
+    [[nodiscard]] constexpr size_t size() const
+    {
+        return _info.size;
+    }
     /*! @brief The count of components in archetype */
-    [[nodiscard]] constexpr size_t count() const { return _component_count; }
+    [[nodiscard]] constexpr size_t count() const
+    {
+        return _component_count;
+    }
 };
 
 /**
@@ -260,11 +277,15 @@ struct archetype_chunk_root
      * @param archetype
      */
     archetype_chunk_root(const struct archetype& archetype)
-      : archetype{ archetype }
-      , per_chunk{ chunk_layout.size / static_cast<uint32_t>(archetype.size()) }
-    {}
+        : archetype{ archetype }
+        , per_chunk{ chunk_layout.size / static_cast<uint32_t>(archetype.size()) }
+    {
+    }
 
-    ~archetype_chunk_root() { cached_free = nullptr; }
+    ~archetype_chunk_root()
+    {
+        cached_free = nullptr;
+    }
 
     /**
      * Find and returns a chunk suitable for allocation. If no suitable chunk is found a
@@ -305,10 +326,14 @@ public:
      * @param max_capacity
      */
     archetype_chunk(struct archetype archetype, uint32_t max_capacity)
-      : archetype{ std::move(archetype) }, _max_capacity(max_capacity)
-    {}
+        : archetype{ std::move(archetype) }, _max_capacity(max_capacity)
+    {
+    }
 
-    ~archetype_chunk() { dealloc(); }
+    ~archetype_chunk()
+    {
+        dealloc();
+    }
 
     /**
      * Allocates required memory for the chunk.
@@ -348,7 +373,7 @@ public:
 #if defined(_WIN32) || defined(__CYGWIN__)
             _aligned_free(static_cast<void*>(_data));
 #else
-            free((void*) (data));
+            free((void*)(data));
 #endif
             _data = nullptr;
         }
@@ -380,7 +405,8 @@ public:
     entity remove(const unsigned index)
     {
         const auto end{ (_size--) - 1 };
-        if (_size == 0) return entities[index];
+        if (_size == 0)
+            return entities[index];
 
         // Swaps last entity with entity to remove
         // TODO: determine if this de-fragmentation is too costly?
@@ -401,7 +427,7 @@ public:
      * @param index Index in chunk
      * @return Component pointer
      */
-    template<typename T>
+    template <typename T>
     [[nodiscard]] internal::enable_if_component<T, T*> get(uint32_t index) const
     {
         return static_cast<T*>(get_pointer(index, component::of<T>()));
@@ -414,7 +440,7 @@ public:
      * @param data Component data to set
      * @return Component pointer
      */
-    template<typename T>
+    template <typename T>
     internal::enable_if_component<T, T*> set(const uint32_t index, T&& data) const
     {
         auto component = component::of<T>();
@@ -428,7 +454,10 @@ public:
      * @param index Index in chunk
      * @return Pointer to entity id
      */
-    [[nodiscard]] const entity* get_entity_at(const uint32_t index) const { return &entities[index]; }
+    [[nodiscard]] const entity* get_entity_at(const uint32_t index) const
+    {
+        return &entities[index];
+    }
 
     /**
      * Get a void pointer for the address of a certain component in the chunk.
@@ -438,7 +467,8 @@ public:
      */
     [[nodiscard]] pointer get_pointer(const uint32_t index, const component& type) const
     {
-        return static_cast<void*>(static_cast<std::byte*>(_data) + offset_to(index, type));
+        return static_cast<void*>(static_cast<std::byte*>(_data) +
+                                  offset_to(index, type));
     }
 
     /**
@@ -447,28 +477,38 @@ public:
      * @param other Other chunk
      * @param to Index in other chunk
      */
-    void copy_to(const unsigned from,
-                               const archetype_chunk* other,
-                               const unsigned to) const
+    void copy_to(const unsigned from, const archetype_chunk* other,
+                 const unsigned to) const
     {
         for (const auto& component : archetype.components) {
             if (other->archetype.has(component)) {
-                memcpy(other->get_pointer(to, component),
-                       get_pointer(from, component),
+                memcpy(other->get_pointer(to, component), get_pointer(from, component),
                        component.layout.size);
             }
         }
     }
 
     /*! @brief Capacity of chunk */
-    [[nodiscard]] constexpr uint32_t capacity() const noexcept { return _max_capacity; }
+    [[nodiscard]] constexpr uint32_t capacity() const noexcept
+    {
+        return _max_capacity;
+    }
     /*! @brief Size (current entity count) of chunk */
-    [[nodiscard]] constexpr uint32_t size() const noexcept { return _size; }
+    [[nodiscard]] constexpr uint32_t size() const noexcept
+    {
+        return _size;
+    }
 
     /*! @brief Chunk is full */
-    [[nodiscard]] bool full() const noexcept { return _size >= _max_capacity; }
+    [[nodiscard]] bool full() const noexcept
+    {
+        return _size >= _max_capacity;
+    }
     /*! @brief Size (current entity count) of chunk */
-    [[nodiscard]] bool allocated() const noexcept { return _data != nullptr; }
+    [[nodiscard]] bool allocated() const noexcept
+    {
+        return _data != nullptr;
+    }
 
 private:
     /**
@@ -492,14 +532,14 @@ private:
     offsets_t _offsets;
 };
 
-inline archetype_chunk*
-archetype_chunk_root::find_free()
+inline archetype_chunk* archetype_chunk_root::find_free()
 {
     // If we have a cached chunk & its not full, use that
-    if (cached_free && !cached_free->full()) return cached_free;
+    if (cached_free && !cached_free->full())
+        return cached_free;
 
-    const auto it = std::find_if(
-      chunks.begin(), chunks.end(), [](auto& b) { return !b->full() && b->allocated(); });
+    const auto it = std::find_if(chunks.begin(), chunks.end(),
+                                 [](auto& b) { return !b->full() && b->allocated(); });
 
     archetype_chunk* ptr{ nullptr };
 
@@ -516,14 +556,12 @@ archetype_chunk_root::find_free()
     return ptr;
 }
 
-inline archetype_chunk*
-archetype_chunk_root::create_chunk()
+inline archetype_chunk* archetype_chunk_root::create_chunk()
 {
-    return chunks
-      .emplace_back(std::make_unique<archetype_chunk>(archetype, per_chunk))
-      .get();
+    return chunks.emplace_back(std::make_unique<archetype_chunk>(archetype, per_chunk))
+        .get();
 }
-} // namespace realm
+}  // namespace realm
 
 /**
  * @cond TURN_OFF_DOXYGEN
@@ -531,7 +569,7 @@ archetype_chunk_root::create_chunk()
  */
 
 namespace std {
-template<>
+template <>
 struct hash<realm::archetype>
 {
     size_t operator()(const realm::archetype& at) const noexcept
@@ -540,7 +578,7 @@ struct hash<realm::archetype>
     }
 };
 
-template<>
+template <>
 struct hash<realm::archetype_chunk_root>
 {
     size_t operator()(const realm::archetype_chunk_root& at) const noexcept
@@ -548,4 +586,4 @@ struct hash<realm::archetype_chunk_root>
         return (hash<realm::archetype>{}(at.archetype));
     }
 };
-} // namespace std
+}  // namespace std

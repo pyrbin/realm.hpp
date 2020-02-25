@@ -78,14 +78,14 @@ public:
         const auto index = first_available;
         if (index != -1) {
             first_available =
-              handles.at(index).index == index ? -1 : handles.at(index).index;
+                handles.at(index).index == index ? -1 : handles.at(index).index;
 
             handles.at(index).index = uint32_t(locations.size());
             handle = { uint32_t(index), handles.at(index).generation };
         } else {
             handles.push_back({
-              static_cast<uint32_t>(locations.size()),
-              0,
+                static_cast<uint32_t>(locations.size()),
+                0,
             });
             handle = { uint32_t(handles.size()) - 1, 0 };
         }
@@ -103,12 +103,13 @@ public:
         // TODO: add comments
         const auto handle = extract_handle(entt);
         auto [index, generation] = handles.at(handle.index);
-        if (generation != handle.generation) return;
+        if (generation != handle.generation)
+            return;
         const auto loc_index = handles.at(handle.index).index;
         handles.at(slots.at(slots.size() - 1)).index = loc_index;
         handles.at(handle.index).generation++;
         handles.at(handle.index).index =
-          first_available != -1 ? first_available : handle.index;
+            first_available != -1 ? first_available : handle.index;
         first_available = handle.index;
         internal::swap_remove(loc_index, slots);
         internal::swap_remove(loc_index, locations);
@@ -123,9 +124,9 @@ public:
     {
         const auto handle = extract_handle(entt);
         auto [index, generation] = handles.at(handle.index);
-        return generation == handle.generation
-                 ? &locations.at(handles.at(handle.index).index)
-                 : nullptr;
+        return generation == handle.generation ?
+                   &locations.at(handles.at(handle.index).index) :
+                   nullptr;
     }
 
     /**
@@ -137,9 +138,9 @@ public:
     {
         const auto handle = extract_handle(entt);
         auto [index, generation] = handles.at(handle.index);
-        return generation == handle.generation
-                 ? &locations.at(handles.at(handle.index).index)
-                 : nullptr;
+        return generation == handle.generation ?
+                   &locations.at(handles.at(handle.index).index) :
+                   nullptr;
     }
 
     /**
@@ -161,9 +162,9 @@ public:
     [[nodiscard]] bool exists(const entity entt) const noexcept
     {
         const auto handle = extract_handle(entt);
-        return handle.index <= handles.size()
-                 ? handle.generation == handles.at(handle.index).generation
-                 : false;
+        return handle.index <= handles.size() ?
+                   handle.generation == handles.at(handle.index).generation :
+                   false;
     }
 
     /**
@@ -190,9 +191,15 @@ public:
         }
     }
 
-    [[nodiscard]] int32_t size() const noexcept { return slots.size(); }
+    [[nodiscard]] int32_t size() const noexcept
+    {
+        return slots.size();
+    }
 
-    [[nodiscard]] int32_t capacity() const noexcept { return slots.capacity(); }
+    [[nodiscard]] int32_t capacity() const noexcept
+    {
+        return slots.capacity();
+    }
 
     /**
      * Create an entity id from an index and generation
@@ -253,4 +260,4 @@ private:
     std::vector<uint32_t> slots;
     int first_available;
 };
-} // namespace realm
+}  // namespace realm

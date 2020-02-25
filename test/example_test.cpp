@@ -10,7 +10,7 @@ struct runtime
 struct move_system
 {
     void update(pos& p, vel& v, const runtime& r) const
-    { 
+    {
         p.x += v.x * r.dt;
     }
 };

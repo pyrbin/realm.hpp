@@ -16,22 +16,30 @@ struct example_system
 
 struct example_system_const
 {
-    void update(const vel&, const pos&) const {}
+    void update(const vel&, const pos&) const
+    {
+    }
 };
 
 struct example_system_mutate
 {
-    void update(vel&, pos&) const {}
+    void update(vel&, pos&) const
+    {
+    }
 };
 
 struct example_system_name
 {
-    void update(name&) const {}
+    void update(name&) const
+    {
+    }
 };
 
 struct example_system_combined
 {
-    void update(vel&, name&, const pos&) const {}
+    void update(vel&, name&, const pos&) const
+    {
+    }
 };
 
 inline realm::world world{ 10 };

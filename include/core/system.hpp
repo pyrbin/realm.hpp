@@ -18,16 +18,14 @@ namespace realm {
 
 struct world;
 
-template<typename... Ts>
+template <typename... Ts>
 struct view;
 
-template<typename F>
-constexpr internal::enable_if_query_fn<F, void>
-query(world* world, F&& f);
+template <typename F>
+constexpr internal::enable_if_query_fn<F, void> query(world* world, F&& f);
 
-template<typename F>
-constexpr internal::enable_if_query_fn<F, void>
-query_seq(world* world, F&& f);
+template <typename F>
+constexpr internal::enable_if_query_fn<F, void> query_seq(world* world, F&& f);
 
 /**
  * @brief System meta
@@ -40,7 +38,7 @@ struct system_meta
     const size_t mut_mask{ 0 };
     const size_t read_mask{ 0 };
 
-    template<typename... Args>
+    template <typename... Args>
     static constexpr system_meta from_pack()
     {
         using components = internal::component_tuple<Args...>;
@@ -50,20 +48,20 @@ struct system_meta
         return { archetype::mask_from_tuple<components>(), mut, read };
     }
 
-    template<typename F, typename... Args>
+    template <typename F, typename... Args>
     static constexpr system_meta of(void (F::*f)(Args...) const)
     {
         return from_pack<Args...>();
     }
 
-    template<typename F, typename... Args>
+    template <typename F, typename... Args>
     static constexpr system_meta of(void (F::*f)(view<Args...>) const)
     {
         return from_pack<Args...>();
     }
 
 private:
-    template<typename T>
+    template <typename T>
     static constexpr void from_pack_helper(size_t& read, size_t& mut)
     {
         if constexpr (!internal::is_entity<T> &&
@@ -85,7 +83,8 @@ struct system_ref
     const system_meta meta{ 0, 0 };
     const std::string name{ "" };
 
-    system_ref() = default;;
+    system_ref() = default;
+    ;
     virtual ~system_ref() = default;
     virtual bool compare(size_t hash) const = 0;
     virtual bool mutates(size_t hash) const = 0;
@@ -95,7 +94,7 @@ struct system_ref
 
 protected:
     system_ref(const uint64_t id, system_meta meta, std::string name)
-      : id{ id }, meta{ meta }, name{ std::move(name) } {};
+        : id{ id }, meta{ meta }, name{ std::move(name) } {};
 };
 
 /**
@@ -105,7 +104,7 @@ protected:
  * execute the query logic.
  * @tparam T Underlying system class
  */
-template<typename T>
+template <typename T>
 struct system_proxy final : public system_ref
 {
 private:
@@ -113,7 +112,7 @@ private:
     const std::unique_ptr<T> _instance;
 
     /*! @brief Creates a lamdba object to system update function */
-    template<typename R = void, typename... Args>
+    template <typename R = void, typename... Args>
     static constexpr auto update_lambda(const system_proxy<T>* proxy,
                                         void (T::*f)(Args...) const)
     {
@@ -128,24 +127,24 @@ public:
      * @param t Underlying system to make a proxy to
      */
     explicit system_proxy(T& t)
-      : system_ref{ internal::identifier_hash_v<T>,
-                    system_meta::of(&T::update),
-                    typeid(T).name() }
-      , _instance{ std::unique_ptr<T>(std::move(t)) }
-    {}
+        : system_ref{ internal::identifier_hash_v<T>, system_meta::of(&T::update),
+                      typeid(T).name() }
+        , _instance{ std::unique_ptr<T>(std::move(t)) }
+    {
+    }
 
     /**
      * Construct a system proxy with arguments for the underlying system.
      * @tparam Args Argument types
      * @param args Arguments for underlying system
      */
-    template<typename... Args>
+    template <typename... Args>
     explicit system_proxy(Args&&... args)
-      : system_ref{ internal::identifier_hash_v<T>,
-                    system_meta::of(&T::update),
-                    typeid(T).name() }
-      , _instance{ std::make_unique<T>(std::forward<Args>(args)...) }
-    {}
+        : system_ref{ internal::identifier_hash_v<T>, system_meta::of(&T::update),
+                      typeid(T).name() }
+        , _instance{ std::make_unique<T>(std::forward<Args>(args)...) }
+    {
+    }
 
     bool compare(const size_t other) const override
     {
@@ -166,7 +165,7 @@ public:
      * Call the system query on a world in parallel
      * @param world
      */
-    [[ nodiscard ]] void invoke(world* world) const override
+    [[nodiscard]] void invoke(world* world) const override
     {
         query(world, update_lambda(this, &T::update));
     }
@@ -181,4 +180,4 @@ public:
     }
 };
 
-} // namespace realm
+}  // namespace realm

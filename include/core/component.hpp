@@ -20,7 +20,7 @@ struct memory_layout
 
     constexpr memory_layout() = default;
     constexpr memory_layout(const unsigned size, const unsigned align)
-      : size{ size }, align{ align }
+        : size{ size }, align{ align }
     {
         /**
          * TODO: add some necessary checks, eg. align has to be power of 2
@@ -33,7 +33,7 @@ struct memory_layout
      * @tparam T
      * @return
      */
-    template<typename T>
+    template <typename T>
     static constexpr memory_layout of()
     {
         return { sizeof(T), alignof(T) };
@@ -69,14 +69,14 @@ struct component_meta
     constexpr component_meta() = default;
 
     constexpr component_meta(const uint64_t hash, const uint64_t mask)
-      : hash{ hash }, mask{ mask } {};
+        : hash{ hash }, mask{ mask } {};
 
     /**
      * Create component meta of a type.
      * @tparam T
      * @return
      */
-    template<typename T>
+    template <typename T>
     static constexpr internal::enable_if_component<T, component_meta> of()
     {
         return component_meta{ internal::identifier_hash_v<internal::pure_t<T>>,
@@ -101,12 +101,11 @@ struct component
 
     constexpr component() = default;
 
-    constexpr component(component_meta meta,
-                        memory_layout layout,
-                        constructor_t* alloc,
+    constexpr component(component_meta meta, memory_layout layout, constructor_t* alloc,
                         constructor_t* destroy)
-      : meta{ meta }, layout{ layout }, alloc{ alloc }, destroy{ destroy }
-    {}
+        : meta{ meta }, layout{ layout }, alloc{ alloc }, destroy{ destroy }
+    {
+    }
 
     constexpr bool operator==(const component& other) const
     {
@@ -118,11 +117,10 @@ struct component
      * @tparam T
      * @return
      */
-    template<typename T>
+    template <typename T>
     static constexpr internal::enable_if_component<T, component> of()
     {
-        return { component_meta::of<T>(),
-                 memory_layout::of<T>(),
+        return { component_meta::of<T>(), memory_layout::of<T>(),
                  [](void* ptr) { new (ptr) T{}; },
                  [](void* ptr) { static_cast<T*>(ptr)->~T(); } };
     }
@@ -146,30 +144,35 @@ struct singleton_component
  * Currently used in world to store singleton components.
  * @tparam T
  */
-template<typename T>
+template <typename T>
 struct singleton_instance final : singleton_component
 {
     const std::unique_ptr<T> instance;
 
     explicit singleton_instance(T& t)
-      : singleton_component{ component::of<T>() }
-      , instance{ std::unique_ptr<T>(std::move(t)) }
-    {}
+        : singleton_component{ component::of<T>() }
+        , instance{ std::unique_ptr<T>(std::move(t)) }
+    {
+    }
 
-    template<typename... Args>
+    template <typename... Args>
     explicit singleton_instance(Args&&... args)
-      : singleton_component{ component::of<T>() }
-      , instance{ std::make_unique<T>(std::forward<Args>(args)...) }
-    {}
+        : singleton_component{ component::of<T>() }
+        , instance{ std::make_unique<T>(std::forward<Args>(args)...) }
+    {
+    }
 
     /**
      * Get the underlying component instance
      * @return Pointer to component instance
      */
-    T* get() { return static_cast<T*>(instance.get()); }
+    T* get()
+    {
+        return static_cast<T*>(instance.get());
+    }
 };
 
-} // namespace realm
+}  // namespace realm
 
 /**
  * @cond TURN_OFF_DOXYGEN
@@ -177,7 +180,7 @@ struct singleton_instance final : singleton_component
  */
 
 namespace std {
-template<>
+template <>
 struct hash<realm::component>
 {
     size_t operator()(const realm::component& c) const noexcept
@@ -185,4 +188,4 @@ struct hash<realm::component>
         return (hash<size_t>{}(c.meta.hash));
     }
 };
-} // namespace std
+}  // namespace std

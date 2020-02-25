@@ -20,12 +20,11 @@ namespace internal {
  * @param index element to remove
  * @param target vector to target
  */
-template<typename T>
-constexpr void
-swap_remove(unsigned index, T& target)
+template <typename T>
+constexpr void swap_remove(unsigned index, T& target)
 {
     std::swap(target[target.size() - 1], target[index]);
     target.resize(target.size() - 1);
 }
-} // namespace internal
-} // namespace realm
+}  // namespace internal
+}  // namespace realm

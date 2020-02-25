@@ -28,8 +28,7 @@ const int N = 1000000;
 
 inline realm::world world{ N };
 
-void
-BENCH_CASE_1M()
+void BENCH_CASE_1M()
 {
     std::cout << "[BENCH] Constructing " << N << " entities"
               << "\n";
@@ -43,8 +42,7 @@ BENCH_CASE_1M()
     std::cout << "[BENCH] Results: " << timer.elapsed() << " seconds\n";
 }
 
-void
-BENCH_CASE_UPDATE_SIMPLE()
+void BENCH_CASE_UPDATE_SIMPLE()
 {
     double min = 99999999;
 
@@ -55,14 +53,15 @@ BENCH_CASE_UPDATE_SIMPLE()
         timer timer;
         world.update_seq();
         const double elapsed = timer.elapsed();
-        if (elapsed < min) { min = elapsed; }
+        if (elapsed < min) {
+            min = elapsed;
+        }
     }
 
     std::cout << "[BENCH] Results: " << min << " seconds\n";
 }
 
-void
-BENCH_CASE_UPDATE_PAR()
+void BENCH_CASE_UPDATE_PAR()
 {
     double min = 99999999;
 
@@ -73,14 +72,15 @@ BENCH_CASE_UPDATE_PAR()
         timer timer;
         world.update();
         const double elapsed = timer.elapsed();
-        if (elapsed < min) { min = elapsed; }
+        if (elapsed < min) {
+            min = elapsed;
+        }
     }
 
     std::cout << "[BENCH] Results: " << min << " seconds\n";
 }
 
-int
-main()
+int main()
 {
     BENCH_CASE_1M();
     world.insert<movement_system>();
