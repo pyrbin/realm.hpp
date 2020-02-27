@@ -6,9 +6,8 @@
 #include <string>
 #include <utility>
 
-#include "../util/tuple_util.hpp"
-
-#include "archetype.hpp"
+#include <realm/util/tuple_util.hpp>
+#include <realm/core/archetype.hpp>
 
 namespace realm {
 
@@ -22,10 +21,12 @@ template <typename... Ts>
 struct view;
 
 template <typename F>
-constexpr internal::enable_if_query_fn<F, void> query(world* world, F&& f);
+constexpr internal::enable_if_query_fn<F, void>
+query(world* world, F&& f);
 
 template <typename F>
-constexpr internal::enable_if_query_fn<F, void> query_seq(world* world, F&& f);
+constexpr internal::enable_if_query_fn<F, void>
+query_seq(world* world, F&& f);
 
 /**
  * @brief System meta
@@ -64,8 +65,7 @@ private:
     template <typename T>
     static constexpr void from_pack_helper(size_t& read, size_t& mut)
     {
-        if constexpr (!internal::is_entity<T> &&
-                      std::is_const_v<std::remove_reference_t<T>>) {
+        if constexpr (!internal::is_entity<T> && std::is_const_v<std::remove_reference_t<T>>) {
             read |= component_meta::of<internal::pure_t<T>>().mask;
         } else if constexpr (!internal::is_entity<T>) {
             mut |= component_meta::of<internal::pure_t<T>>().mask;
@@ -94,7 +94,9 @@ struct system_ref
 
 protected:
     system_ref(const uint64_t id, system_meta meta, std::string name)
-        : id{ id }, meta{ meta }, name{ std::move(name) } {};
+        : id{ id }
+        , meta{ meta }
+        , name{ std::move(name) } {};
 };
 
 /**
@@ -114,7 +116,7 @@ private:
     /*! @brief Creates a lamdba object to system update function */
     template <typename R = void, typename... Args>
     static constexpr auto update_lambda(const system_proxy<T>* proxy,
-                                        void (T::*f)(Args...) const)
+        void (T::*f)(Args...) const)
     {
         return [proxy, f](Args... args) -> void {
             (proxy->_instance.get()->*f)(std::forward<Args>(args)...);
@@ -128,7 +130,7 @@ public:
      */
     explicit system_proxy(T& t)
         : system_ref{ internal::identifier_hash_v<T>, system_meta::of(&T::update),
-                      typeid(T).name() }
+            typeid(T).name() }
         , _instance{ std::unique_ptr<T>(std::move(t)) }
     {
     }
@@ -141,7 +143,7 @@ public:
     template <typename... Args>
     explicit system_proxy(Args&&... args)
         : system_ref{ internal::identifier_hash_v<T>, system_meta::of(&T::update),
-                      typeid(T).name() }
+            typeid(T).name() }
         , _instance{ std::make_unique<T>(std::forward<Args>(args)...) }
     {
     }
@@ -180,4 +182,4 @@ public:
     }
 };
 
-}  // namespace realm
+} // namespace realm

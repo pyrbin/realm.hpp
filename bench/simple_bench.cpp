@@ -1,4 +1,4 @@
-#include "../include/realm.hpp"
+#include <realm/realm.hpp>
 #include "util/components.hpp"
 #include "util/timer.hpp"
 
@@ -28,7 +28,8 @@ const int N = 1000000;
 
 inline realm::world world{ N };
 
-void BENCH_CASE_1M()
+void
+BENCH_CASE_1M()
 {
     std::cout << "[BENCH] Constructing " << N << " entities"
               << "\n";
@@ -42,7 +43,8 @@ void BENCH_CASE_1M()
     std::cout << "[BENCH] Results: " << timer.elapsed() << " seconds\n";
 }
 
-void BENCH_CASE_UPDATE_SIMPLE()
+void
+BENCH_CASE_UPDATE_SIMPLE()
 {
     double min = 99999999;
 
@@ -61,7 +63,8 @@ void BENCH_CASE_UPDATE_SIMPLE()
     std::cout << "[BENCH] Results: " << min << " seconds\n";
 }
 
-void BENCH_CASE_UPDATE_PAR()
+void
+BENCH_CASE_UPDATE_PAR()
 {
     double min = 99999999;
 
@@ -80,7 +83,8 @@ void BENCH_CASE_UPDATE_PAR()
     std::cout << "[BENCH] Results: " << min << " seconds\n";
 }
 
-int main()
+int
+main()
 {
     BENCH_CASE_1M();
     world.insert<movement_system>();

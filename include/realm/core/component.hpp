@@ -5,7 +5,7 @@
 #include <iostream>
 #include <vector>
 
-#include "../util/identifier.hpp"
+#include <realm/util/identifier.hpp>
 
 namespace realm {
 /**
@@ -20,7 +20,8 @@ struct memory_layout
 
     constexpr memory_layout() = default;
     constexpr memory_layout(const unsigned size, const unsigned align)
-        : size{ size }, align{ align }
+        : size{ size }
+        , align{ align }
     {
         /**
          * TODO: add some necessary checks, eg. align has to be power of 2
@@ -69,7 +70,8 @@ struct component_meta
     constexpr component_meta() = default;
 
     constexpr component_meta(const uint64_t hash, const uint64_t mask)
-        : hash{ hash }, mask{ mask } {};
+        : hash{ hash }
+        , mask{ mask } {};
 
     /**
      * Create component meta of a type.
@@ -80,7 +82,7 @@ struct component_meta
     static constexpr internal::enable_if_component<T, component_meta> of()
     {
         return component_meta{ internal::identifier_hash_v<internal::pure_t<T>>,
-                               internal::identifier_mask_v<internal::pure_t<T>> };
+            internal::identifier_mask_v<internal::pure_t<T>> };
     }
 };
 
@@ -102,8 +104,11 @@ struct component
     constexpr component() = default;
 
     constexpr component(component_meta meta, memory_layout layout, constructor_t* alloc,
-                        constructor_t* destroy)
-        : meta{ meta }, layout{ layout }, alloc{ alloc }, destroy{ destroy }
+        constructor_t* destroy)
+        : meta{ meta }
+        , layout{ layout }
+        , alloc{ alloc }
+        , destroy{ destroy }
     {
     }
 
@@ -121,8 +126,8 @@ struct component
     static constexpr internal::enable_if_component<T, component> of()
     {
         return { component_meta::of<T>(), memory_layout::of<T>(),
-                 [](void* ptr) { new (ptr) T{}; },
-                 [](void* ptr) { static_cast<T*>(ptr)->~T(); } };
+            [](void* ptr) { new (ptr) T{}; },
+            [](void* ptr) { static_cast<T*>(ptr)->~T(); } };
     }
 };
 
@@ -133,7 +138,8 @@ struct component
 struct singleton_component
 {
     singleton_component() = default;
-    singleton_component(component&& comp) : component_info{ comp } {};
+    singleton_component(component&& comp)
+        : component_info{ comp } {};
     virtual ~singleton_component() = default;
     const component component_info;
 };
@@ -172,7 +178,7 @@ struct singleton_instance final : singleton_component
     }
 };
 
-}  // namespace realm
+} // namespace realm
 
 /**
  * @cond TURN_OFF_DOXYGEN
@@ -188,4 +194,4 @@ struct hash<realm::component>
         return (hash<size_t>{}(c.meta.hash));
     }
 };
-}  // namespace std
+} // namespace std

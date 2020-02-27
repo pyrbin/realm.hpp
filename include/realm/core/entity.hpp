@@ -4,7 +4,7 @@
 #include <functional>
 #include <vector>
 
-#include "../util/swap_remove.hpp"
+#include <realm/util/swap_remove.hpp>
 
 namespace realm {
 /**
@@ -51,7 +51,8 @@ public:
      * Create an entity pool with specified capacity
      * @param capacity
      */
-    explicit entity_manager(const uint32_t capacity) : first_available{ -1 }
+    explicit entity_manager(const uint32_t capacity)
+        : first_available{ -1 }
     {
         slots.reserve(capacity);
         locations.reserve(capacity);
@@ -77,8 +78,7 @@ public:
         entity_handle handle{};
         const auto index = first_available;
         if (index != -1) {
-            first_available =
-                handles.at(index).index == index ? -1 : handles.at(index).index;
+            first_available = handles.at(index).index == index ? -1 : handles.at(index).index;
 
             handles.at(index).index = uint32_t(locations.size());
             handle = { uint32_t(index), handles.at(index).generation };
@@ -108,8 +108,7 @@ public:
         const auto loc_index = handles.at(handle.index).index;
         handles.at(slots.at(slots.size() - 1)).index = loc_index;
         handles.at(handle.index).generation++;
-        handles.at(handle.index).index =
-            first_available != -1 ? first_available : handle.index;
+        handles.at(handle.index).index = first_available != -1 ? first_available : handle.index;
         first_available = handle.index;
         internal::swap_remove(loc_index, slots);
         internal::swap_remove(loc_index, locations);
@@ -124,9 +123,7 @@ public:
     {
         const auto handle = extract_handle(entt);
         auto [index, generation] = handles.at(handle.index);
-        return generation == handle.generation ?
-                   &locations.at(handles.at(handle.index).index) :
-                   nullptr;
+        return generation == handle.generation ? &locations.at(handles.at(handle.index).index) : nullptr;
     }
 
     /**
@@ -138,9 +135,7 @@ public:
     {
         const auto handle = extract_handle(entt);
         auto [index, generation] = handles.at(handle.index);
-        return generation == handle.generation ?
-                   &locations.at(handles.at(handle.index).index) :
-                   nullptr;
+        return generation == handle.generation ? &locations.at(handles.at(handle.index).index) : nullptr;
     }
 
     /**
@@ -162,9 +157,7 @@ public:
     [[nodiscard]] bool exists(const entity entt) const noexcept
     {
         const auto handle = extract_handle(entt);
-        return handle.index <= handles.size() ?
-                   handle.generation == handles.at(handle.index).generation :
-                   false;
+        return handle.index <= handles.size() ? handle.generation == handles.at(handle.index).generation : false;
     }
 
     /**
@@ -208,7 +201,7 @@ public:
      * @return An entity id
      */
     static constexpr entity merge_handle(const uint32_t index,
-                                         const uint32_t generation) noexcept
+        const uint32_t generation) noexcept
     {
         return entity{ generation } << 32 | entity{ index };
     }
@@ -260,4 +253,4 @@ private:
     std::vector<uint32_t> slots;
     int first_available;
 };
-}  // namespace realm
+} // namespace realm

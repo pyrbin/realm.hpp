@@ -1,9 +1,8 @@
 #pragma once
 
-#include "../util/type_traits.hpp"
-
-#include "view.hpp"
-#include "world.hpp"
+#include <realm/util/type_traits.hpp>
+#include <realm/core/world.hpp>
+#include <realm/core/view.hpp>
 
 #include <algorithm>
 #include <execution>
@@ -23,7 +22,8 @@ namespace internal {
 
 /** @brief Gets the mask of a query. Excludes singleton components */
 template <typename... Args>
-constexpr size_t query_mask(world* world)
+constexpr size_t
+query_mask(world* world)
 {
     auto at = archetype::from_tuple<typename view<Args...>::components>();
     size_t mask{ 0 };
@@ -39,9 +39,10 @@ constexpr size_t query_mask(world* world)
 
 /** @brief Per-chunk (view) query */
 template <typename F, typename... Args>
-constexpr internal::enable_if_query_fn<F, void> query_helper(world* world, F* object,
-                                                             void (F::*f)(view<Args...>)
-                                                                 const)
+constexpr internal::enable_if_query_fn<F, void>
+query_helper(world* world, F* object,
+    void (F::*f)(view<Args...>)
+        const)
 {
     auto mask = query_mask<Args...>(world);
     for (auto& root : world->chunks) {
@@ -56,8 +57,9 @@ constexpr internal::enable_if_query_fn<F, void> query_helper(world* world, F* ob
 
 /** @brief Per-entity query */
 template <typename F, typename... Args>
-constexpr internal::enable_if_query_fn<F, void> query_helper(world* world, F* object,
-                                                             void (F::*f)(Args...) const)
+constexpr internal::enable_if_query_fn<F, void>
+query_helper(world* world, F* object,
+    void (F::*f)(Args...) const)
 {
     auto mask = query_mask<Args...>(world);
     for (auto& root : world->chunks) {
@@ -82,34 +84,35 @@ query_helper(ExePo policy, world* world, F* object, void (F::*f)(view<Args...>) 
         if (!root->archetype.subset(mask))
             return;
         std::for_each(std::execution::par, root->chunks.begin(), root->chunks.end(),
-                      [&](auto& chunk) {
-                          (object->*f)(view<Args...>{ chunk.get(), world });
-                      });
+            [&](auto& chunk) {
+                (object->*f)(view<Args...>{ chunk.get(), world });
+            });
     });
 }
 
 /** @brief Parallel per-entity query */
 template <typename ExePo, typename F, typename... Args>
-constexpr internal::enable_if_query_fn<F, void> query_helper(ExePo policy, world* world,
-                                                             F* object,
-                                                             void (F::*f)(Args...) const)
+constexpr internal::enable_if_query_fn<F, void>
+query_helper(ExePo policy, world* world,
+    F* object,
+    void (F::*f)(Args...) const)
 {
     auto mask = query_mask<Args...>(world);
     std::for_each(policy, world->chunks.begin(), world->chunks.end(), [&](auto& root) {
         if (!root->archetype.subset(mask))
             return;
         std::for_each(std::execution::par, root->chunks.begin(), root->chunks.end(),
-                      [&](auto& chunk) {
-                          view<internal::pure_t<Args>...> view{ chunk.get(), world };
-                          for (uint32_t i{ 0 }; i < chunk->size(); i++) {
-                              (object->*f)(
-                                  view.template get<internal::pure_t<Args>>(i)...);
-                          }
-                      });
+            [&](auto& chunk) {
+                view<internal::pure_t<Args>...> view{ chunk.get(), world };
+                for (uint32_t i{ 0 }; i < chunk->size(); i++) {
+                    (object->*f)(
+                        view.template get<internal::pure_t<Args>>(i)...);
+                }
+            });
     });
 }
 
-}  // namespace internal
+} // namespace internal
 
 /**
  * @brief Query
@@ -120,7 +123,8 @@ constexpr internal::enable_if_query_fn<F, void> query_helper(ExePo policy, world
  * @return
  */
 template <typename F>
-constexpr internal::enable_if_query_fn<F, void> query(world* world, F&& f)
+constexpr internal::enable_if_query_fn<F, void>
+query(world* world, F&& f)
 {
     using pure_t = internal::pure_t<F>;
     internal::query_helper(std::execution::par_unseq, world, &f, &pure_t::operator());
@@ -138,10 +142,11 @@ constexpr internal::enable_if_query_fn<F, void> query(world* world, F&& f)
  * @return
  */
 template <typename F>
-constexpr internal::enable_if_query_fn<F, void> query_seq(world* world, F&& f)
+constexpr internal::enable_if_query_fn<F, void>
+query_seq(world* world, F&& f)
 {
     using pure_t = internal::pure_t<F>;
     internal::query_helper(world, &f, &pure_t::operator());
 }
 
-}  // namespace realm
+} // namespace realm

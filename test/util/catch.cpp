@@ -5,5 +5,5 @@
 #define CATCH_CONFIG_MAIN
 #include "catch.hpp"
 
-#include "../../include/realm.hpp"
+#include <realm/realm.hpp>
 #include "components.hpp"

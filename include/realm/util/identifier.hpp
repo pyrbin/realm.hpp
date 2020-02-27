@@ -1,7 +1,5 @@
 #pragma once
 
-#include <atomic>
-
 // TODO: implement a fallback id generation
 #if defined(__GNUC__)
 #define __VALID_PRETTY_FUNC__ __PRETTY_FUNCTION__
@@ -35,11 +33,11 @@ const hash_t fnv_prime = 1099511628211ull;
  * @param value
  * @return
  */
-constexpr hash_t hash_fnv1a(const char* const str,
-                            const hash_t value = fnv_basis) noexcept
+constexpr hash_t
+hash_fnv1a(const char* const str,
+    const hash_t value = fnv_basis) noexcept
 {
-    return (str[0] == '\0') ? value :
-                              hash_fnv1a(&str[1], (value ^ hash_t(str[0])) * fnv_prime);
+    return (str[0] == '\0') ? value : hash_fnv1a(&str[1], (value ^ hash_t(str[0])) * fnv_prime);
 }
 
 /**
@@ -61,7 +59,7 @@ public:
     using value_type = hash_t;
     static constexpr value_type hash{ get() };
     static constexpr value_type mask{ static_cast<uint64_t>(0x1L)
-                                      << static_cast<uint64_t>((hash) % 63L) };
+        << static_cast<uint64_t>((hash) % 63L) };
 };
 
 template <typename T>
@@ -70,5 +68,5 @@ inline constexpr hash_t identifier_hash_v = internal::identifier<T>::hash;
 template <typename T>
 inline constexpr hash_t identifier_mask_v = internal::identifier<T>::mask;
 
-}  // namespace internal
-}  // namespace realm
+} // namespace internal
+} // namespace realm

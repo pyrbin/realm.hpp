@@ -1,4 +1,8 @@
-cmake_minimum_required(VERSION 3.15)
+﻿cmake_minimum_required(VERSION 3.15)
+
+# ┌──────────────────────────────────────────────────────────────────┐
+# │  Projects Settings                                               │
+# └──────────────────────────────────────────────────────────────────┘
 
 project(
   realm
@@ -21,15 +25,13 @@ option(REALM_BENCH "Build benchmarks" ${IS_MASTER_PROJECT})
 # Library
 add_library(${PROJECT_NAME} INTERFACE)
 add_library(${PROJECT_NAME}::${PROJECT_NAME} ALIAS ${PROJECT_NAME})
+
 target_include_directories(
   ${PROJECT_NAME}
-  INTERFACE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/realm.hpp>)
+  INTERFACE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>)
 
 # Settings
 target_compile_features(${PROJECT_NAME} INTERFACE cxx_std_20)
-
-# Old way (CLion doesn't pickup  target_compile_features
-set(CMAKE_CXX_STANDARD 20)
 
 # Targets
 if(REALM_TESTS)

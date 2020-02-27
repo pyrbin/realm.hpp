@@ -2,13 +2,17 @@ TODO/Roadmap
 
 Version 0.1.5 (Small fixes):
 
+* more update hooks (pre_update, post_update etc)
+
 * optimize get_singleton (currently 1.3x iteration time)
+
+* optimize overall
 
 * better tests/benchs (and link library)
 
 * better/more comments 
 
-* error checking
+* error handling
 
 * update readme, fix typos better explainations etc.
 
@@ -18,17 +22,17 @@ Version 0.2:
 
 * add a snapshotting feature for syncing of entities in ex multiplayer games
 
-* system functions such as disable, enable, ejec�t 
+* system functions such as disable, enable
 
 * fix view to support realm::entity
 
 * re-add concepts instead of enable_if
 
-* add shared components (components that will never change)
-
 Further features:
 
 * when more c++20 features are default impl. modules, coroutines & ranges
+
+* add shared components (components that will never change)
 
 * allow undefined allocation capacity, eg. grow when needed
 

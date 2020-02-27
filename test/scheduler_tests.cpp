@@ -4,7 +4,8 @@ struct example_system
 {
     const float value;
 
-    example_system(float value) : value{ value } {};
+    example_system(float value)
+        : value{ value } {};
 
     void update(vel& v, const pos&) const
     {

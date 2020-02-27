@@ -8,7 +8,7 @@ set(
 function(add_cmake_bench target)
   string(CONCAT target_src ${target} ".cpp")
   add_executable(${target} ${target_src})
-  target_link_libraries(${target} realm::realm)
+  target_link_libraries(${target} realm)
 endfunction()
 
 foreach(b ${BENCHS})

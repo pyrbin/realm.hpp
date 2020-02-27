@@ -1,6 +1,6 @@
 #pragma once
 
-#include "system.hpp"
+#include <realm/core/system.hpp>
 
 #include <execution>
 #include <vector>
@@ -116,7 +116,7 @@ struct scheduler
                     // eg. if ref = Sys(A,B) & we have blocks A, B they have to be merged
                     curr->component_mask |= block.component_mask;
                     curr->systems.insert(curr->systems.end(), block.systems.begin(),
-                                         block.systems.end());
+                        block.systems.end());
                     blocks.erase(blocks.begin() + i--);
                 }
             }
@@ -141,7 +141,7 @@ struct scheduler
         // Execute each block in parallel.
         // Blocks are guaranteed to have no write/read dependencies
         std::for_each(std::execution::par_unseq, blocks.begin(), blocks.end(),
-                      [world](auto& block) { block.exec(world); });
+            [world](auto& block) { block.exec(world); });
     }
 
     /**
@@ -153,7 +153,7 @@ struct scheduler
         // Execute each block in parallel.
         // Blocks are guaranteed to have no write/read dependencies
         std::for_each(blocks.begin(), blocks.end(),
-                      [world](auto& block) { block.exec_seq(world); });
+            [world](auto& block) { block.exec_seq(world); });
     }
 
     [[nodiscard]] size_t size() const noexcept
@@ -162,4 +162,4 @@ struct scheduler
     }
 };
 
-}  // namespace realm
+} // namespace realm

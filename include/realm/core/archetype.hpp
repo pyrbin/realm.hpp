@@ -9,12 +9,12 @@
 #include <type_traits>
 #include <utility>
 
-#include "../extern/robin_hood.hpp"
-#include "../util/swap_remove.hpp"
-#include "../util/type_traits.hpp"
+#include <realm/extern/robin_hood.hpp>
+#include <realm/util/swap_remove.hpp>
+#include <realm/util/type_traits.hpp>
 
-#include "component.hpp"
-#include "entity.hpp"
+#include <realm/core/component.hpp>
+#include <realm/core/entity.hpp>
 
 namespace realm {
 struct world;
@@ -80,7 +80,7 @@ private:
     archetype(const components_t& components, const data& info)
         : _info{ info }
         , _component_count{ components.size() }
-        , components{ components }  // NOLINT(clang-diagnostic-reorder)
+        , components{ components } // NOLINT(clang-diagnostic-reorder)
     {
     }
 
@@ -124,7 +124,7 @@ public:
     static constexpr internal::enable_if_component_pack<size_t, T...> mask_of()
     {
         size_t mask{ 0 };
-        (  // Iterate each type and get component mask
+        ( // Iterate each type and get component mask
             [&](component&& component) mutable {
                 mask |= component.meta.mask;
             }(component::of<T>()),
@@ -326,7 +326,8 @@ public:
      * @param max_capacity
      */
     archetype_chunk(struct archetype archetype, uint32_t max_capacity)
-        : archetype{ std::move(archetype) }, _max_capacity(max_capacity)
+        : archetype{ std::move(archetype) }
+        , _max_capacity(max_capacity)
     {
     }
 
@@ -467,8 +468,7 @@ public:
      */
     [[nodiscard]] pointer get_pointer(const uint32_t index, const component& type) const
     {
-        return static_cast<void*>(static_cast<std::byte*>(_data) +
-                                  offset_to(index, type));
+        return static_cast<void*>(static_cast<std::byte*>(_data) + offset_to(index, type));
     }
 
     /**
@@ -478,12 +478,12 @@ public:
      * @param to Index in other chunk
      */
     void copy_to(const unsigned from, const archetype_chunk* other,
-                 const unsigned to) const
+        const unsigned to) const
     {
         for (const auto& component : archetype.components) {
             if (other->archetype.has(component)) {
                 memcpy(other->get_pointer(to, component), get_pointer(from, component),
-                       component.layout.size);
+                    component.layout.size);
             }
         }
     }
@@ -532,14 +532,15 @@ private:
     offsets_t _offsets;
 };
 
-inline archetype_chunk* archetype_chunk_root::find_free()
+inline archetype_chunk*
+archetype_chunk_root::find_free()
 {
     // If we have a cached chunk & its not full, use that
     if (cached_free && !cached_free->full())
         return cached_free;
 
     const auto it = std::find_if(chunks.begin(), chunks.end(),
-                                 [](auto& b) { return !b->full() && b->allocated(); });
+        [](auto& b) { return !b->full() && b->allocated(); });
 
     archetype_chunk* ptr{ nullptr };
 
@@ -556,12 +557,13 @@ inline archetype_chunk* archetype_chunk_root::find_free()
     return ptr;
 }
 
-inline archetype_chunk* archetype_chunk_root::create_chunk()
+inline archetype_chunk*
+archetype_chunk_root::create_chunk()
 {
     return chunks.emplace_back(std::make_unique<archetype_chunk>(archetype, per_chunk))
         .get();
 }
-}  // namespace realm
+} // namespace realm
 
 /**
  * @cond TURN_OFF_DOXYGEN
@@ -586,4 +588,4 @@ struct hash<realm::archetype_chunk_root>
         return (hash<realm::archetype>{}(at.archetype));
     }
 };
-}  // namespace std
+} // namespace std

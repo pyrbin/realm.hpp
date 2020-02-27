@@ -1,11 +1,11 @@
 #pragma once
 
-#include "archetype.hpp"
-#include "entity.hpp"
-#include "scheduler.hpp"
-#include "system.hpp"
-
 #include <vector>
+
+#include <realm/core/archetype.hpp>
+#include <realm/core/entity.hpp>
+#include <realm/core/scheduler.hpp>
+#include <realm/core/system.hpp>
 
 namespace realm {
 /**
@@ -93,7 +93,8 @@ public:
      * Allocate a world with specified capacity
      * @param capacity
      */
-    explicit world(const uint32_t capacity = default_max_entities) : entities{ capacity }
+    explicit world(const uint32_t capacity = default_max_entities)
+        : entities{ capacity }
     {
     }
 
@@ -400,4 +401,4 @@ public:
         return systems.size();
     }
 };
-}  // namespace realm
+} // namespace realm

@@ -3,8 +3,8 @@
 #include <tuple>
 #include <type_traits>
 
-#include "../core/entity.hpp"
-#include "type_traits.hpp"
+#include <realm/util/type_traits.hpp>
+#include <realm/core/entity.hpp>
 
 namespace realm {
 /**
@@ -47,7 +47,7 @@ struct remove_entity<std::tuple<T, Args...>>
 {
     using type = decltype(
         tuple_cat(std::declval<typename remove_entity<std::tuple<T>>::type>(),
-                  std::declval<typename remove_entity<std::tuple<Args...>>::type>()));
+            std::declval<typename remove_entity<std::tuple<Args...>>::type>()));
 };
 
 template <typename T>
@@ -55,5 +55,5 @@ using remove_entity_t = typename remove_entity<T>::type;
 
 template <typename... T>
 using component_tuple = remove_entity_t<std::tuple<pure_t<T>...>>;
-}  // namespace internal
-}  // namespace realm
+} // namespace internal
+} // namespace realm

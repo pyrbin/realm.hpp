@@ -4,11 +4,11 @@
 #include <type_traits>
 #include <utility>
 
-#include "../util/tuple_util.hpp"
-#include "../util/type_traits.hpp"
+#include <realm/util/tuple_util.hpp>
+#include <realm/util/type_traits.hpp>
 
-#include "archetype.hpp"
-#include "world.hpp"
+#include <realm/core/archetype.hpp>
+#include <realm/core/world.hpp>
 
 namespace realm {
 
@@ -31,7 +31,8 @@ public:
      * the components defined by the view.
      * @param chunk
      */
-    explicit constexpr view(archetype_chunk* chunk) : _chunk{ chunk }
+    explicit constexpr view(archetype_chunk* chunk)
+        : _chunk{ chunk }
     {
     }
 
@@ -44,7 +45,8 @@ public:
      * @param world_ptr
      */
     constexpr view(archetype_chunk* chunk, world* world_ptr)
-        : _chunk{ chunk }, _world_ptr{ world_ptr }
+        : _chunk{ chunk }
+        , _world_ptr{ world_ptr }
     {
     }
 
@@ -59,7 +61,8 @@ public:
         typedef std::forward_iterator_tag iterator_category;
 
         explicit constexpr iterator(view* chunk_view)
-            : _chunk_view{ chunk_view }, _index{ 0 }
+            : _chunk_view{ chunk_view }
+            , _index{ 0 }
         {
         }
 
@@ -132,7 +135,7 @@ public:
             // definitely something to look into for performance
             return get_singleton<T>();
         }
-    	
+
         return *_chunk->get<T>(index);
     }
 
@@ -152,4 +155,4 @@ private:
     archetype_chunk* _chunk{ nullptr };
     world* _world_ptr{ nullptr };
 };
-}  // namespace realm
+} // namespace realm
