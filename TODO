@@ -6,6 +6,8 @@ Version 0.1.5 (Small fixes):
 
 * install tbb with cmake
 
+* replace all size_t & u64 types related to component masking with a "mask" alias for u64 
+
 * optimize get_singleton (currently 1.3x iteration time)
 
 * optimize overall
