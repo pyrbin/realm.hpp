@@ -6,27 +6,24 @@
 #include <string>
 #include <utility>
 
-#include <realm/util/tuple_util.hpp>
 #include <realm/core/archetype.hpp>
+#include <realm/util/tuple_util.hpp>
 
 namespace realm {
-
 /**
  * Forward declarations
  */
 
 struct world;
 
-template <typename... Ts>
+template<typename... Ts>
 struct view;
 
-template <typename F>
-constexpr internal::enable_if_query_fn<F, void>
-query(world* world, F&& f);
+template<typename F>
+constexpr internal::enable_if_query_fn<F, void> query(world* world, F&& f);
 
-template <typename F>
-constexpr internal::enable_if_query_fn<F, void>
-query_seq(world* world, F&& f);
+template<typename F>
+constexpr internal::enable_if_query_fn<F, void> query_seq(world* world, F&& f);
 
 /**
  * @brief System meta
@@ -39,7 +36,7 @@ struct system_meta
     const size_t mut_mask{ 0 };
     const size_t read_mask{ 0 };
 
-    template <typename... Args>
+    template<typename... Args>
     static constexpr system_meta from_pack()
     {
         using components = internal::component_tuple<Args...>;
@@ -49,20 +46,20 @@ struct system_meta
         return { archetype::mask_from_tuple<components>(), mut, read };
     }
 
-    template <typename F, typename... Args>
+    template<typename F, typename... Args>
     static constexpr system_meta of(void (F::*f)(Args...) const)
     {
         return from_pack<Args...>();
     }
 
-    template <typename F, typename... Args>
+    template<typename F, typename... Args>
     static constexpr system_meta of(void (F::*f)(view<Args...>) const)
     {
         return from_pack<Args...>();
     }
 
 private:
-    template <typename T>
+    template<typename T>
     static constexpr void from_pack_helper(size_t& read, size_t& mut)
     {
         if constexpr (!internal::is_entity<T> && std::is_const_v<std::remove_reference_t<T>>) {
@@ -79,7 +76,7 @@ private:
  */
 struct system_ref
 {
-    const uint64_t id{ 0 };
+    const u64 id{ 0 };
     const system_meta meta{ 0, 0 };
     const std::string name{ "" };
 
@@ -93,7 +90,7 @@ struct system_ref
     virtual void invoke_seq(world*) const = 0;
 
 protected:
-    system_ref(const uint64_t id, system_meta meta, std::string name)
+    system_ref(const u64 id, system_meta meta, std::string name)
         : id{ id }
         , meta{ meta }
         , name{ std::move(name) } {};
@@ -106,20 +103,19 @@ protected:
  * execute the query logic.
  * @tparam T Underlying system class
  */
-template <typename T>
+template<typename T>
 struct system_proxy final : public system_ref
 {
 private:
     /*! @brief Underlying system pointer */
-    const std::unique_ptr<T> _instance;
+    const std::unique_ptr<T> instance_;
 
     /*! @brief Creates a lamdba object to system update function */
-    template <typename R = void, typename... Args>
-    static constexpr auto update_lambda(const system_proxy<T>* proxy,
-        void (T::*f)(Args...) const)
+    template<typename R = void, typename... Args>
+    static constexpr auto update_lambda(const system_proxy<T>* proxy, void (T::*f)(Args...) const)
     {
         return [proxy, f](Args... args) -> void {
-            (proxy->_instance.get()->*f)(std::forward<Args>(args)...);
+            (proxy->instance_.get()->*f)(std::forward<Args>(args)...);
         };
     }
 
@@ -131,27 +127,22 @@ public:
     explicit system_proxy(T& t)
         : system_ref{ internal::identifier_hash_v<T>, system_meta::of(&T::update),
             typeid(T).name() }
-        , _instance{ std::unique_ptr<T>(std::move(t)) }
-    {
-    }
+        , instance_{ std::unique_ptr<T>(std::move(t)) }
+    {}
 
     /**
      * Construct a system proxy with arguments for the underlying system.
      * @tparam Args Argument types
      * @param args Arguments for underlying system
      */
-    template <typename... Args>
+    template<typename... Args>
     explicit system_proxy(Args&&... args)
         : system_ref{ internal::identifier_hash_v<T>, system_meta::of(&T::update),
             typeid(T).name() }
-        , _instance{ std::make_unique<T>(std::forward<Args>(args)...) }
-    {
-    }
+        , instance_{ std::make_unique<T>(std::forward<Args>(args)...) }
+    {}
 
-    bool compare(const size_t other) const override
-    {
-        return archetype::subset(other, meta.mask);
-    }
+    bool compare(const size_t other) const override { return archetype::subset(other, meta.mask); }
 
     bool mutates(const size_t other) const override
     {
@@ -181,5 +172,4 @@ public:
         query_seq(world, update_lambda(this, &T::update));
     }
 };
-
 } // namespace realm
