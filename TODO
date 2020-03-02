@@ -4,6 +4,8 @@ Version 0.1.5 (Small fixes):
 
 * more update hooks (pre_update, post_update etc)
 
+* install tbb with cmake
+
 * optimize get_singleton (currently 1.3x iteration time)
 
 * optimize overall
