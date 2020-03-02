@@ -24,9 +24,9 @@ This is an archetype-based ECS taking inspiration from
 The main focus is a clean & minimal API with acceptable performance, 
 perfect aligned contiguous memory of components & easy parallelization of systems.
 
-##### Project is currently very WIP and should not be used in anything serious.
+#### Project is currently very WIP and should not be used in anything serious.
 
-##### Requires a C++20 compatible compiler.   
+#### Requires a C++20 compatible compiler.   
 
 ## Design
 TODO
