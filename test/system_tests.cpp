@@ -4,7 +4,8 @@ struct example_system
 {
     const float value;
 
-    example_system(float value) : value{ value } {};
+    example_system(float value)
+        : value{ value } {};
 
     void update(vel& v, const pos&, realm::entity) const
     {
@@ -40,7 +41,7 @@ TEST_CASE("system_insert")
     world.insert<example_view_system>();
     world.insert<example_system>(Arg1);
 
-    REQUIRE(world.system_count() == 2);
+    REQUIRE(world.count_() == 2);
 }
 
 TEST_CASE("system_update")

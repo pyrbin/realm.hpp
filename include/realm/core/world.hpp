@@ -11,13 +11,14 @@ namespace realm {
 /**
  * @brief World
  * The world is the core collection of the ECS.
- * Contains all the entities, components & systems & provides simple
+ * Contains all the entities_, components & systems_ & provides simple
  * functions to mutate and read the data.
  */
 struct world
 {
     static const size_t default_max_entities = 100000;
 
+    using ptr = world*;
     using chunks_t = std::vector<std::unique_ptr<archetype_chunk_root>>;
     using hash_map_t = robin_hood::unordered_flat_map<size_t, unsigned>;
     using singletons_t = std::vector<std::unique_ptr<singleton_component>>;
@@ -27,12 +28,12 @@ struct world
     hash_map_t chunks_map;
 
 private:
-    scheduler systems;
-    entity_manager entities;
+    scheduler systems_;
+    entity_manager entities_;
 
-    uint64_t singleton_mask{ 0 };
-    singletons_t singletons;
-    hash_map_t singletons_map;
+    u64 singleton_mask_{ 0 };
+    singletons_t singletons_;
+    hash_map_t singletons_map_;
 
     /**
      * Returns a free (has available space) chunk of a specified archetype.
@@ -40,9 +41,9 @@ private:
      * @param at Archetype to find
      * @return Pointer to chunk
      */
-    archetype_chunk* get_free_chunk(const archetype& at)
+    archetype_chunk::ptr get_free_chunk(const archetype& at)
     {
-        archetype_chunk_root* root{ nullptr };
+        archetype_chunk_root::ptr root{ nullptr };
         const auto it = chunks_map.find(at.mask());
 
         if (it == chunks_map.end()) {
@@ -68,7 +69,7 @@ private:
      */
     void modify_archetype(const entity entt, const archetype& new_at) noexcept
     {
-        auto old_location = entities.get(entt);
+        auto old_location = entities_.get(entt);
         auto chunk = get_free_chunk(new_at);
 
         if (chunk->archetype == old_location->chunk->archetype)
@@ -82,10 +83,10 @@ private:
 
         // to remove the last entity is swapped with the removed/modified entities index
         // to prevent fragmentation, thus its location has to be updated
-        entities.update(moved, { old_location->chunk_index, old_location->chunk });
+        entities_.update(moved, { old_location->chunk_index, old_location->chunk });
 
         // update location info of the modified entity
-        entities.update(entt, { idx, chunk });
+        entities_.update(entt, { idx, chunk });
     }
 
 public:
@@ -93,17 +94,16 @@ public:
      * Allocate a world with specified capacity
      * @param capacity
      */
-    explicit world(const uint32_t capacity = default_max_entities)
-        : entities{ capacity }
-    {
-    }
+    explicit world(const u32 capacity = default_max_entities)
+        : entities_{ capacity }
+    {}
 
     /**
      * Create a singleton component of a type
      * @tparam T The type of the singleton component
      * @return
      */
-    template <typename T>
+    template<typename T>
     internal::enable_if_component<T, void> singleton()
     {
         auto meta = component_meta::of<T>();
@@ -114,9 +114,9 @@ public:
         }
 
         // Update mask and insert singleton instance
-        singleton_mask |= meta.mask;
-        singletons.push_back(std::make_unique<singleton_instance<T>>(T{}));
-        singletons_map.emplace(meta.hash, singletons.size() - 1);
+        singleton_mask_ |= meta.mask;
+        singletons_.push_back(std::make_unique<singleton_instance<T>>(T{}));
+        singletons_map_.emplace(meta.hash, singletons_.size() - 1);
     }
 
     /**
@@ -124,12 +124,12 @@ public:
      * @tparam T The type of the singleton component
      * @return Reference to the component
      */
-    template <typename T>
+    template<typename T>
     internal::enable_if_component<T, T&> get_singleton()
     {
         auto meta = component_meta::of<internal::pure_t<T>>();
-        auto idx = singletons_map.at(meta.hash);
-        auto singleton = static_cast<singleton_instance<T>*>(singletons.at(idx).get());
+        auto idx = singletons_map_.at(meta.hash);
+        auto singleton = static_cast<singleton_instance<T>*>(singletons_.at(idx).get());
         return *singleton->get();
     }
 
@@ -140,9 +140,9 @@ public:
      */
     bool is_singleton(const component& component) const
     {
-        if (singleton_mask == 0)
+        if (singleton_mask_ == 0)
             return false;
-        return archetype::subset(singleton_mask, component.meta.mask);
+        return archetype::subset(singleton_mask_, component.meta.mask);
     }
 
     /**
@@ -150,13 +150,13 @@ public:
      * @tparam T The type of the singleton component
      * @return If component type is a singleton
      */
-    template <typename T>
+    template<typename T>
     internal::enable_if_component<T, bool> is_singleton()
     {
         auto meta = component_meta::of<internal::pure_t<T>>();
-        if (singleton_mask == 0)
+        if (singleton_mask_ == 0)
             return false;
-        return archetype::subset(singleton_mask, meta.mask);
+        return archetype::subset(singleton_mask_, meta.mask);
     }
 
     /**
@@ -167,7 +167,7 @@ public:
     entity create(const archetype& at)
     {
         auto chunk = get_free_chunk(at);
-        const auto entt = entities.create({ chunk->size(), chunk });
+        const auto entt = entities_.create({ chunk->size(), chunk });
         chunk->insert(entt);
         return entt;
     }
@@ -177,7 +177,7 @@ public:
      * @tparam T Component types
      * @return An entity id
      */
-    template <typename... T>
+    template<typename... T>
     internal::enable_if_component_pack<entity, T...> create()
     {
         return create(archetype::of<T...>());
@@ -189,8 +189,8 @@ public:
      * @param n Number of entities to create
      * @return A vector of created entity ids
      */
-    template <typename... T>
-    internal::enable_if_component_pack<std::vector<entity>, T...> batch(uint32_t n)
+    template<typename... T>
+    internal::enable_if_component_pack<std::vector<entity>, T...> batch(u32 n)
     {
         return batch(n, archetype::of<T...>());
     }
@@ -201,13 +201,13 @@ public:
      * @param n Number of entities to create
      * @return A vector of created entity ids
      */
-    std::vector<entity> batch(const uint32_t n, const archetype& at)
+    std::vector<entity> batch(const u32 n, const archetype& at)
     {
-        std::vector<entity> entities{};
-        for (uint32_t i{ 0 }; i < n; i++) {
-            entities.push_back(create(at));
+        std::vector<entity> entities_{};
+        for (u32 i{ 0 }; i < n; i++) {
+            entities_.push_back(create(at));
         }
-        return entities;
+        return entities_;
     }
 
     /**
@@ -215,10 +215,7 @@ public:
      * @param entt The entity id
      * @return
      */
-    bool exists(const entity entt) const
-    {
-        return entities.exists(entt);
-    }
+    bool exists(const entity entt) const { return entities_.exists(entt); }
 
     /**
      * Destroy an entity, deallocating its component and making the id invalid.
@@ -229,14 +226,14 @@ public:
         if (!exists(entt))
             return;
 
-        auto location = entities.get(entt);
+        auto location = entities_.get(entt);
 
         // copy and remove from old chunk to new
         const auto moved = location->chunk->remove(location->chunk_index);
 
         // update switched entity (as defragmentation is done on removal)
-        entities.update(moved, { location->chunk_index, location->chunk });
-        entities.remove(entt);
+        entities_.update(moved, { location->chunk_index, location->chunk });
+        entities_.remove(entt);
     }
 
     /**
@@ -245,10 +242,10 @@ public:
      * @param entt  Entity id
      * @return A component reference of type T&
      */
-    template <typename T>
+    template<typename T>
     internal::enable_if_component<T, T&> get(const entity entt)
     {
-        auto [index, chunk_ptr] = *entities.get(entt);
+        auto [index, chunk_ptr] = *entities_.get(entt);
         return static_cast<T&>(*chunk_ptr->get<internal::pure_t<T>>(index));
     }
 
@@ -259,12 +256,11 @@ public:
      * @param data
      * @return A component reference of type T&
      */
-    template <typename T>
+    template<typename T>
     internal::enable_if_component<T, T&> set(const entity entt, T&& data)
     {
-        auto [index, chunk_ptr] = *entities.get(entt);
-        return static_cast<T&>(
-            *chunk_ptr->set<internal::pure_t<T>>(index, std::forward<T>(data)));
+        auto [index, chunk_ptr] = *entities_.get(entt);
+        return static_cast<T&>(*chunk_ptr->set<internal::pure_t<T>>(index, std::forward<T>(data)));
     }
 
     /**
@@ -273,7 +269,7 @@ public:
      * @param entt Entity to add to
      * @return
      */
-    template <typename... T>
+    template<typename... T>
     internal::enable_if_component_pack<void, T...> add(const entity entt)
     {
         assert(!has<T...>(entt));
@@ -295,7 +291,7 @@ public:
      * @param entt Entity to remove from
      * @return
      */
-    template <typename... T>
+    template<typename... T>
     internal::enable_if_component_pack<void, T...> remove(const entity entt)
     {
         assert(has<T...>(entt));
@@ -323,7 +319,7 @@ public:
      * @param entt Entity to check
      * @return If the entity has the component
      */
-    template <typename... T>
+    template<typename... T>
     internal::enable_if_component_pack<bool, T...> has(const entity entt) const
     {
         auto at = get_archetype(entt);
@@ -337,7 +333,7 @@ public:
      */
     const archetype& get_archetype(const entity entt) const
     {
-        return entities.get(entt)->chunk->archetype;
+        return entities_.get(entt)->chunk->archetype;
     }
 
     /**
@@ -347,10 +343,10 @@ public:
      * @param args System constructor arguments
      * @return
      */
-    template <typename T, typename... Args>
+    template<typename T, typename... Args>
     constexpr internal::enable_if_system<T, void> insert(Args&&... args)
     {
-        systems.insert<T>(std::forward<Args>(args)...);
+        systems_.insert<T>(std::forward<Args>(args)...);
     }
 
     /**
@@ -359,10 +355,10 @@ public:
      * @param t System object
      * @return
      */
-    template <typename T>
+    template<typename T>
     constexpr internal::enable_if_system<T, void> insert(T&& t)
     {
-        systems.insert(std::forward<T>(t));
+        systems_.insert(std::forward<T>(t));
     }
 
     /**
@@ -370,10 +366,7 @@ public:
      * Calls update on every system that has been inserted in the world on matching
      * archetype chunks.
      */
-    void update()
-    {
-        systems.exec(this);
-    }
+    void update() { systems_.exec(this); }
 
     /**
      * @brief Update sequentially (no parallelization)
@@ -381,24 +374,12 @@ public:
      * archetype chunks. The call order is determined by the insert order of the
      * systems where the first inserted will be the first to be called.
      */
-    void update_seq()
-    {
-        systems.exec_seq(this);
-    }
+    void update_seq() { systems_.exec_seq(this); }
 
-    [[nodiscard]] int32_t size() const noexcept
-    {
-        return entities.size();
-    }
+    [[nodiscard]] int32_t size() const noexcept { return entities_.size(); }
 
-    [[nodiscard]] int32_t capacity() const noexcept
-    {
-        return entities.capacity();
-    }
+    [[nodiscard]] int32_t capacity() const noexcept { return entities_.capacity(); }
 
-    [[nodiscard]] int32_t system_count() const noexcept
-    {
-        return systems.size();
-    }
+    [[nodiscard]] int32_t count_() const noexcept { return systems_.size(); }
 };
 } // namespace realm

@@ -6,6 +6,7 @@
 #include <vector>
 
 #include <realm/util/identifier.hpp>
+#include <realm/util/type_traits.hpp>
 
 namespace realm {
 /**
@@ -34,7 +35,7 @@ struct memory_layout
      * @tparam T
      * @return
      */
-    template <typename T>
+    template<typename T>
     static constexpr memory_layout of()
     {
         return { sizeof(T), alignof(T) };
@@ -64,12 +65,12 @@ struct memory_layout
  */
 struct component_meta
 {
-    const uint64_t hash{ 0 };
-    const uint64_t mask{ 0 };
+    const u64 hash{ 0 };
+    const u64 mask{ 0 };
 
     constexpr component_meta() = default;
 
-    constexpr component_meta(const uint64_t hash, const uint64_t mask)
+    constexpr component_meta(const u64 hash, const u64 mask)
         : hash{ hash }
         , mask{ mask } {};
 
@@ -78,7 +79,7 @@ struct component_meta
      * @tparam T
      * @return
      */
-    template <typename T>
+    template<typename T>
     static constexpr internal::enable_if_component<T, component_meta> of()
     {
         return component_meta{ internal::identifier_hash_v<internal::pure_t<T>>,
@@ -103,30 +104,25 @@ struct component
 
     constexpr component() = default;
 
-    constexpr component(component_meta meta, memory_layout layout, constructor_t* alloc,
-        constructor_t* destroy)
+    constexpr component(
+        component_meta meta, memory_layout layout, constructor_t* alloc, constructor_t* destroy)
         : meta{ meta }
         , layout{ layout }
         , alloc{ alloc }
         , destroy{ destroy }
-    {
-    }
+    {}
 
-    constexpr bool operator==(const component& other) const
-    {
-        return other.meta.hash == meta.hash;
-    }
+    constexpr bool operator==(const component& other) const { return other.meta.hash == meta.hash; }
 
     /**
      * Create a component of a specified type
      * @tparam T
      * @return
      */
-    template <typename T>
+    template<typename T>
     static constexpr internal::enable_if_component<T, component> of()
     {
-        return { component_meta::of<T>(), memory_layout::of<T>(),
-            [](void* ptr) { new (ptr) T{}; },
+        return { component_meta::of<T>(), memory_layout::of<T>(), [](void* ptr) { new (ptr) T{}; },
             [](void* ptr) { static_cast<T*>(ptr)->~T(); } };
     }
 };
@@ -150,34 +146,29 @@ struct singleton_component
  * Currently used in world to store singleton components.
  * @tparam T
  */
-template <typename T>
+template<typename T>
 struct singleton_instance final : singleton_component
 {
-    const std::unique_ptr<T> instance;
-
     explicit singleton_instance(T& t)
         : singleton_component{ component::of<T>() }
-        , instance{ std::unique_ptr<T>(std::move(t)) }
-    {
-    }
+        , instance_{ std::unique_ptr<T>(std::move(t)) }
+    {}
 
-    template <typename... Args>
+    template<typename... Args>
     explicit singleton_instance(Args&&... args)
         : singleton_component{ component::of<T>() }
-        , instance{ std::make_unique<T>(std::forward<Args>(args)...) }
-    {
-    }
+        , instance_{ std::make_unique<T>(std::forward<Args>(args)...) }
+    {}
 
     /**
      * Get the underlying component instance
      * @return Pointer to component instance
      */
-    T* get()
-    {
-        return static_cast<T*>(instance.get());
-    }
-};
+    T* get() { return static_cast<T*>(instance_.get()); }
 
+private:
+    const std::unique_ptr<T> instance_;
+};
 } // namespace realm
 
 /**
@@ -186,7 +177,7 @@ struct singleton_instance final : singleton_component
  */
 
 namespace std {
-template <>
+template<>
 struct hash<realm::component>
 {
     size_t operator()(const realm::component& c) const noexcept

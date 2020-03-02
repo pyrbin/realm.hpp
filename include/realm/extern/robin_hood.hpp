@@ -41,8 +41,7 @@
 
 // see https://semver.org/
 #define ROBIN_HOOD_VERSION_MAJOR 3 // for incompatible API changes
-#define ROBIN_HOOD_VERSION_MINOR                                                         \
-    5 // for adding functionality in a backwards-compatible manner
+#define ROBIN_HOOD_VERSION_MINOR 5 // for adding functionality in a backwards-compatible manner
 #define ROBIN_HOOD_VERSION_PATCH 0 // for backwards-compatible bug fixes
 
 #include <algorithm>
@@ -57,8 +56,7 @@
 // #define ROBIN_HOOD_LOG_ENABLED
 #ifdef ROBIN_HOOD_LOG_ENABLED
 #include <iostream>
-#define ROBIN_HOOD_LOG(x)                                                                \
-    std::cout << __FUNCTION__ << "@" << __LINE__ << ": " << x << std::endl
+#define ROBIN_HOOD_LOG(x) std::cout << __FUNCTION__ << "@" << __LINE__ << ": " << x << std::endl
 #else
 #define ROBIN_HOOD_LOG(x)
 #endif
@@ -66,8 +64,7 @@
 // #define ROBIN_HOOD_TRACE_ENABLED
 #ifdef ROBIN_HOOD_TRACE_ENABLED
 #include <iostream>
-#define ROBIN_HOOD_TRACE(x)                                                              \
-    std::cout << __FUNCTION__ << "@" << __LINE__ << ": " << x << std::endl
+#define ROBIN_HOOD_TRACE(x) std::cout << __FUNCTION__ << "@" << __LINE__ << ": " << x << std::endl
 #else
 #define ROBIN_HOOD_TRACE(x)
 #endif
@@ -82,15 +79,12 @@ struct Counts
     uint64_t shiftUp{};
     uint64_t shiftDown{};
 };
-inline std::ostream&
-operator<<(std::ostream& os, Counts const& c)
+inline std::ostream& operator<<(std::ostream& os, Counts const& c)
 {
-    return os << c.shiftUp << " shiftUp" << std::endl
-              << c.shiftDown << " shiftDown" << std::endl;
+    return os << c.shiftUp << " shiftUp" << std::endl << c.shiftDown << " shiftDown" << std::endl;
 }
 
-static Counts&
-counts()
+static Counts& counts()
 {
     static Counts counts{};
     return counts;
@@ -119,12 +113,10 @@ counts()
 // endianess
 #ifdef _MSC_VER
 #define ROBIN_HOOD_PRIVATE_DEFINITION_LITTLE_ENDIAN() 1
-#define ROBIN_HOOD_PRIVATE_DEFINITION_BIG_ENDIAN() 0
+#define ROBIN_HOOD_PRIVATE_DEFINITION_BIG_ENDIAN()    0
 #else
-#define ROBIN_HOOD_PRIVATE_DEFINITION_LITTLE_ENDIAN()                                    \
-    (__BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__)
-#define ROBIN_HOOD_PRIVATE_DEFINITION_BIG_ENDIAN()                                       \
-    (__BYTE_ORDER__ == __ORDER_BIG_ENDIAN__)
+#define ROBIN_HOOD_PRIVATE_DEFINITION_LITTLE_ENDIAN() (__BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__)
+#define ROBIN_HOOD_PRIVATE_DEFINITION_BIG_ENDIAN()    (__BYTE_ORDER__ == __ORDER_BIG_ENDIAN__)
 #endif
 
 // inline
@@ -150,11 +142,11 @@ counts()
 #endif
 #include <intrin.h>
 #pragma intrinsic(ROBIN_HOOD(BITSCANFORWARD))
-#define ROBIN_HOOD_COUNT_TRAILING_ZEROES(x)                                              \
-    [](size_t mask) noexcept -> int {                                                    \
-        unsigned long index;                                                             \
-        return ROBIN_HOOD(BITSCANFORWARD)(&index, mask) ? static_cast<int>(index)        \
-                                                        : ROBIN_HOOD(BITNESS);           \
+#define ROBIN_HOOD_COUNT_TRAILING_ZEROES(x) \
+    [](size_t mask) noexcept -> int { \
+        unsigned long index; \
+        return ROBIN_HOOD(BITSCANFORWARD)(&index, mask) ? static_cast<int>(index) : \
+                                                          ROBIN_HOOD(BITNESS); \
     }(x)
 #else
 #if ROBIN_HOOD(BITNESS) == 32
@@ -164,10 +156,8 @@ counts()
 #define ROBIN_HOOD_PRIVATE_DEFINITION_CTZ() __builtin_ctzll
 #define ROBIN_HOOD_PRIVATE_DEFINITION_CLZ() __builtin_clzll
 #endif
-#define ROBIN_HOOD_COUNT_LEADING_ZEROES(x)                                               \
-    ((x) ? ROBIN_HOOD(CLZ)(x) : ROBIN_HOOD(BITNESS))
-#define ROBIN_HOOD_COUNT_TRAILING_ZEROES(x)                                              \
-    ((x) ? ROBIN_HOOD(CTZ)(x) : ROBIN_HOOD(BITNESS))
+#define ROBIN_HOOD_COUNT_LEADING_ZEROES(x)  ((x) ? ROBIN_HOOD(CLZ)(x) : ROBIN_HOOD(BITNESS))
+#define ROBIN_HOOD_COUNT_TRAILING_ZEROES(x) ((x) ? ROBIN_HOOD(CTZ)(x) : ROBIN_HOOD(BITNESS))
 #endif
 
 // fallthrough
@@ -184,10 +174,10 @@ counts()
 
 // likely/unlikely
 #ifdef _MSC_VER
-#define ROBIN_HOOD_LIKELY(condition) condition
+#define ROBIN_HOOD_LIKELY(condition)   condition
 #define ROBIN_HOOD_UNLIKELY(condition) condition
 #else
-#define ROBIN_HOOD_LIKELY(condition) __builtin_expect(condition, 1)
+#define ROBIN_HOOD_LIKELY(condition)   __builtin_expect(condition, 1)
 #define ROBIN_HOOD_UNLIKELY(condition) __builtin_expect(condition, 0)
 #endif
 
@@ -196,13 +186,12 @@ counts()
 #if defined(__GNUC__) && __GNUC__ < 5
 #define ROBIN_HOOD_IS_TRIVIALLY_COPYABLE(...) __has_trivial_copy(__VA_ARGS__)
 #else
-#define ROBIN_HOOD_IS_TRIVIALLY_COPYABLE(...)                                            \
-    std::is_trivially_copyable<__VA_ARGS__>::value
+#define ROBIN_HOOD_IS_TRIVIALLY_COPYABLE(...) std::is_trivially_copyable<__VA_ARGS__>::value
 #endif
 
 // helpers for C++ versions, see
 // https://gcc.gnu.org/onlinedocs/cpp/Standard-Predefined-Macros.html
-#define ROBIN_HOOD_PRIVATE_DEFINITION_CXX() __cplusplus
+#define ROBIN_HOOD_PRIVATE_DEFINITION_CXX()   __cplusplus
 #define ROBIN_HOOD_PRIVATE_DEFINITION_CXX98() 199711L
 #define ROBIN_HOOD_PRIVATE_DEFINITION_CXX11() 201103L
 #define ROBIN_HOOD_PRIVATE_DEFINITION_CXX14() 201402L
@@ -222,9 +211,8 @@ namespace robin_hood {
 // c++11 compatibility layer
 namespace ROBIN_HOOD_STD {
 template<class T>
-struct alignment_of
-  : std::integral_constant<std::size_t,
-                           alignof(typename std::remove_all_extents<T>::type)>
+struct alignment_of :
+    std::integral_constant<std::size_t, alignof(typename std::remove_all_extents<T>::type)>
 {};
 
 template<class T, T... Ints>
@@ -244,28 +232,22 @@ struct IntSeqImpl
 {
     using TValue = T;
     static_assert(std::is_integral<TValue>::value, "not integral type");
-    static_assert(Begin >= 0 && Begin < End,
-                  "unexpected argument (Begin<0 || Begin<=End)");
+    static_assert(Begin >= 0 && Begin < End, "unexpected argument (Begin<0 || Begin<=End)");
 
     template<class, class>
     struct IntSeqCombiner;
 
     template<TValue... Inds0, TValue... Inds1>
-    struct IntSeqCombiner<integer_sequence<TValue, Inds0...>,
-                          integer_sequence<TValue, Inds1...>>
+    struct IntSeqCombiner<integer_sequence<TValue, Inds0...>, integer_sequence<TValue, Inds1...>>
     {
         using TResult = integer_sequence<TValue, Inds0..., Inds1...>;
     };
 
-    using TResult = typename IntSeqCombiner<
-      typename IntSeqImpl<TValue,
-                          Begin,
-                          Begin + (End - Begin) / 2,
-                          (End - Begin) / 2 == 1>::TResult,
-      typename IntSeqImpl<TValue,
-                          Begin + (End - Begin) / 2,
-                          End,
-                          (End - Begin + 1) / 2 == 1>::TResult>::TResult;
+    using TResult =
+        typename IntSeqCombiner<typename IntSeqImpl<TValue, Begin, Begin + (End - Begin) / 2,
+                                    (End - Begin) / 2 == 1>::TResult,
+            typename IntSeqImpl<TValue, Begin + (End - Begin) / 2, End,
+                (End - Begin + 1) / 2 == 1>::TResult>::TResult;
 };
 
 template<class T, T Begin>
@@ -288,8 +270,7 @@ struct IntSeqImpl<T, Begin, End, true>
 } // namespace detail_
 
 template<class T, T N>
-using make_integer_sequence =
-  typename detail_::IntSeqImpl<T, 0, N, (N - 0) == 1>::TResult;
+using make_integer_sequence = typename detail_::IntSeqImpl<T, 0, N, (N - 0) == 1>::TResult;
 
 template<std::size_t N>
 using make_index_sequence = make_integer_sequence<std::size_t, N>;
@@ -310,8 +291,7 @@ namespace detail {
 using uint128_t = unsigned __int128;
 #pragma GCC diagnostic pop
 #endif
-inline uint64_t
-umul128(uint64_t a, uint64_t b, uint64_t* high) noexcept
+inline uint64_t umul128(uint64_t a, uint64_t b, uint64_t* high) noexcept
 {
     auto result = static_cast<uint128_t>(a) * static_cast<uint128_t>(b);
     *high = static_cast<uint64_t>(result >> 64U);
@@ -324,8 +304,7 @@ umul128(uint64_t a, uint64_t b, uint64_t* high) noexcept
 #ifndef _M_ARM64
 #pragma intrinsic(_umul128)
 #endif
-inline uint64_t
-umul128(uint64_t a, uint64_t b, uint64_t* high) noexcept
+inline uint64_t umul128(uint64_t a, uint64_t b, uint64_t* high) noexcept
 {
 #ifdef _M_ARM64
     *high = __umulh(a, b);
@@ -342,15 +321,13 @@ umul128(uint64_t a, uint64_t b, uint64_t* high) noexcept
 // 'uint64_t*' {aka 'long unsigned int*'} increases required alignment of target type".
 // Use with care!
 template<typename T>
-inline T
-reinterpret_cast_no_cast_align_warning(void* ptr) noexcept
+inline T reinterpret_cast_no_cast_align_warning(void* ptr) noexcept
 {
     return reinterpret_cast<T>(ptr);
 }
 
 template<typename T>
-inline T
-reinterpret_cast_no_cast_align_warning(void const* ptr) noexcept
+inline T reinterpret_cast_no_cast_align_warning(void const* ptr) noexcept
 {
     return reinterpret_cast<T>(ptr);
 }
@@ -373,16 +350,16 @@ void doThrow(Args&&... ROBIN_HOOD_UNUSED(args) /*unused*/)
 #endif
 
 template<typename E, typename T, typename... Args>
-T*
-assertNotNull(T* t, Args&&... args)
+T* assertNotNull(T* t, Args&&... args)
 {
-    if (ROBIN_HOOD_UNLIKELY(nullptr == t)) { doThrow<E>(std::forward<Args>(args)...); }
+    if (ROBIN_HOOD_UNLIKELY(nullptr == t)) {
+        doThrow<E>(std::forward<Args>(args)...);
+    }
     return t;
 }
 
 template<typename T>
-inline T
-unaligned_load(void const* ptr) noexcept
+inline T unaligned_load(void const* ptr) noexcept
 {
     // using memcpy so we don't get into unaligned load problems.
     // compiler should optimize this very well anyways.
@@ -402,11 +379,13 @@ public:
 
     // does not copy anything, just creates a new allocator.
     BulkPoolAllocator(const BulkPoolAllocator& ROBIN_HOOD_UNUSED(o) /*unused*/) noexcept
-      : mHead(nullptr), mListForFree(nullptr)
+        : mHead(nullptr)
+        , mListForFree(nullptr)
     {}
 
     BulkPoolAllocator(BulkPoolAllocator&& o) noexcept
-      : mHead(o.mHead), mListForFree(o.mListForFree)
+        : mHead(o.mHead)
+        , mListForFree(o.mListForFree)
     {
         o.mListForFree = nullptr;
         o.mHead = nullptr;
@@ -449,7 +428,9 @@ public:
     T* allocate()
     {
         T* tmp = mHead;
-        if (!tmp) { tmp = performAllocation(); }
+        if (!tmp) {
+            tmp = performAllocation();
+        }
 
         mHead = *reinterpret_cast_no_cast_align_warning<T**>(tmp);
         return tmp;
@@ -490,7 +471,7 @@ public:
 private:
     // iterates the list of allocated memory to calculate how many to alloc next.
     // Recalculating this each time saves us a size_t member.
-    // This ignores the fact that memory blocks might have been added manually with
+    // This ignores the fact that memory blocks_ might have been added manually with
     // addOrFree. In practice, this should not matter much.
     ROBIN_HOOD(NODISCARD) size_t calcNumElementsToAlloc() const noexcept
     {
@@ -519,20 +500,20 @@ private:
         mListForFree = data;
 
         // create linked list for newly allocated data
-        auto const headT = reinterpret_cast_no_cast_align_warning<T*>(
-          reinterpret_cast<char*>(ptr) + ALIGNMENT);
+        auto const headT =
+            reinterpret_cast_no_cast_align_warning<T*>(reinterpret_cast<char*>(ptr) + ALIGNMENT);
 
         auto const head = reinterpret_cast<char*>(headT);
 
         // Visual Studio compiler automatically unrolls this loop, which is pretty cool
         for (size_t i = 0; i < numElements; ++i) {
             *reinterpret_cast_no_cast_align_warning<char**>(head + i * ALIGNED_SIZE) =
-              head + (i + 1) * ALIGNED_SIZE;
+                head + (i + 1) * ALIGNED_SIZE;
         }
 
         // last one points to 0
-        *reinterpret_cast_no_cast_align_warning<T**>(head + (numElements - 1) *
-                                                              ALIGNED_SIZE) = mHead;
+        *reinterpret_cast_no_cast_align_warning<T**>(head + (numElements - 1) * ALIGNED_SIZE) =
+            mHead;
         mHead = headT;
     }
 
@@ -553,12 +534,12 @@ private:
     // enforce byte alignment of the T's
 #if ROBIN_HOOD(CXX) >= ROBIN_HOOD(CXX14)
     static constexpr size_t ALIGNMENT =
-      (std::max)(std::alignment_of<T>::value, std::alignment_of<T*>::value);
+        (std::max)(std::alignment_of<T>::value, std::alignment_of<T*>::value);
 #else
     static const size_t ALIGNMENT =
-      (ROBIN_HOOD_STD::alignment_of<T>::value > ROBIN_HOOD_STD::alignment_of<T*>::value)
-        ? ROBIN_HOOD_STD::alignment_of<T>::value
-        : +ROBIN_HOOD_STD::alignment_of<T*>::value; // the + is for walkarround
+        (ROBIN_HOOD_STD::alignment_of<T>::value > ROBIN_HOOD_STD::alignment_of<T*>::value) ?
+        ROBIN_HOOD_STD::alignment_of<T>::value :
+        +ROBIN_HOOD_STD::alignment_of<T*>::value; // the + is for walkarround
 #endif
 
     static constexpr size_t ALIGNED_SIZE = ((sizeof(T) - 1) / ALIGNMENT + 1) * ALIGNMENT;
@@ -581,25 +562,18 @@ template<typename T, size_t MinSize, size_t MaxSize>
 struct NodeAllocator<T, MinSize, MaxSize, true>
 {
     // we are not using the data, so just free it.
-    void addOrFree(void* ptr, size_t ROBIN_HOOD_UNUSED(numBytes) /*unused*/) noexcept
-    {
-        free(ptr);
-    }
+    void addOrFree(void* ptr, size_t ROBIN_HOOD_UNUSED(numBytes) /*unused*/) noexcept { free(ptr); }
 };
 
 template<typename T, size_t MinSize, size_t MaxSize>
-struct NodeAllocator<T, MinSize, MaxSize, false>
-  : public BulkPoolAllocator<T, MinSize, MaxSize>
+struct NodeAllocator<T, MinSize, MaxSize, false> : public BulkPoolAllocator<T, MinSize, MaxSize>
 {};
 
 // dummy hash, unsed as mixer when robin_hood::hash is already used
 template<typename T>
 struct identity_hash
 {
-    constexpr size_t operator()(T const& obj) const noexcept
-    {
-        return static_cast<size_t>(obj);
-    }
+    constexpr size_t operator()(T const& obj) const noexcept { return static_cast<size_t>(obj); }
 };
 
 // c++14 doesn't have is_nothrow_swappable, and clang++ 6.0.1 doesn't like it either, so
@@ -626,104 +600,92 @@ struct pair
     using first_type = T1;
     using second_type = T2;
 
-    template<
-      typename U1 = T1,
-      typename U2 = T2,
-      typename = typename std::enable_if<std::is_default_constructible<U1>::value &&
-                                         std::is_default_constructible<U2>::value>::type>
-    constexpr pair() noexcept(noexcept(U1()) && noexcept(U2())) : first(), second()
+    template<typename U1 = T1, typename U2 = T2,
+        typename = typename std::enable_if<std::is_default_constructible<U1>::value &&
+            std::is_default_constructible<U2>::value>::type>
+    constexpr pair() noexcept(noexcept(U1()) && noexcept(U2()))
+        : first()
+        , second()
     {}
 
     // pair constructors are explicit so we don't accidentally call this ctor when we
     // don't have to.
     explicit constexpr pair(std::pair<T1, T2> const& o) noexcept(
-      noexcept(T1(std::declval<T1 const&>())) && noexcept(T2(std::declval<T2 const&>())))
-      : first(o.first), second(o.second)
+        noexcept(T1(std::declval<T1 const&>())) && noexcept(T2(std::declval<T2 const&>())))
+        : first(o.first)
+        , second(o.second)
     {}
 
     // pair constructors are explicit so we don't accidentally call this ctor when we
     // don't have to.
-    explicit constexpr pair(std::pair<T1, T2>&& o) noexcept(noexcept(T1(
-      std::move(std::declval<T1&&>()))) && noexcept(T2(std::move(std::declval<T2&&>()))))
-      : first(std::move(o.first)), second(std::move(o.second))
+    explicit constexpr pair(std::pair<T1, T2>&& o) noexcept(
+        noexcept(T1(std::move(std::declval<T1&&>()))) &&
+        noexcept(T2(std::move(std::declval<T2&&>()))))
+        : first(std::move(o.first))
+        , second(std::move(o.second))
     {}
 
-    constexpr pair(T1&& a, T2&& b) noexcept(noexcept(T1(
-      std::move(std::declval<T1&&>()))) && noexcept(T2(std::move(std::declval<T2&&>()))))
-      : first(std::move(a)), second(std::move(b))
+    constexpr pair(T1&& a, T2&& b) noexcept(noexcept(T1(std::move(std::declval<T1&&>()))) &&
+        noexcept(T2(std::move(std::declval<T2&&>()))))
+        : first(std::move(a))
+        , second(std::move(b))
     {}
 
     template<typename U1, typename U2>
-    constexpr pair(U1&& a, U2&& b) noexcept(noexcept(T1(std::forward<U1>(
-      std::declval<U1&&>()))) && noexcept(T2(std::forward<U2>(std::declval<U2&&>()))))
-      : first(std::forward<U1>(a)), second(std::forward<U2>(b))
+    constexpr pair(U1&& a, U2&& b) noexcept(noexcept(T1(std::forward<U1>(std::declval<U1&&>()))) &&
+        noexcept(T2(std::forward<U2>(std::declval<U2&&>()))))
+        : first(std::forward<U1>(a))
+        , second(std::forward<U2>(b))
     {}
 
     template<typename... U1, typename... U2>
-    constexpr pair(
-      std::piecewise_construct_t /*unused*/,
-      std::tuple<U1...> a,
-      std::tuple<U2...>
-        b) noexcept(noexcept(pair(std::declval<std::tuple<U1...>&>(),
-                                  std::declval<std::tuple<U2...>&>(),
-                                  ROBIN_HOOD_STD::index_sequence_for<U1...>(),
-                                  ROBIN_HOOD_STD::index_sequence_for<U2...>())))
-      : pair(a,
-             b,
-             ROBIN_HOOD_STD::index_sequence_for<U1...>(),
-             ROBIN_HOOD_STD::index_sequence_for<U2...>())
+    constexpr pair(std::piecewise_construct_t /*unused*/, std::tuple<U1...> a,
+        std::tuple<U2...> b) noexcept(noexcept(pair(std::declval<std::tuple<U1...>&>(),
+        std::declval<std::tuple<U2...>&>(), ROBIN_HOOD_STD::index_sequence_for<U1...>(),
+        ROBIN_HOOD_STD::index_sequence_for<U2...>())))
+        : pair(a, b, ROBIN_HOOD_STD::index_sequence_for<U1...>(),
+              ROBIN_HOOD_STD::index_sequence_for<U2...>())
     {}
 
     // constructor called from the std::piecewise_construct_t ctor
     template<typename... U1, size_t... I1, typename... U2, size_t... I2>
-    pair(
-      std::tuple<U1...>& a,
-      std::tuple<U2...>& b,
-      ROBIN_HOOD_STD::index_sequence<I1...> /*unused*/,
-      ROBIN_HOOD_STD::index_sequence<
-        I2...> /*unused*/) noexcept(noexcept(T1(std::
-                                                  forward<U1>(std::get<I1>(
-                                                    std::declval<std::tuple<
-                                                      U1...>&>()))...)) && noexcept(T2(std::
-                                                                                         forward<
-                                                                                           U2>(std::get<
-                                                                                               I2>(
-                                                                                           std::declval<
-                                                                                             std::tuple<
-                                                                                               U2...>&>()))...)))
-      : first(std::forward<U1>(std::get<I1>(a))...)
-      , second(std::forward<U2>(std::get<I2>(b))...)
+    pair(std::tuple<U1...>& a, std::tuple<U2...>& b,
+        ROBIN_HOOD_STD::index_sequence<I1...> /*unused*/,
+        ROBIN_HOOD_STD::index_sequence<
+            I2...> /*unused*/) noexcept(noexcept(T1(std::forward<U1>(std::
+                                                get<I1>(std::declval<std::tuple<U1...>&>()))...)) &&
+        noexcept(T2(std::forward<U2>(std::get<I2>(std::declval<std::tuple<U2...>&>()))...)))
+        : first(std::forward<U1>(std::get<I1>(a))...)
+        , second(std::forward<U2>(std::get<I2>(b))...)
     {
         // make visual studio compiler happy about warning about unused a & b.
         // Visual studio's pair implementation disables warning 4100.
-        (void) a;
-        (void) b;
+        (void)a;
+        (void)b;
     }
 
-    void swap(pair<T1, T2>& o) noexcept((detail::swappable::nothrow<T1>::value) &&
-                                        (detail::swappable::nothrow<T2>::value))
+    void swap(pair<T1, T2>& o) noexcept(
+        (detail::swappable::nothrow<T1>::value) && (detail::swappable::nothrow<T2>::value))
     {
         using std::swap;
         swap(first, o.first);
         swap(second, o.second);
     }
 
-    T1 first;  // NOLINT(misc-non-private-member-variables-in-classes)
+    T1 first; // NOLINT(misc-non-private-member-variables-in-classes)
     T2 second; // NOLINT(misc-non-private-member-variables-in-classes)
 };
 
 template<typename A, typename B>
-void
-swap(pair<A, B>& a, pair<A, B>& b) noexcept(
-  noexcept(std::declval<pair<A, B>&>().swap(std::declval<pair<A, B>&>())))
+void swap(pair<A, B>& a, pair<A, B>& b) noexcept(
+    noexcept(std::declval<pair<A, B>&>().swap(std::declval<pair<A, B>&>())))
 {
     a.swap(b);
 }
 
 // Hash an arbitrary amount of bytes. This is basically Murmur2 hash without caring about
 // big endianness. TODO(martinus) add a fallback for very large strings?
-static size_t
-hash_bytes(void const* ptr, size_t const len) noexcept
+static size_t hash_bytes(void const* ptr, size_t const len) noexcept
 {
     static constexpr uint64_t m = UINT64_C(0xc6a4a7935bd1e995);
     static constexpr uint64_t seed = UINT64_C(0xe17a1465);
@@ -746,30 +708,30 @@ hash_bytes(void const* ptr, size_t const len) noexcept
 
     auto const data8 = reinterpret_cast<uint8_t const*>(data64 + n_blocks);
     switch (len & 7U) {
-        case 7:
-            h ^= static_cast<uint64_t>(data8[6]) << 48U;
-            ROBIN_HOOD(FALLTHROUGH); // FALLTHROUGH
-        case 6:
-            h ^= static_cast<uint64_t>(data8[5]) << 40U;
-            ROBIN_HOOD(FALLTHROUGH); // FALLTHROUGH
-        case 5:
-            h ^= static_cast<uint64_t>(data8[4]) << 32U;
-            ROBIN_HOOD(FALLTHROUGH); // FALLTHROUGH
-        case 4:
-            h ^= static_cast<uint64_t>(data8[3]) << 24U;
-            ROBIN_HOOD(FALLTHROUGH); // FALLTHROUGH
-        case 3:
-            h ^= static_cast<uint64_t>(data8[2]) << 16U;
-            ROBIN_HOOD(FALLTHROUGH); // FALLTHROUGH
-        case 2:
-            h ^= static_cast<uint64_t>(data8[1]) << 8U;
-            ROBIN_HOOD(FALLTHROUGH); // FALLTHROUGH
-        case 1:
-            h ^= static_cast<uint64_t>(data8[0]);
-            h *= m;
-            ROBIN_HOOD(FALLTHROUGH); // FALLTHROUGH
-        default:
-            break;
+    case 7:
+        h ^= static_cast<uint64_t>(data8[6]) << 48U;
+        ROBIN_HOOD(FALLTHROUGH); // FALLTHROUGH
+    case 6:
+        h ^= static_cast<uint64_t>(data8[5]) << 40U;
+        ROBIN_HOOD(FALLTHROUGH); // FALLTHROUGH
+    case 5:
+        h ^= static_cast<uint64_t>(data8[4]) << 32U;
+        ROBIN_HOOD(FALLTHROUGH); // FALLTHROUGH
+    case 4:
+        h ^= static_cast<uint64_t>(data8[3]) << 24U;
+        ROBIN_HOOD(FALLTHROUGH); // FALLTHROUGH
+    case 3:
+        h ^= static_cast<uint64_t>(data8[2]) << 16U;
+        ROBIN_HOOD(FALLTHROUGH); // FALLTHROUGH
+    case 2:
+        h ^= static_cast<uint64_t>(data8[1]) << 8U;
+        ROBIN_HOOD(FALLTHROUGH); // FALLTHROUGH
+    case 1:
+        h ^= static_cast<uint64_t>(data8[0]);
+        h *= m;
+        ROBIN_HOOD(FALLTHROUGH); // FALLTHROUGH
+    default:
+        break;
     }
 
     h ^= h >> r;
@@ -778,8 +740,7 @@ hash_bytes(void const* ptr, size_t const len) noexcept
     return static_cast<size_t>(h);
 }
 
-inline size_t
-hash_int(uint64_t obj) noexcept
+inline size_t hash_int(uint64_t obj) noexcept
 {
 #if ROBIN_HOOD(HAS_UMUL128)
     // 167079903232 masksum, 120428523 ops best: 0xde5fb9d2630458e9
@@ -809,8 +770,8 @@ hash_int(uint64_t obj) noexcept
 template<typename T>
 struct hash : public std::hash<T>
 {
-    size_t operator()(T const& obj) const noexcept(
-      noexcept(std::declval<std::hash<T>>().operator()(std::declval<T const&>())))
+    size_t operator()(T const& obj) const
+        noexcept(noexcept(std::declval<std::hash<T>>().operator()(std::declval<T const&>())))
     {
         // call base hash
         auto result = std::hash<T>::operator()(obj);
@@ -831,20 +792,14 @@ struct hash<std::string>
 template<class T>
 struct hash<T*>
 {
-    size_t operator()(T* ptr) const noexcept
-    {
-        return hash_int(reinterpret_cast<size_t>(ptr));
-    }
+    size_t operator()(T* ptr) const noexcept { return hash_int(reinterpret_cast<size_t>(ptr)); }
 };
 
-#define ROBIN_HOOD_HASH_INT(T)                                                           \
-    template<>                                                                           \
-    struct hash<T>                                                                       \
-    {                                                                                    \
-        size_t operator()(T obj) const noexcept                                          \
-        {                                                                                \
-            return hash_int(static_cast<uint64_t>(obj));                                 \
-        }                                                                                \
+#define ROBIN_HOOD_HASH_INT(T) \
+    template<> \
+    struct hash<T> \
+    { \
+        size_t operator()(T obj) const noexcept { return hash_int(static_cast<uint64_t>(obj)); } \
     }
 
 #if defined(__GNUC__) && !defined(__clang__)
@@ -877,7 +832,8 @@ template<typename T>
 struct WrapHash : public T
 {
     WrapHash() = default;
-    explicit WrapHash(T const& o) noexcept(noexcept(T(std::declval<T const&>()))) : T(o)
+    explicit WrapHash(T const& o) noexcept(noexcept(T(std::declval<T const&>())))
+        : T(o)
     {}
 };
 
@@ -886,7 +842,7 @@ struct WrapKeyEqual : public T
 {
     WrapKeyEqual() = default;
     explicit WrapKeyEqual(T const& o) noexcept(noexcept(T(std::declval<T const&>())))
-      : T(o)
+        : T(o)
     {}
 };
 
@@ -919,24 +875,15 @@ struct WrapKeyEqual : public T
 // According to STL, order of templates has effect on throughput. That's why I've moved
 // the boolean to the front.
 // https://www.reddit.com/r/cpp/comments/ahp6iu/compile_time_binary_size_reductions_and_cs_future/eeguck4/
-template<bool IsFlat,
-         size_t MaxLoadFactor100,
-         typename Key,
-         typename T,
-         typename Hash,
-         typename KeyEqual>
-class Table
-  : public WrapHash<Hash>
-  , public WrapKeyEqual<KeyEqual>
-  , detail::NodeAllocator<
-      typename std::conditional<
-        std::is_void<T>::value,
-        Key,
-        robin_hood::pair<typename std::conditional<IsFlat, Key, Key const>::type,
-                         T>>::type,
-      4,
-      16384,
-      IsFlat>
+template<bool IsFlat, size_t MaxLoadFactor100, typename Key, typename T, typename Hash,
+    typename KeyEqual>
+class Table :
+    public WrapHash<Hash>,
+    public WrapKeyEqual<KeyEqual>,
+    detail::NodeAllocator<
+        typename std::conditional<std::is_void<T>::value, Key,
+            robin_hood::pair<typename std::conditional<IsFlat, Key, Key const>::type, T>>::type,
+        4, 16384, IsFlat>
 {
 public:
     static constexpr bool is_flat = IsFlat;
@@ -945,20 +892,16 @@ public:
 
     using key_type = Key;
     using mapped_type = T;
-    using value_type = typename std::conditional<
-      is_set,
-      Key,
-      robin_hood::pair<typename std::conditional<is_flat, Key, Key const>::type,
-                       T>>::type;
+    using value_type = typename std::conditional<is_set, Key,
+        robin_hood::pair<typename std::conditional<is_flat, Key, Key const>::type, T>>::type;
     using size_type = size_t;
     using hasher = Hash;
     using key_equal = KeyEqual;
-    using Self =
-      Table<IsFlat, MaxLoadFactor100, key_type, mapped_type, hasher, key_equal>;
+    using Self = Table<IsFlat, MaxLoadFactor100, key_type, mapped_type, hasher, key_equal>;
 
 private:
     static_assert(MaxLoadFactor100 > 10 && MaxLoadFactor100 < 100,
-                  "MaxLoadFactor100 needs to be >10 && < 100");
+        "MaxLoadFactor100 needs to be >10 && < 100");
 
     using WHash = WrapHash<Hash>;
     using WKeyEqual = WrapKeyEqual<KeyEqual>;
@@ -969,8 +912,7 @@ private:
     static constexpr size_t InitialNumElements = sizeof(uint64_t);
     static constexpr uint32_t InitialInfoNumBits = 5;
     static constexpr uint8_t InitialInfoInc = 1U << InitialInfoNumBits;
-    static constexpr uint8_t InitialInfoHashShift =
-      sizeof(size_t) * 8 - InitialInfoNumBits;
+    static constexpr uint8_t InitialInfoHashShift = sizeof(size_t) * 8 - InitialInfoNumBits;
     using DataPool = detail::NodeAllocator<value_type, 4, 16384, IsFlat>;
 
     // type needs to be wider than uint8_t.
@@ -992,13 +934,13 @@ private:
     public:
         template<typename... Args>
         explicit DataNode(M& ROBIN_HOOD_UNUSED(map) /*unused*/, Args&&... args) noexcept(
-          noexcept(value_type(std::forward<Args>(args)...)))
-          : mData(std::forward<Args>(args)...)
+            noexcept(value_type(std::forward<Args>(args)...)))
+            : mData(std::forward<Args>(args)...)
         {}
 
         DataNode(M& ROBIN_HOOD_UNUSED(map) /*unused*/, DataNode<M, true>&& n) noexcept(
-          std::is_nothrow_move_constructible<value_type>::value)
-          : mData(std::move(n.mData))
+            std::is_nothrow_move_constructible<value_type>::value)
+            : mData(std::move(n.mData))
         {}
 
         // doesn't do anything
@@ -1014,8 +956,7 @@ private:
 
         template<typename VT = value_type>
         ROBIN_HOOD(NODISCARD)
-        typename std::enable_if<is_map, typename VT::first_type&>::type
-          getFirst() noexcept
+        typename std::enable_if<is_map, typename VT::first_type&>::type getFirst() noexcept
         {
             return mData.first;
         }
@@ -1028,8 +969,8 @@ private:
 
         template<typename VT = value_type>
         ROBIN_HOOD(NODISCARD)
-        typename std::enable_if<is_map, typename VT::first_type const&>::type
-          getFirst() const noexcept
+        typename std::enable_if<is_map, typename VT::first_type const&>::type getFirst() const
+            noexcept
         {
             return mData.first;
         }
@@ -1055,7 +996,7 @@ private:
         }
 
         void swap(DataNode<M, true>& o) noexcept(
-          noexcept(std::declval<value_type>().swap(std::declval<value_type>())))
+            noexcept(std::declval<value_type>().swap(std::declval<value_type>())))
         {
             mData.swap(o.mData);
         }
@@ -1070,13 +1011,14 @@ private:
     {
     public:
         template<typename... Args>
-        explicit DataNode(M& map, Args&&... args) : mData(map.allocate())
+        explicit DataNode(M& map, Args&&... args)
+            : mData(map.allocate())
         {
             ::new (static_cast<void*>(mData)) value_type(std::forward<Args>(args)...);
         }
 
         DataNode(M& ROBIN_HOOD_UNUSED(map) /*unused*/, DataNode<M, false>&& n) noexcept
-          : mData(std::move(n.mData))
+            : mData(std::move(n.mData))
         {}
 
         void destroy(M& map) noexcept
@@ -1098,8 +1040,7 @@ private:
 
         template<typename VT = value_type>
         ROBIN_HOOD(NODISCARD)
-        typename std::enable_if<is_map, typename VT::first_type&>::type
-          getFirst() noexcept
+        typename std::enable_if<is_map, typename VT::first_type&>::type getFirst() noexcept
         {
             return mData->first;
         }
@@ -1112,8 +1053,8 @@ private:
 
         template<typename VT = value_type>
         ROBIN_HOOD(NODISCARD)
-        typename std::enable_if<is_map, typename VT::first_type const&>::type
-          getFirst() const noexcept
+        typename std::enable_if<is_map, typename VT::first_type const&>::type getFirst() const
+            noexcept
         {
             return mData->first;
         }
@@ -1167,7 +1108,7 @@ private:
     template<typename Q = mapped_type>
     ROBIN_HOOD(NODISCARD)
     typename std::enable_if<!std::is_void<Q>::value, key_type const&>::type
-      getFirstConst(value_type const& vt) const noexcept
+        getFirstConst(value_type const& vt) const noexcept
     {
         return vt.first;
     }
@@ -1185,8 +1126,7 @@ private:
         {
             auto src = reinterpret_cast<char const*>(source.mKeyVals);
             auto tgt = reinterpret_cast<char*>(target.mKeyVals);
-            auto const numElementsWithBuffer =
-              target.calcNumElementsWithBuffer(target.mMask + 1);
+            auto const numElementsWithBuffer = target.calcNumElementsWithBuffer(target.mMask + 1);
             std::copy(src, src + target.calcNumBytesTotal(numElementsWithBuffer), tgt);
         }
     };
@@ -1197,8 +1137,7 @@ private:
         void operator()(M const& s, M& t) const
         {
             auto const numElementsWithBuffer = t.calcNumElementsWithBuffer(t.mMask + 1);
-            std::copy(
-              s.mInfo, s.mInfo + t.calcNumBytesInfo(numElementsWithBuffer), t.mInfo);
+            std::copy(s.mInfo, s.mInfo + t.calcNumBytesInfo(numElementsWithBuffer), t.mInfo);
 
             for (size_t i = 0; i < numElementsWithBuffer; ++i) {
                 if (t.mInfo[i]) {
@@ -1271,10 +1210,8 @@ private:
     public:
         using difference_type = std::ptrdiff_t;
         using value_type = typename Self::value_type;
-        using reference =
-          typename std::conditional<IsConst, value_type const&, value_type&>::type;
-        using pointer =
-          typename std::conditional<IsConst, value_type const*, value_type*>::type;
+        using reference = typename std::conditional<IsConst, value_type const&, value_type&>::type;
+        using pointer = typename std::conditional<IsConst, value_type const*, value_type*>::type;
         using iterator_category = std::forward_iterator_tag;
 
         // default constructed iterator can be compared to itself, but WON'T return true
@@ -1286,26 +1223,28 @@ private:
 
         // Conversion constructor from iterator to const_iterator.
         template<bool OtherIsConst,
-                 typename = typename std::enable_if<IsConst && !OtherIsConst>::type>
+            typename = typename std::enable_if<IsConst && !OtherIsConst>::type>
         // NOLINTNEXTLINE(hicpp-explicit-conversions)
         Iter(Iter<OtherIsConst> const& other) noexcept
-          : mKeyVals(other.mKeyVals), mInfo(other.mInfo)
+            : mKeyVals(other.mKeyVals)
+            , mInfo(other.mInfo)
         {}
 
         Iter(NodePtr valPtr, uint8_t const* infoPtr) noexcept
-          : mKeyVals(valPtr), mInfo(infoPtr)
+            : mKeyVals(valPtr)
+            , mInfo(infoPtr)
         {}
 
-        Iter(NodePtr valPtr,
-             uint8_t const* infoPtr,
-             fast_forward_tag ROBIN_HOOD_UNUSED(tag) /*unused*/) noexcept
-          : mKeyVals(valPtr), mInfo(infoPtr)
+        Iter(NodePtr valPtr, uint8_t const* infoPtr,
+            fast_forward_tag ROBIN_HOOD_UNUSED(tag) /*unused*/) noexcept
+            : mKeyVals(valPtr)
+            , mInfo(infoPtr)
         {
             fastForward();
         }
 
         template<bool OtherIsConst,
-                 typename = typename std::enable_if<IsConst && !OtherIsConst>::type>
+            typename = typename std::enable_if<IsConst && !OtherIsConst>::type>
         Iter& operator=(Iter<OtherIsConst> const& other) noexcept
         {
             mKeyVals = other.mKeyVals;
@@ -1355,12 +1294,7 @@ private:
             } while (inc == static_cast<int>(sizeof(size_t)));
         }
 
-        friend class Table<IsFlat,
-                           MaxLoadFactor100,
-                           key_type,
-                           mapped_type,
-                           hasher,
-                           key_equal>;
+        friend class Table<IsFlat, MaxLoadFactor100, key_type, mapped_type, hasher, key_equal>;
         NodePtr mKeyVals{ nullptr };
         uint8_t const* mInfo{ nullptr };
     };
@@ -1376,10 +1310,9 @@ private:
         // for a user-specified hash that is *not* robin_hood::hash, apply
         // robin_hood::hash as an additional mixing step. This serves as a bad hash
         // prevention, if the given data is badly mixed.
-        using Mix = typename std::conditional<
-          std::is_same<::robin_hood::hash<key_type>, hasher>::value,
-          ::robin_hood::detail::identity_hash<size_t>,
-          ::robin_hood::hash<size_t>>::type;
+        using Mix =
+            typename std::conditional<std::is_same<::robin_hood::hash<key_type>, hasher>::value,
+                ::robin_hood::detail::identity_hash<size_t>, ::robin_hood::hash<size_t>>::type;
         *idx = Mix{}(WHash::operator()(key));
 
         *info = mInfoInc + static_cast<InfoType>(*idx >> mInfoHashShift);
@@ -1396,16 +1329,20 @@ private:
     void nextWhileLess(InfoType* info, size_t* idx) const noexcept
     {
         // unrolling this by hand did not bring any speedups.
-        while (*info < mInfo[*idx]) { next(info, idx); }
+        while (*info < mInfo[*idx]) {
+            next(info, idx);
+        }
     }
 
     // Shift everything up by one element. Tries to move stuff around.
     void shiftUp(size_t startIdx, size_t const insertion_idx) noexcept(
-      std::is_nothrow_move_assignable<Node>::value)
+        std::is_nothrow_move_assignable<Node>::value)
     {
         auto idx = startIdx;
         ::new (static_cast<void*>(mKeyVals + idx)) Node(std::move(mKeyVals[idx - 1]));
-        while (--idx != insertion_idx) { mKeyVals[idx] = std::move(mKeyVals[idx - 1]); }
+        while (--idx != insertion_idx) {
+            mKeyVals[idx] = std::move(mKeyVals[idx - 1]);
+        }
 
         idx = startIdx;
         while (idx != insertion_idx) {
@@ -1463,10 +1400,9 @@ private:
         } while (info <= mInfo[idx]);
 
         // nothing found!
-        return mMask == 0
-                 ? 0
-                 : static_cast<size_t>(std::distance(
-                     mKeyVals, reinterpret_cast_no_cast_align_warning<Node*>(mInfo)));
+        return mMask == 0 ? 0 :
+                            static_cast<size_t>(std::distance(
+                                mKeyVals, reinterpret_cast_no_cast_align_warning<Node*>(mInfo)));
     }
 
     void cloneData(const Table& o)
@@ -1502,7 +1438,9 @@ private:
         }
 
         // find an empty spot
-        while (0 != mInfo[idx]) { next(&info, &idx); }
+        while (0 != mInfo[idx]) {
+            next(&info, &idx);
+        }
 
         auto& l = mKeyVals[insertion_idx];
         if (idx == insertion_idx) {
@@ -1528,41 +1466,38 @@ public:
     // element. The penalty is payed at the first insert, and not before. Lookup of this
     // empty map works because everybody points to DummyInfoByte::b. parameter
     // bucket_count is dictated by the standard, but we can ignore it.
-    explicit Table(size_t ROBIN_HOOD_UNUSED(bucket_count) /*unused*/ = 0,
-                   const Hash& h = Hash{},
-                   const KeyEqual& equal =
-                     KeyEqual{}) noexcept(noexcept(Hash(h)) && noexcept(KeyEqual(equal)))
-      : WHash(h), WKeyEqual(equal)
+    explicit Table(size_t ROBIN_HOOD_UNUSED(bucket_count) /*unused*/ = 0, const Hash& h = Hash{},
+        const KeyEqual& equal = KeyEqual{}) noexcept(noexcept(Hash(h)) && noexcept(KeyEqual(equal)))
+        : WHash(h)
+        , WKeyEqual(equal)
     {
         ROBIN_HOOD_TRACE(this);
     }
 
     template<typename Iter>
-    Table(Iter first,
-          Iter last,
-          size_t ROBIN_HOOD_UNUSED(bucket_count) /*unused*/ = 0,
-          const Hash& h = Hash{},
-          const KeyEqual& equal = KeyEqual{})
-      : WHash(h), WKeyEqual(equal)
+    Table(Iter first, Iter last, size_t ROBIN_HOOD_UNUSED(bucket_count) /*unused*/ = 0,
+        const Hash& h = Hash{}, const KeyEqual& equal = KeyEqual{})
+        : WHash(h)
+        , WKeyEqual(equal)
     {
         ROBIN_HOOD_TRACE(this);
         insert(first, last);
     }
 
     Table(std::initializer_list<value_type> initlist,
-          size_t ROBIN_HOOD_UNUSED(bucket_count) /*unused*/ = 0,
-          const Hash& h = Hash{},
-          const KeyEqual& equal = KeyEqual{})
-      : WHash(h), WKeyEqual(equal)
+        size_t ROBIN_HOOD_UNUSED(bucket_count) /*unused*/ = 0, const Hash& h = Hash{},
+        const KeyEqual& equal = KeyEqual{})
+        : WHash(h)
+        , WKeyEqual(equal)
     {
         ROBIN_HOOD_TRACE(this);
         insert(initlist.begin(), initlist.end());
     }
 
     Table(Table&& o) noexcept
-      : WHash(std::move(static_cast<WHash&>(o)))
-      , WKeyEqual(std::move(static_cast<WKeyEqual&>(o)))
-      , DataPool(std::move(static_cast<DataPool&>(o)))
+        : WHash(std::move(static_cast<WHash&>(o)))
+        , WKeyEqual(std::move(static_cast<WKeyEqual&>(o)))
+        , DataPool(std::move(static_cast<DataPool&>(o)))
     {
         ROBIN_HOOD_TRACE(this);
         if (o.mMask) {
@@ -1606,9 +1541,9 @@ public:
     }
 
     Table(const Table& o)
-      : WHash(static_cast<const WHash&>(o))
-      , WKeyEqual(static_cast<const WKeyEqual&>(o))
-      , DataPool(static_cast<const DataPool&>(o))
+        : WHash(static_cast<const WHash&>(o))
+        , WKeyEqual(static_cast<const WKeyEqual&>(o))
+        , DataPool(static_cast<const DataPool&>(o))
     {
         ROBIN_HOOD_TRACE(this);
         if (!o.empty()) {
@@ -1617,7 +1552,7 @@ public:
 
             auto const numElementsWithBuffer = calcNumElementsWithBuffer(o.mMask + 1);
             mKeyVals = static_cast<Node*>(detail::assertNotNull<std::bad_alloc>(
-              malloc(calcNumBytesTotal(numElementsWithBuffer))));
+                malloc(calcNumBytesTotal(numElementsWithBuffer))));
             // no need for calloc because clonData does memcpy
             mInfo = reinterpret_cast<uint8_t*>(mKeyVals + numElementsWithBuffer);
             mNumElements = o.mNumElements;
@@ -1658,8 +1593,7 @@ public:
         }
 
         // clean up old stuff
-        Destroyer<Self, IsFlat && std::is_trivially_destructible<Node>::value>{}.nodes(
-          *this);
+        Destroyer<Self, IsFlat && std::is_trivially_destructible<Node>::value>{}.nodes(*this);
 
         if (mMask != o.mMask) {
             // no luck: we don't have the same array size allocated, so we need to
@@ -1671,7 +1605,7 @@ public:
 
             auto const numElementsWithBuffer = calcNumElementsWithBuffer(o.mMask + 1);
             mKeyVals = static_cast<Node*>(detail::assertNotNull<std::bad_alloc>(
-              malloc(calcNumBytesTotal(numElementsWithBuffer))));
+                malloc(calcNumBytesTotal(numElementsWithBuffer))));
 
             // no need for calloc here because cloneData performs a memcpy.
             mInfo = reinterpret_cast<uint8_t*>(mKeyVals + numElementsWithBuffer);
@@ -1708,8 +1642,7 @@ public:
             return;
         }
 
-        Destroyer<Self, IsFlat && std::is_trivially_destructible<Node>::value>{}.nodes(
-          *this);
+        Destroyer<Self, IsFlat && std::is_trivially_destructible<Node>::value>{}.nodes(*this);
 
         auto const numElementsWithBuffer = calcNumElementsWithBuffer(mMask + 1);
         // clear everything, then set the sentinel again
@@ -1732,10 +1665,14 @@ public:
     bool operator==(const Table& other) const
     {
         ROBIN_HOOD_TRACE(this);
-        if (other.size() != size()) { return false; }
+        if (other.size() != size()) {
+            return false;
+        }
         for (auto const& otherEntry : other) {
             auto const myIt = find(otherEntry.first);
-            if (myIt == end() || !(myIt->second == otherEntry.second)) { return false; }
+            if (myIt == end() || !(myIt->second == otherEntry.second)) {
+                return false;
+            }
         }
 
         return true;
@@ -1748,8 +1685,7 @@ public:
     }
 
     template<typename Q = mapped_type>
-    typename std::enable_if<!std::is_void<Q>::value, Q&>::type operator[](
-      const key_type& key)
+    typename std::enable_if<!std::is_void<Q>::value, Q&>::type operator[](const key_type& key)
     {
         ROBIN_HOOD_TRACE(this);
         return doCreateByKey(key);
@@ -1791,17 +1727,16 @@ public:
         return doInsert(keyval);
     }
 
-    std::pair<iterator, bool> insert(value_type&& keyval)
-    {
-        return doInsert(std::move(keyval));
-    }
+    std::pair<iterator, bool> insert(value_type&& keyval) { return doInsert(std::move(keyval)); }
 
     // Returns 1 if key is found, 0 otherwise.
     size_t count(const key_type& key) const
     { // NOLINT(modernize-use-nodiscard)
         ROBIN_HOOD_TRACE(this);
         auto kv = mKeyVals + findIdx(key);
-        if (kv != reinterpret_cast_no_cast_align_warning<Node*>(mInfo)) { return 1; }
+        if (kv != reinterpret_cast_no_cast_align_warning<Node*>(mInfo)) {
+            return 1;
+        }
         return 0;
     }
 
@@ -1828,8 +1763,7 @@ public:
     // Throws std::out_of_range if element cannot be found
     template<typename Q = mapped_type>
     // NOLINTNEXTLINE(modernize-use-nodiscard)
-    typename std::enable_if<!std::is_void<Q>::value, Q const&>::type at(
-      key_type const& key) const
+    typename std::enable_if<!std::is_void<Q>::value, Q const&>::type at(key_type const& key) const
     {
         ROBIN_HOOD_TRACE(this);
         auto kv = mKeyVals + findIdx(key);
@@ -1872,7 +1806,9 @@ public:
     iterator begin()
     {
         ROBIN_HOOD_TRACE(this);
-        if (empty()) { return end(); }
+        if (empty()) {
+            return end();
+        }
         return iterator(mKeyVals, mInfo, fast_forward_tag{});
     }
     const_iterator begin() const
@@ -1883,7 +1819,9 @@ public:
     const_iterator cbegin() const
     { // NOLINT(modernize-use-nodiscard)
         ROBIN_HOOD_TRACE(this);
-        if (empty()) { return cend(); }
+        if (empty()) {
+            return cend();
+        }
         return const_iterator(mKeyVals, mInfo, fast_forward_tag{});
     }
 
@@ -1902,8 +1840,7 @@ public:
     const_iterator cend() const
     { // NOLINT(modernize-use-nodiscard)
         ROBIN_HOOD_TRACE(this);
-        return const_iterator{ reinterpret_cast_no_cast_align_warning<Node*>(mInfo),
-                               nullptr };
+        return const_iterator{ reinterpret_cast_no_cast_align_warning<Node*>(mInfo), nullptr };
     }
 
     iterator erase(const_iterator pos)
@@ -1911,8 +1848,7 @@ public:
         ROBIN_HOOD_TRACE(this);
         // its safe to perform const cast here
         // NOLINTNEXTLINE(cppcoreguidelines-pro-type-const-cast)
-        return erase(
-          iterator{ const_cast<Node*>(pos.mKeyVals), const_cast<uint8_t*>(pos.mInfo) });
+        return erase(iterator{ const_cast<Node*>(pos.mKeyVals), const_cast<uint8_t*>(pos.mInfo) });
     }
 
     // Erases element at pos, returns iterator to the next element.
@@ -1943,8 +1879,7 @@ public:
 
         // check while info matches with the source idx
         do {
-            if (info == mInfo[idx] &&
-                WKeyEqual::operator()(key, mKeyVals[idx].getFirst())) {
+            if (info == mInfo[idx] && WKeyEqual::operator()(key, mKeyVals[idx].getFirst())) {
                 shiftDown(idx);
                 --mNumElements;
                 return 1;
@@ -1970,7 +1905,9 @@ public:
         while (calcMaxNumElementsAllowed(newSize) < minElementsAllowed && newSize != 0) {
             newSize *= 2;
         }
-        if (ROBIN_HOOD_UNLIKELY(newSize == 0)) { throwOverflowError(); }
+        if (ROBIN_HOOD_UNLIKELY(newSize == 0)) {
+            throwOverflowError();
+        }
 
         rehashPowerOfTwo(newSize);
     }
@@ -2015,8 +1952,7 @@ public:
     ROBIN_HOOD(NODISCARD)
     size_t calcMaxNumElementsAllowed(size_t maxElements) const noexcept
     {
-        if (ROBIN_HOOD_LIKELY(maxElements <=
-                              (std::numeric_limits<size_t>::max)() / 100)) {
+        if (ROBIN_HOOD_LIKELY(maxElements <= (std::numeric_limits<size_t>::max)() / 100)) {
             return maxElements * MaxLoadFactor100 / 100;
         }
 
@@ -2036,8 +1972,7 @@ public:
     size_t calcNumElementsWithBuffer(size_t numElements) const noexcept
     {
         auto maxNumElementsAllowed = calcMaxNumElementsAllowed(numElements);
-        return numElements +
-               (std::min)(maxNumElementsAllowed, (static_cast<size_t>(0xFF)));
+        return numElements + (std::min)(maxNumElementsAllowed, (static_cast<size_t>(0xFF)));
     }
 
     // calculation only allowed for 2^n values
@@ -2109,7 +2044,7 @@ private:
 
         // calloc also zeroes everything
         mKeyVals = reinterpret_cast<Node*>(detail::assertNotNull<std::bad_alloc>(
-          calloc(1, calcNumBytesTotal(numElementsWithBuffer))));
+            calloc(1, calcNumBytesTotal(numElementsWithBuffer))));
         mInfo = reinterpret_cast<uint8_t*>(mKeyVals + numElementsWithBuffer);
 
         // set sentinel
@@ -2152,23 +2087,20 @@ private:
             }
 
             // find an empty spot
-            while (0 != mInfo[idx]) { next(&info, &idx); }
+            while (0 != mInfo[idx]) {
+                next(&info, &idx);
+            }
 
             auto& l = mKeyVals[insertion_idx];
             if (idx == insertion_idx) {
                 // put at empty spot. This forwards all arguments into the node where the
                 // object is constructed exactly where it is needed.
-                ::new (static_cast<void*>(&l))
-                  Node(*this,
-                       std::piecewise_construct,
-                       std::forward_as_tuple(std::forward<Arg>(key)),
-                       std::forward_as_tuple());
+                ::new (static_cast<void*>(&l)) Node(*this, std::piecewise_construct,
+                    std::forward_as_tuple(std::forward<Arg>(key)), std::forward_as_tuple());
             } else {
                 shiftUp(idx, insertion_idx);
-                l = Node(*this,
-                         std::piecewise_construct,
-                         std::forward_as_tuple(std::forward<Arg>(key)),
-                         std::forward_as_tuple());
+                l = Node(*this, std::piecewise_construct,
+                    std::forward_as_tuple(std::forward<Arg>(key)), std::forward_as_tuple());
             }
 
             // mKeyVals[idx].getFirst() = std::move(key);
@@ -2191,12 +2123,11 @@ private:
 
             // while we potentially have a match
             while (info == mInfo[idx]) {
-                if (WKeyEqual::operator()(getFirstConst(keyval),
-                                          mKeyVals[idx].getFirst())) {
+                if (WKeyEqual::operator()(getFirstConst(keyval), mKeyVals[idx].getFirst())) {
                     // key already exists, do NOT insert.
                     // see http://en.cppreference.com/w/cpp/container/unordered_map/insert
                     return std::make_pair<iterator, bool>(
-                      iterator(mKeyVals + idx, mInfo + idx), false);
+                        iterator(mKeyVals + idx, mInfo + idx), false);
                 }
                 next(&info, &idx);
             }
@@ -2215,7 +2146,9 @@ private:
             }
 
             // find an empty spot
-            while (0 != mInfo[idx]) { next(&info, &idx); }
+            while (0 != mInfo[idx]) {
+                next(&info, &idx);
+            }
 
             auto& l = mKeyVals[insertion_idx];
             if (idx == insertion_idx) {
@@ -2229,16 +2162,15 @@ private:
             mInfo[insertion_idx] = static_cast<uint8_t>(insertion_info);
 
             ++mNumElements;
-            return std::make_pair(
-              iterator(mKeyVals + insertion_idx, mInfo + insertion_idx), true);
+            return std::make_pair(iterator(mKeyVals + insertion_idx, mInfo + insertion_idx), true);
         }
     }
 
     bool try_increase_info()
     {
-        ROBIN_HOOD_LOG("mInfoInc=" << mInfoInc << ", numElements=" << mNumElements
-                                   << ", maxNumElementsAllowed="
-                                   << calcMaxNumElementsAllowed(mMask + 1));
+        ROBIN_HOOD_LOG(
+            "mInfoInc=" << mInfoInc << ", numElements=" << mNumElements
+                        << ", maxNumElementsAllowed=" << calcMaxNumElementsAllowed(mMask + 1));
         if (mInfoInc <= 2) {
             // need to be > 2 so that shift works (otherwise undefined behavior!)
             return false;
@@ -2272,12 +2204,13 @@ private:
         }
 
         auto const maxNumElementsAllowed = calcMaxNumElementsAllowed(mMask + 1);
-        if (mNumElements < maxNumElementsAllowed && try_increase_info()) { return; }
+        if (mNumElements < maxNumElementsAllowed && try_increase_info()) {
+            return;
+        }
 
-        ROBIN_HOOD_LOG("mNumElements=" << mNumElements << ", maxNumElementsAllowed="
-                                       << maxNumElementsAllowed << ", load="
-                                       << (static_cast<double>(mNumElements) * 100.0 /
-                                           (static_cast<double>(mMask) + 1)));
+        ROBIN_HOOD_LOG("mNumElements="
+            << mNumElements << ", maxNumElementsAllowed=" << maxNumElementsAllowed << ", load="
+            << (static_cast<double>(mNumElements) * 100.0 / (static_cast<double>(mMask) + 1)));
         // it seems we have a really bad hash function! don't try to resize again
         if (mNumElements * 2 < calcMaxNumElementsAllowed(mMask + 1)) {
             throwOverflowError();
@@ -2294,13 +2227,15 @@ private:
         }
 
         Destroyer<Self, IsFlat && std::is_trivially_destructible<Node>::value>{}
-          .nodesDoNotDeallocate(*this);
+            .nodesDoNotDeallocate(*this);
 
         // This protection against not deleting mMask shouldn't be needed as it's
         // sufficiently protected with the 0==mMask check, but I have this anyways because
         // g++ 7 otherwise reports a compile error: attempt to free a non-heap object ‘fm’
         // [-Werror=free-nonheap-object]
-        if (mKeyVals != reinterpret_cast<Node*>(&mMask)) { free(mKeyVals); }
+        if (mKeyVals != reinterpret_cast<Node*>(&mMask)) {
+            free(mKeyVals);
+        }
     }
 
     void init() noexcept
@@ -2315,77 +2250,50 @@ private:
     }
 
     // members are sorted so no padding occurs
-    Node* mKeyVals = reinterpret_cast<Node*>(&mMask);    // 8 byte  8
+    Node* mKeyVals = reinterpret_cast<Node*>(&mMask); // 8 byte  8
     uint8_t* mInfo = reinterpret_cast<uint8_t*>(&mMask); // 8 byte 16
-    size_t mNumElements = 0;                             // 8 byte 24
-    size_t mMask = 0;                                    // 8 byte 32
-    size_t mMaxNumElementsAllowed = 0;                   // 8 byte 40
-    InfoType mInfoInc = InitialInfoInc;                  // 4 byte 44
-    InfoType mInfoHashShift = InitialInfoHashShift;      // 4 byte 48
-                                                         // 16 byte 56 if NodeAllocator
+    size_t mNumElements = 0; // 8 byte 24
+    size_t mMask = 0; // 8 byte 32
+    size_t mMaxNumElementsAllowed = 0; // 8 byte 40
+    InfoType mInfoInc = InitialInfoInc; // 4 byte 44
+    InfoType mInfoHashShift = InitialInfoHashShift; // 4 byte 48
+                                                    // 16 byte 56 if NodeAllocator
 };
 } // namespace detail
 
 // map
 
-template<typename Key,
-         typename T,
-         typename Hash = hash<Key>,
-         typename KeyEqual = std::equal_to<Key>,
-         size_t MaxLoadFactor100 = 80>
+template<typename Key, typename T, typename Hash = hash<Key>,
+    typename KeyEqual = std::equal_to<Key>, size_t MaxLoadFactor100 = 80>
 using unordered_flat_map = detail::Table<true, MaxLoadFactor100, Key, T, Hash, KeyEqual>;
 
-template<typename Key,
-         typename T,
-         typename Hash = hash<Key>,
-         typename KeyEqual = std::equal_to<Key>,
-         size_t MaxLoadFactor100 = 80>
+template<typename Key, typename T, typename Hash = hash<Key>,
+    typename KeyEqual = std::equal_to<Key>, size_t MaxLoadFactor100 = 80>
 using unordered_node_map = detail::Table<false, MaxLoadFactor100, Key, T, Hash, KeyEqual>;
 
-template<typename Key,
-         typename T,
-         typename Hash = hash<Key>,
-         typename KeyEqual = std::equal_to<Key>,
-         size_t MaxLoadFactor100 = 80>
-using unordered_map =
-  detail::Table<sizeof(robin_hood::pair<Key, T>) <= sizeof(size_t) * 6 &&
-                  std::is_nothrow_move_constructible<robin_hood::pair<Key, T>>::value &&
-                  std::is_nothrow_move_assignable<robin_hood::pair<Key, T>>::value,
-                MaxLoadFactor100,
-                Key,
-                T,
-                Hash,
-                KeyEqual>;
+template<typename Key, typename T, typename Hash = hash<Key>,
+    typename KeyEqual = std::equal_to<Key>, size_t MaxLoadFactor100 = 80>
+using unordered_map = detail::Table<sizeof(robin_hood::pair<Key, T>) <= sizeof(size_t) * 6 &&
+        std::is_nothrow_move_constructible<robin_hood::pair<Key, T>>::value &&
+        std::is_nothrow_move_assignable<robin_hood::pair<Key, T>>::value,
+    MaxLoadFactor100, Key, T, Hash, KeyEqual>;
 
 // set
 
-template<typename Key,
-         typename Hash = hash<Key>,
-         typename KeyEqual = std::equal_to<Key>,
-         size_t MaxLoadFactor100 = 80>
-using unordered_flat_set =
-  detail::Table<true, MaxLoadFactor100, Key, void, Hash, KeyEqual>;
+template<typename Key, typename Hash = hash<Key>, typename KeyEqual = std::equal_to<Key>,
+    size_t MaxLoadFactor100 = 80>
+using unordered_flat_set = detail::Table<true, MaxLoadFactor100, Key, void, Hash, KeyEqual>;
 
-template<typename Key,
-         typename Hash = hash<Key>,
-         typename KeyEqual = std::equal_to<Key>,
-         size_t MaxLoadFactor100 = 80>
-using unordered_node_set =
-  detail::Table<false, MaxLoadFactor100, Key, void, Hash, KeyEqual>;
+template<typename Key, typename Hash = hash<Key>, typename KeyEqual = std::equal_to<Key>,
+    size_t MaxLoadFactor100 = 80>
+using unordered_node_set = detail::Table<false, MaxLoadFactor100, Key, void, Hash, KeyEqual>;
 
-template<typename Key,
-         typename T,
-         typename Hash = hash<Key>,
-         typename KeyEqual = std::equal_to<Key>,
-         size_t MaxLoadFactor100 = 80>
+template<typename Key, typename T, typename Hash = hash<Key>,
+    typename KeyEqual = std::equal_to<Key>, size_t MaxLoadFactor100 = 80>
 using unordered_set = detail::Table<sizeof(Key) <= sizeof(size_t) * 6 &&
-                                      std::is_nothrow_move_constructible<Key>::value &&
-                                      std::is_nothrow_move_assignable<Key>::value,
-                                    MaxLoadFactor100,
-                                    Key,
-                                    void,
-                                    Hash,
-                                    KeyEqual>;
+        std::is_nothrow_move_constructible<Key>::value &&
+        std::is_nothrow_move_assignable<Key>::value,
+    MaxLoadFactor100, Key, void, Hash, KeyEqual>;
 } // namespace robin_hood
 
 #endif

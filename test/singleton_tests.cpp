@@ -7,10 +7,7 @@ struct runtime_s
 
 struct alignas(64) keyboard_mapping_s
 {
-    keyboard_mapping_s()
-    {
-        std::fill(size, size + 1023, 'r');
-    };
+    keyboard_mapping_s() { std::fill(size, size + 1023, 'r'); };
     char size[1024]{};
 };
 
@@ -21,9 +18,7 @@ struct big_s
 
 struct example_system
 {
-    void update(name&, pos&, const runtime_s& r) const
-    {
-    }
+    void update(name&, pos&, const runtime_s& r) const {}
 };
 
 struct example_view_system

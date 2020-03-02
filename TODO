@@ -4,9 +4,7 @@ Version 0.1.5 (Small fixes):
 
 * more update hooks (pre_update, post_update etc)
 
-* better system dependency resolution (impl. DAG graph)
-
-* create a way to visualize system execution (with ex. https://graphviz.org/)
+* install tbb with cmake
 
 * optimize get_singleton (currently 1.3x iteration time)
 

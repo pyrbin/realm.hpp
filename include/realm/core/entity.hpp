@@ -1,9 +1,9 @@
 #pragma once
 
-#include <cstdint>
 #include <functional>
 #include <vector>
 
+#include <realm/core/types.hpp>
 #include <realm/util/swap_remove.hpp>
 
 namespace realm {
@@ -12,7 +12,7 @@ namespace realm {
  * Entities are represented as 64-bit integers split in half,
  * where respective 32-bit half represents an index & generation
  */
-using entity = uint64_t;
+using entity = u64;
 
 /**
  *  @brief Entity handle
@@ -20,8 +20,12 @@ using entity = uint64_t;
  */
 struct entity_handle
 {
-    uint32_t index;
-    uint32_t generation;
+    using ptr = entity_handle*;
+    using ref = const entity_handle&;
+    using list = std::vector<entity_handle>;
+
+    u32 index;
+    u32 generation;
 };
 
 struct archetype_chunk;
@@ -32,15 +36,19 @@ struct archetype_chunk;
  */
 struct entity_location
 {
+    using ptr = entity_location*;
+    using ref = const entity_location&;
+    using list = std::vector<entity_location>;
+
     /*! @brief Index where in chunk the entity stored */
-    uint32_t chunk_index{ 0 };
+    u32 chunk_index{ 0 };
     /*! @brief Which chunk the entity is stored */
     archetype_chunk* chunk{ nullptr };
 };
 
 /**
  * @brief Entity Manager
- * A collection of entities based on a Rust slot-map/beach-map.
+ * A collection of entities_ based on a Rust slot-map/beach-map.
  * Uses indirection to guarantee a dense/packed storage of entities.
  * @ref https://docs.rs/beach_map/
  */
@@ -51,17 +59,17 @@ public:
      * Create an entity pool with specified capacity
      * @param capacity
      */
-    explicit entity_manager(const uint32_t capacity)
-        : first_available{ -1 }
+    explicit entity_manager(const u32 capacity)
+        : first_available_{ -1 }
     {
-        slots.reserve(capacity);
-        locations.reserve(capacity);
-        handles.reserve(capacity);
+        slots_.reserve(capacity);
+        locations_.reserve(capacity);
+        handles_.reserve(capacity);
     }
 
     ~entity_manager()
     {
-        for (auto&& loc : locations) {
+        for (auto&& loc : locations_) {
             loc.chunk_index = 0;
             loc.chunk = nullptr;
         }
@@ -72,25 +80,25 @@ public:
      * @param loc entity location
      * @return The entity id for the entity
      */
-    entity create(const entity_location& loc)
+    entity create(entity_location::ref location)
     {
         // TODO: add comments
         entity_handle handle{};
-        const auto index = first_available;
+        const auto index = first_available_;
         if (index != -1) {
-            first_available = handles.at(index).index == index ? -1 : handles.at(index).index;
+            first_available_ = handles_.at(index).index == index ? -1 : handles_.at(index).index;
 
-            handles.at(index).index = uint32_t(locations.size());
-            handle = { uint32_t(index), handles.at(index).generation };
+            handles_.at(index).index = u32(locations_.size());
+            handle = { u32(index), handles_.at(index).generation };
         } else {
-            handles.push_back({
-                static_cast<uint32_t>(locations.size()),
+            handles_.push_back({
+                static_cast<u32>(locations_.size()),
                 0,
             });
-            handle = { uint32_t(handles.size()) - 1, 0 };
+            handle = { u32(handles_.size()) - 1, 0 };
         }
-        slots.push_back(handle.index);
-        locations.push_back(loc);
+        slots_.push_back(handle.index);
+        locations_.push_back(location);
         return merge_handle(handle);
     }
 
@@ -102,16 +110,16 @@ public:
     {
         // TODO: add comments
         const auto handle = extract_handle(entt);
-        auto [index, generation] = handles.at(handle.index);
+        auto [index, generation] = handles_.at(handle.index);
         if (generation != handle.generation)
             return;
-        const auto loc_index = handles.at(handle.index).index;
-        handles.at(slots.at(slots.size() - 1)).index = loc_index;
-        handles.at(handle.index).generation++;
-        handles.at(handle.index).index = first_available != -1 ? first_available : handle.index;
-        first_available = handle.index;
-        internal::swap_remove(loc_index, slots);
-        internal::swap_remove(loc_index, locations);
+        const auto loc_index = handles_.at(handle.index).index;
+        handles_.at(slots_.at(slots_.size() - 1)).index = loc_index;
+        handles_.at(handle.index).generation++;
+        handles_.at(handle.index).index = first_available_ != -1 ? first_available_ : handle.index;
+        first_available_ = handle.index;
+        internal::swap_remove(loc_index, slots_);
+        internal::swap_remove(loc_index, locations_);
     }
 
     /**
@@ -119,11 +127,13 @@ public:
      * @param entt The entity id
      * @return The entity location
      */
-    const entity_location* get(const entity entt) const
+    const entity_location::ptr get(const entity entt) const
     {
         const auto handle = extract_handle(entt);
-        auto [index, generation] = handles.at(handle.index);
-        return generation == handle.generation ? &locations.at(handles.at(handle.index).index) : nullptr;
+        auto [index, generation] = handles_.at(handle.index);
+        return generation == handle.generation ?
+            (entity_location::ptr)&locations_.at(handles_.at(handle.index).index) :
+            nullptr;
     }
 
     /**
@@ -131,11 +141,12 @@ public:
      * @param entt The entity id
      * @return The entity location
      */
-    entity_location* get_mut(const entity entt)
+    entity_location::ptr get_mut(const entity entt)
     {
         const auto handle = extract_handle(entt);
-        auto [index, generation] = handles.at(handle.index);
-        return generation == handle.generation ? &locations.at(handles.at(handle.index).index) : nullptr;
+        auto [index, generation] = handles_.at(handle.index);
+        return generation == handle.generation ? &locations_.at(handles_.at(handle.index).index) :
+                                                 nullptr;
     }
 
     /**
@@ -157,42 +168,14 @@ public:
     [[nodiscard]] bool exists(const entity entt) const noexcept
     {
         const auto handle = extract_handle(entt);
-        return handle.index <= handles.size() ? handle.generation == handles.at(handle.index).generation : false;
+        return handle.index <= handles_.size() ?
+            handle.generation == handles_.at(handle.index).generation :
+            false;
     }
 
-    /**
-     * Iterate each entity immutable
-     * @param fn
-     */
-    void each(const std::function<void(entity, const entity_location*)> fn)
-    {
-        for (unsigned i{ 0 }; i < handles.size(); i++) {
-            const auto id = merge_handle(handles[i]);
-            fn(id, const_cast<const entity_location*>(get(id)));
-        }
-    }
+    [[nodiscard]] int32_t size() const noexcept { return slots_.size(); }
 
-    /**
-     * Iterate each entity mutable
-     * @param fn
-     */
-    void each_mut(const std::function<void(entity, entity_location*)> fn)
-    {
-        for (unsigned i{ 0 }; i < handles.size(); i++) {
-            const auto id = merge_handle(handles[i]);
-            fn(id, (get_mut(id)));
-        }
-    }
-
-    [[nodiscard]] int32_t size() const noexcept
-    {
-        return slots.size();
-    }
-
-    [[nodiscard]] int32_t capacity() const noexcept
-    {
-        return slots.capacity();
-    }
+    [[nodiscard]] int32_t capacity() const noexcept { return slots_.capacity(); }
 
     /**
      * Create an entity id from an index and generation
@@ -200,8 +183,7 @@ public:
      * @param generation
      * @return An entity id
      */
-    static constexpr entity merge_handle(const uint32_t index,
-        const uint32_t generation) noexcept
+    static constexpr entity merge_handle(const u32 index, const u32 generation) noexcept
     {
         return entity{ generation } << 32 | entity{ index };
     }
@@ -211,7 +193,7 @@ public:
      * @param handle
      * @return
      */
-    static constexpr entity merge_handle(const entity_handle handle) noexcept
+    static constexpr entity merge_handle(entity_handle::ref handle) noexcept
     {
         auto [index, generation] = handle;
         return merge_handle(index, generation);
@@ -222,20 +204,14 @@ public:
      * @param entt
      * @return
      */
-    static constexpr uint32_t index(entity entt) noexcept
-    {
-        return static_cast<uint32_t>(entt);
-    }
+    static constexpr u32 index(entity entt) noexcept { return static_cast<u32>(entt); }
 
     /**
      * Get the generation of an entity id
      * @param entt
      * @return
      */
-    static constexpr uint32_t generation(entity entt) noexcept
-    {
-        return (entt >> 32);
-    }
+    static constexpr u32 generation(entity entt) noexcept { return (entt >> 32); }
 
     /**
      * Create an entity handle from ab entity id
@@ -248,9 +224,9 @@ public:
     }
 
 private:
-    std::vector<entity_location> locations;
-    std::vector<entity_handle> handles;
-    std::vector<uint32_t> slots;
-    int first_available;
+    entity_location::list locations_;
+    entity_handle::list handles_;
+    std::vector<u32> slots_;
+    i32 first_available_;
 };
 } // namespace realm

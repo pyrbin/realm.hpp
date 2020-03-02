@@ -4,26 +4,26 @@
 #include <type_traits>
 #include <utility>
 
+#include <realm/core/archetype.hpp>
+#include <realm/core/world.hpp>
 #include <realm/util/tuple_util.hpp>
 #include <realm/util/type_traits.hpp>
 
-#include <realm/core/archetype.hpp>
-#include <realm/core/world.hpp>
-
 namespace realm {
-
 /**
  * @brief View
  * Describes a chunk view for iteration & manipulation of a single archetype chunk.
  * @tparam Ts Component types to match
  */
-template <typename... Ts>
+template<typename... Ts>
 struct view
 {
 public:
-    typedef std::tuple<Ts...> values;
-    typedef std::tuple<std::add_lvalue_reference_t<Ts>...> references;
-    typedef internal::component_tuple<Ts...> components;
+    using values = std::tuple<Ts...>;
+    using references = std::tuple<std::add_lvalue_reference_t<Ts>...>;
+    using components = internal::component_tuple<Ts...>;
+
+    using ptr = view*;
 
     /**
      * Creates a view of a chunk.
@@ -31,10 +31,9 @@ public:
      * the components defined by the view.
      * @param chunk
      */
-    explicit constexpr view(archetype_chunk* chunk)
-        : _chunk{ chunk }
-    {
-    }
+    explicit constexpr view(archetype_chunk::ptr chunk)
+        : chunk_{ chunk }
+    {}
 
     /**
      * Creates a view of a chunk with a world.
@@ -44,38 +43,33 @@ public:
      * @param chunk
      * @param world_ptr
      */
-    constexpr view(archetype_chunk* chunk, world* world_ptr)
-        : _chunk{ chunk }
-        , _world_ptr{ world_ptr }
-    {
-    }
+    constexpr view(archetype_chunk::ptr chunk, world::ptr world_)
+        : chunk_{ chunk }
+        , world_{ world_ }
+    {}
 
     static inline const size_t mask = archetype::mask_from_tuple<components>();
 
     class iterator
     {
     public:
-        typedef iterator self_type;
-        typedef values value_type;
-        typedef references reference;
-        typedef std::forward_iterator_tag iterator_category;
+        using self_type = iterator;
+        using value_type = values;
+        using reference = references;
+        using iterator_category = std::forward_iterator_tag;
 
-        explicit constexpr iterator(view* chunk_view)
-            : _chunk_view{ chunk_view }
-            , _index{ 0 }
-        {
-        }
+        explicit constexpr iterator(view::ptr view)
+            : view_{ view }
+            , index_{ 0 }
+        {}
 
-        constexpr bool valid()
-        {
-            return _chunk_view->_chunk != nullptr;
-        }
+        constexpr bool valid() { return _chunk_view->_chunk != nullptr; }
 
         void step()
         {
-            _index++;
-            if (_index >= _chunk_view->_chunk->size()) {
-                _chunk_view = nullptr;
+            index_++;
+            if (index_ >= view_->chunk_->size()) {
+                view_ = nullptr;
                 return;
             }
         }
@@ -95,29 +89,19 @@ public:
 
         auto operator*()
         {
-            return (std::forward_as_tuple(
-                _chunk_view->template get<internal::pure_t<Ts>>(_index)...));
+            return (std::forward_as_tuple(view_->template get<internal::pure_t<Ts>>(index_)...));
         }
 
-        constexpr bool operator!=(const self_type& other)
-        {
-            return _chunk_view != other._chunk_view;
-        }
+        constexpr bool operator!=(const self_type& other) { return view_ != other.view_; }
 
     private:
-        view* _chunk_view;
-        unsigned int _index;
+        view::ptr view_;
+        unsigned int index_;
     };
 
-    iterator begin()
-    {
-        return iterator(this);
-    }
+    iterator begin() { return iterator(this); }
 
-    iterator end()
-    {
-        return iterator(nullptr);
-    }
+    iterator end() { return iterator(nullptr); }
 
     /**
      * Get a component from the chunk for a specific entity
@@ -127,32 +111,32 @@ public:
      * @param index
      * @return A component reference of type T
      */
-    template <typename T>
-    [[nodiscard]] internal::enable_if_component<T, T&> get(const uint32_t index) const
+    template<typename T>
+    [[nodiscard]] internal::enable_if_component<T, T&> get(const u32 index) const
     {
-        if (_world_ptr != nullptr && _world_ptr->is_singleton<T>()) {
+        if (world_ != nullptr && world_->is_singleton<T>()) {
             // TODO: this call increases system update by a lot
             // definitely something to look into for performance
             return get_singleton<T>();
         }
 
-        return *_chunk->get<T>(index);
+        return *chunk_->get<T>(index);
     }
 
-    template <typename T>
-    [[nodiscard]] internal::enable_if_entity<T, const entity&> get(const uint32_t index) const
+    template<typename T>
+    [[nodiscard]] internal::enable_if_entity<T, const entity&> get(const u32 index) const
     {
-        return *_chunk->get_entity_at(index);
+        return *chunk_->get_entity_at(index);
     }
 
-    template <typename T>
+    template<typename T>
     [[nodiscard]] internal::enable_if_component<T, T&> get_singleton() const
     {
-        return _world_ptr->get_singleton<T>();
+        return world_->get_singleton<T>();
     }
 
 private:
-    archetype_chunk* _chunk{ nullptr };
-    world* _world_ptr{ nullptr };
+    archetype_chunk* chunk_{ nullptr };
+    world::ptr world_{ nullptr };
 };
 } // namespace realm

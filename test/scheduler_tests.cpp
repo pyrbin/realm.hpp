@@ -17,30 +17,22 @@ struct example_system
 
 struct example_system_const
 {
-    void update(const vel&, const pos&) const
-    {
-    }
+    void update(const vel&, const pos&) const {}
 };
 
 struct example_system_mutate
 {
-    void update(vel&, pos&) const
-    {
-    }
+    void update(vel&, pos&) const {}
 };
 
 struct example_system_name
 {
-    void update(name&) const
-    {
-    }
+    void update(name&) const {}
 };
 
 struct example_system_combined
 {
-    void update(vel&, name&, const pos&) const
-    {
-    }
+    void update(vel&, name&, const pos&) const {}
 };
 
 inline realm::world world{ 10 };
@@ -55,14 +47,15 @@ TEST_CASE("scheduler_block_order")
     scheduler.insert<example_system_mutate>();
     scheduler.insert<example_system_name>();
 
-    REQUIRE(scheduler.blocks[0].systems.size() >= 1);
-    REQUIRE(scheduler.blocks.size() == 3);
+    REQUIRE(scheduler.get_block(0).size() >= 1);
+
+    REQUIRE(scheduler.blocks_size() == 3);
 
     // scheduler.print_exec(std::cout);
     scheduler.insert<example_system_combined>();
 
-    REQUIRE(scheduler.blocks.size() == 2);
-    REQUIRE(scheduler.blocks[1].systems.size() == 4);
+    REQUIRE(scheduler.blocks_size() == 2);
+    REQUIRE(scheduler.get_block(1).size() == 4);
 
     scheduler.exec(&world);
 }
